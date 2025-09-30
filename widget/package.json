@@ -1,0 +1,14 @@
+{
+  "name": "kunstpakket-ai-widget",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch",
+    "deploy": "npm run build && npx wrangler deploy --config wrangler.toml"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "sass": "^1.77.0"
+  }
+}

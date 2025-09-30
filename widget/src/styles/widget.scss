@@ -1,0 +1,220 @@
+// AI Search Widget Styles
+$primary: #2563eb;
+$bg-dark: rgba(0, 0, 0, 0.7);
+$radius: 12px;
+$shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+$font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+.kp-ai-widget {
+  // Reset all nested elements to prevent external CSS interference
+  *, *::before, *::after {
+    all: unset;
+    box-sizing: border-box;
+  }
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background: $bg-dark;
+    backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+    
+    @media (min-width: 768px) {
+      padding: 80px 20px 20px;
+    }
+  }
+
+  &__modal {
+    background: white;
+    border-radius: $radius;
+    box-shadow: $shadow;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+    font-family: $font;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #1e293b;
+  }
+
+  &__header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  &__input {
+    flex: 1;
+    border: none !important;
+    font-size: 16px !important;
+    font-family: $font !important;
+    outline: none !important;
+    background: transparent !important;
+    color: #1e293b !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    
+    &::placeholder {
+      color: #9ca3af !important;
+    }
+  }
+
+  &__close {
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    
+    &:hover, &:active {
+      background: #f3f4f6;
+    }
+  }
+
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  &__loading {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+  }
+
+  &__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  &__answer {
+    background: #f0f9ff;
+    border-left: 4px solid $primary;
+    padding: 16px;
+    margin-bottom: 24px;
+    border-radius: 8px;
+    
+    p {
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1.6 !important;
+      color: #1e293b !important;
+      font-family: $font !important;
+      font-size: 15px !important;
+    }
+  }
+
+  &__products {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+  }
+
+  &__product {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  &__product-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: #f9fafb;
+  }
+
+  &__product-info {
+    padding: 12px;
+  }
+
+  &__product-title {
+    font-size: 14px !important;
+    font-family: $font !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    margin: 0 0 8px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: #1e293b !important;
+  }
+
+  &__product-price {
+    font-size: 16px !important;
+    font-family: $font !important;
+    font-weight: 600 !important;
+    color: $primary !important;
+    margin: 0 !important;
+  }
+
+  &__empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+    
+    svg {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      opacity: 0.5;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "runId": "82a3bdfa-a70d-447b-993a-66089fb86818",
+  "startedAt": null,
+  "finishedAt": "2025-09-26T10:49:38.466Z",
+  "counts": {
+    "products": 898,
+    "written": 898,
+    "removed": 0
+  },
+  "progress": 0,
+  "updatedAt": "2025-09-26T10:49:38.466Z"
+}

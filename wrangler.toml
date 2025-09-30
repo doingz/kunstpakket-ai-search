@@ -1,0 +1,39 @@
+name = "frederique-ai"
+main = "sync/index.js"
+compatibility_date = "2024-01-01"
+account_id = "9ca4115b4354987fcb09f8ca5fb970ab"
+
+# Environment variables (configureer deze in Cloudflare Dashboard)
+[vars]
+LIGHTSPEED_BASE_URL = "https://api.webshopapp.com/nl"
+LIGHTSPEED_API_KEY = "08e288496a18419dc28ac87c8dca5a0f"
+LIGHTSPEED_SECRET = "03f81d0420d6c0d12f41d27a73376c7c"
+DEBUG_LIMIT = "0" # 0 = alle producten, getal = test limiet
+SKIP_CLEANUP = "0" # cleanup aan
+
+LS_DELAY_MS = "100"  # 100ms delay voor stabiele Lightspeed API calls
+
+# Cloudflare AI Search
+# Zet deze secrets/vars in Dashboard of via wrangler secret put
+CF_ACCOUNT_ID = "9ca4115b4354987fcb09f8ca5fb970ab"
+AI_RAG_SLUG = "kunstpakket-ai-search"
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "PRODUCTS_BUCKET"
+bucket_name = "kunstpakket-products"
+
+# Cron trigger - elke nacht om 3:00
+[triggers]
+crons = ["0 3 * * *"]
+
+# Build settings
+[build]
+command = "echo 'No build step needed for this worker'"
+
+# wrangler.toml (wrangler v3.88.0^)
+[observability.logs]
+enabled = true
+
+[ai]
+binding = "AI"

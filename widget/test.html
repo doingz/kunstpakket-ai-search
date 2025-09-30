@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Widget Test - Kunstpakket</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: #f9fafb;
+    }
+    h1 { color: #1e293b; }
+    .info {
+      background: #dbeafe;
+      border-left: 4px solid #2563eb;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    .trigger-buttons {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    button {
+      padding: 12px 24px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .mobile-button {
+      background: #10b981;
+    }
+    .mobile-button:hover {
+      background: #059669;
+    }
+    code {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 AI Search Widget Test</h1>
+  
+  <div class="info">
+    <strong>Feature Flag:</strong> Widget is alleen actief als <code>?f=1</code> in de URL staat.<br>
+    <strong>Current Status:</strong> <span id="status">Checking...</span>
+  </div>
+
+  <div class="trigger-buttons">
+    <button id="formSearch">🔍 Desktop Search (#formSearch)</button>
+    <button class="mobile-button" id="mobileSearch">📱 Mobile Search (#nav .search)</button>
+  </div>
+
+  <h2>Instructies:</h2>
+  <ol>
+    <li>Open deze pagina met <code>?f=1</code> in de URL</li>
+    <li>Klik op één van de knoppen hierboven</li>
+    <li>Type een zoekopdracht (bijv. "schilderij voor €50")</li>
+    <li>Bekijk de AI antwoorden en product resultaten!</li>
+  </ol>
+
+  <!-- Hidden nav .search element for mobile trigger -->
+  <div id="nav" style="display:none;">
+    <div class="search"></div>
+  </div>
+
+  <script src="https://frederique-ai.lotapi.workers.dev/widget.js"></script>
+  
+  <script>
+    // Update status indicator
+    const enabled = sessionStorage.getItem('kp_widget_enabled') === '1';
+    const statusEl = document.getElementById('status');
+    
+    if (enabled) {
+      statusEl.innerHTML = '<span style="color: #10b981;">✅ Widget enabled (feature flag active)</span>';
+    } else {
+      statusEl.innerHTML = '<span style="color: #dc2626;">❌ Widget disabled (add ?f=1 to URL)</span>';
+      
+      // Show enable button
+      const enableBtn = document.createElement('button');
+      enableBtn.textContent = 'Enable Widget (add ?f=1)';
+      enableBtn.style.marginLeft = '12px';
+      enableBtn.onclick = () => {
+        window.location.href = window.location.pathname + '?f=1';
+      };
+      statusEl.appendChild(enableBtn);
+    }
+    
+    // Add mobile trigger manually (kunstpakket.nl heeft dit al)
+    document.getElementById('mobileSearch').onclick = () => {
+      document.querySelector('#nav .search').click();
+    };
+  </script>
+</body>
+</html>
