@@ -38,6 +38,15 @@ export default {
       }
     }
 
+    if (pathname === '/sync/preview' && method === 'GET') {
+      const id = searchParams.get('id');
+      if (!id) return jsonResponse({ error: 'id required' }, 400);
+      const obj = await env.PRODUCTS_BUCKET.get(`${id}.json`);
+      if (!obj) return jsonResponse({ error: 'not found' }, 404);
+      const data = await obj.json();
+      return jsonResponse(data);
+    }
+
     return new Response('Not found', { status: 404 });
   },
 
@@ -171,55 +180,95 @@ async function checkRateLimit(env) {
 // ============================================================================
 
 const TYPE_SYNONYMS = {
+  mok: [
+    'mok','mokken','beker','bekers','kop','kopje','koffiemok','theemok',
+    'espresso mok','espresso kopje','mug','coffee mug','tea mug','cup'
+  ],
+  theepot: [
+    'theepot','theepotten','teapot'
+  ],
+  kan: [
+    'kan','kannen','pitcher','jug','karaf','karafje','decanter'
+  ],
+  vaas: [
+    'vaas','vazen','vase','vases','bloemenvaas','flower vase','vaasje'
+  ],
+  schaal: [
+    'schaal','schalen','kom','kommen','bowl','fruit bowl','serveerschaal','slakom','schaaltje'
+  ],
   onderzetters: [
-    'onderzetter','onderzetters','coaster','coasters','glasonderzetter','glasonderzetters',
-    'drankonderzetter','tafelonderzetter'
+    'onderzetter','onderzetters','coaster','coasters','glasonderzetter','glasonderzetters'
+  ],
+  wandbord: [
+    'wandbord','wandborden','muurbord','muurplaat','wandplaat','wall plate','wall plaque','plaque'
+  ],
+  bord: [
+    'bord','borden','plate','plates','serviesbord','decoratiebord','designbord'
+  ],
+  beeldje: [
+    'beeldje','beeldjes','figurine','statuette','statuet'
+  ],
+  beeld: [
+    'beeld','beelden','statue','sculptuur','sculpturen','kunstbeeld'
+  ],
+  kandelaar: [
+    'kandelaar','kandelaars','candlestick','candle stick'
+  ],
+  waxinelichthouder: [
+    'waxinelichthouder','waxinelichthouders','theelichthouder','theelichthouders',
+    'tealight holder','tea light holder','candle holder'
+  ],
+  theelicht: [
+    'theelicht','theelichten','tealight','tea light'
   ],
   schilderij: [
     'schilderij','schilderijen','painting','artwork','canvas','doek','linnen','print',
-    'poster','reproductie','giclée','giclee','zeefdruk','houtdruk','ets','etsen',
-    'gravure','serigrafie','kunstdruk','litho'
+    'kunstdruk','art print','artprint'
   ],
-  mok: [
-    'mok','mokje','mokken','beker','bekers','kop','kopje','koffiemok','theemok',
-    'espresso','espresso kopje','mug','coffee mug','tea mug','cup'
+  zeefdruk: [
+    'zeefdruk','serigrafie','serigraph'
   ],
-  schaal: [
-    'schaal','schalen','kom','kommen','dish','dishes','bowl','fruit bowl',
-    'serveerschaal','servingschaal','slakom','slabowl'
+  'giclée': [
+    'giclée','giclee'
   ],
-  beeldje: [
-    'beeldje','beeldjes','sculptuur','sculpturen','figuur','figuren','figurine',
-    'statue','statuette','beeld','beelden','kunstbeeld','bronzen beeld',
-    'verbronsd','resin beeld','kunstsculptuur'
+  litho: [
+    'litho','lithografie','lithograph','lithography'
   ],
-  vaas: [
-    'vaas','vazen','vase','vases','bloemenvaas','flower vase','decoratieve vaas',
-    'glass vase','keramische vaas','porseleinen vaas'
+  ets: [
+    'ets','etsen','etching','engraving','gravure','prent'
   ],
-  bord: [
-    'bord','borden','plate','plates','wandbord','decoratiebord','serviesbord',
-    'porseleinen bord','keramisch bord','designbord'
+  wijnstop: [
+    'wijnstop','bottle stopper','stopper'
+  ],
+  wijnpakket: [
+    'wijnpakket','wine gift','wine set'
+  ],
+  sokkel: [
+    'sokkel','sokkels','plint','plinth','voetstuk','voetstukken','standaard','display stand'
   ],
   masker: [
-    'masker','maskers','mask','masks','venetiaans','venetian mask','tribal mask',
-    'wandmasker','wall mask','africaans masker','ceremonieel masker'
+    'masker','maskers','wandmasker','wall mask','mask','masks'
   ],
-  cadeau: [
-    'cadeau','cadeaus','gift','gifts','present','geschenk','souvenir','kado',
-    'cadeauartikel','relatiegeschenk','gift item','giftware'
+  poster: [
+    'poster','posters','kunstposter','art poster'
   ],
-  keramiek: [
-    'keramiek','ceramics','ceramic','aardewerk','pottery','stoneware',
-    'porselein','porcelain','handgemaakt keramiek'
+  zandloper: [
+    'zandloper','zandlopers','hourglass','hourglasses'
   ],
-  glaswerk: [
-    'glaswerk','glas','glazen','glass','glassware','kristal','crystal','handgeblazen',
-    'vaasje glas','decoratief glas'
+  schaakbord: [
+    'schaakbord','schaakborden','chessboard','chess board'
   ],
-  kunstobject: [
-    'kunstobject','kunstobjecten','designobject','design objects','art object',
-    'art piece','artwork object','decoratie','decoratief object','uniek kunstwerk'
+  spiegeldoosje: [
+    'spiegeldoosje','spiegeldoosjes','mirror box','jewel box','trinket box'
+  ],
+  kurkentrekker: [
+    'kurkentrekker','kurkentrekkers','corkscrew','wine opener'
+  ],
+  geurdispenser: [
+    'geurdispenser','geurdispensers','aroma diffuser','scent diffuser','fragrance dispenser'
+  ],
+  sfeerlamp: [
+    'sfeerlamp','sfeerlampen','mood lamp','ambience lamp','decor lamp'
   ]
 };
 
@@ -397,13 +446,13 @@ async function saveMarkdown(env, products) {
 
     const results = await Promise.allSettled(
       batch.map(async (product) => {
-        const md = productToMarkdown(product);
-      await withTimeout(
-          env.PRODUCTS_BUCKET.put(`${product.id}.md`, md, {
-          httpMetadata: { contentType: 'text/markdown; charset=utf-8' }
-        }),
+        const json = productToJSON(product);
+        await withTimeout(
+          env.PRODUCTS_BUCKET.put(`${product.id}.json`, JSON.stringify(json, null, 2), {
+            httpMetadata: { contentType: 'application/json; charset=utf-8' }
+          }),
           5000,
-          `${product.id}.md`
+          `${product.id}.json`
         );
         return product.id;
       })
@@ -416,169 +465,65 @@ async function saveMarkdown(env, products) {
   return written;
 }
 
-function productToMarkdown(product) {
-  const esc = (s) => String(s || '').replace(/"/g, '\\"').replace(/\n+/g, ' ').trim();
-  const list = (arr) => (arr || []).map(v => `  - "${esc(v)}"`).join('\n');
+function productToJSON(product) {
+  const text = generateSearchText(product);
   
-  const fields = [
-    '---',
-    `id: ${product.id}`,
-    `title: "${esc(product.title)}"`,
-    product.fulltitle && `fulltitle: "${esc(product.fulltitle?.replace(/\.$/, ''))}"`,
-    product.type && `type: "${product.type}"`,
-    product.description && `description: "${esc(product.description)}"`,
-    product.price != null && `price: ${product.price}`,
-    product.discountPrice != null && `discountPrice: ${product.discountPrice}`,
-    `hasDiscount: ${Boolean(product.hasDiscount)}`,
-    product.discountPercent != null && `discountPercent: ${product.discountPercent}`,
-    `stock: ${product.stock || 0}`,
-    `salesCount: ${product.salesCount || 0}`,
-    product.url && `url: "${esc(product.url)}"`,
-    product.imageUrl && `imageUrl: "${esc(product.imageUrl)}"`,
-    'tags:',
-    list(product.tags),
-    'categories:',
-    list(product.categories),
-    '---'
-  ].filter(Boolean).join('\n');
-
-  const body = generateEmbeddingText(product);
-  return fields + '\n\n' + body;
+  // Prijs logica: 
+  // - price = huidige prijs (na discount)
+  // - originalPrice = originele prijs (alleen als hasDiscount)
+  const currentPrice = product.hasDiscount && product.discountPrice 
+    ? product.discountPrice 
+    : product.price;
+  
+  return {
+    id: String(product.id),
+    text,
+    metadata: {
+      title: product.title || '',
+      fulltitle: product.fulltitle || product.title || '',
+      type: product.type || '',
+      price: currentPrice || 0,
+      originalPrice: product.hasDiscount ? (product.price || null) : null,
+      hasDiscount: Boolean(product.hasDiscount),
+      discountPercent: product.discountPercent || null,
+      stock: product.stock || 0,
+      salesCount: product.salesCount || 0,
+      tags: product.tags || [],
+      categories: product.categories || [],
+      url: product.url || '',
+      imageUrl: product.imageUrl || ''
+    }
+  };
 }
 
-const TYPE_DESCRIPTIONS = {
-  onderzetters: ['onderzetter', 'onderzetters', 'coaster', 'coasters', 'glasonderzetter', 'tafelonderzetter', 'drinkonderzetter'],
-  schilderij: ['schilderij', 'schilderijen', 'kunstwerk', 'artwork', 'canvas', 'doek', 'print', 'poster', 'reproductie', 'giclée', 'zeefdruk', 'kunstdruk'],
-  mok: ['mok', 'mokken', 'beker', 'bekers', 'koffiemok', 'theemok', 'kop', 'kopje', 'espressokop', 'drinkbeker'],
-  schaal: ['schaal', 'schalen', 'kom', 'kommen', 'bowl', 'serveerschaal', 'fruitschaal', 'decoratieschaal'],
-  beeldje: ['beeldje', 'beeldjes', 'beeld', 'beelden', 'sculptuur', 'sculpturen', 'figuur', 'figuren', 'bronzen beeld', 'verbronsd beeld', 'kunstbeeld', 'decoratief beeld'],
-  vaas: ['vaas', 'vazen', 'bloemenvaas', 'decoratieve vaas', 'keramische vaas', 'glazen vaas'],
-  bord: ['bord', 'borden', 'wandbord', 'decoratiebord', 'sierbord', 'keramisch bord', 'porseleinen bord'],
-  masker: ['masker', 'maskers', 'wandmasker', 'venetiaans masker', 'decoratief masker', 'tribal masker'],
-  cadeau: ['cadeau', 'cadeautje', 'geschenk', 'present', 'relatiegeschenk', 'kunstcadeau', 'origineel cadeau'],
-  keramiek: ['keramiek', 'keramische kunst', 'aardewerk', 'pottery', 'porselein', 'handgemaakt keramiek'],
-  glaswerk: ['glaswerk', 'glas', 'glazen object', 'kristal', 'handgeblazen glas', 'decoratief glas'],
-  kunstobject: ['kunstobject', 'kunstobjecten', 'designobject', 'art object', 'decoratief object', 'uniek kunstwerk']
-};
-
-function generateEmbeddingText(product) {
+function generateSearchText(product) {
   const parts = [];
   
   // Title
   const title = product.fulltitle || product.title;
-  parts.push(`# ${title}`);
+  if (title) parts.push(title);
   
-  // Type met synoniemen
-  if (product.type && TYPE_DESCRIPTIONS[product.type]) {
-    const synonyms = TYPE_DESCRIPTIONS[product.type];
-    parts.push(`**Product type:** ${synonyms.join(', ')}`);
+  // Type synoniemen
+  if (product.type && TYPE_SYNONYMS[product.type]) {
+    parts.push(TYPE_SYNONYMS[product.type].join(' '));
   }
-  
-  // Prijs met uitgebreide context
-  if (product.hasDiscount && product.discountPrice) {
-    const savings = product.price - product.discountPrice;
-    const priceClass = getPriceClass(product.discountPrice);
-    parts.push(`**AANBIEDING:** Nu €${product.discountPrice} (was €${product.price})`);
-    parts.push(`**Besparing:** €${savings.toFixed(2)} (${product.discountPercent}% korting!) - ${priceClass.description}`);
-    parts.push(`**Prijsklasse:** ${priceClass.range}, ${priceClass.keywords.join(', ')}`);
-    parts.push(`**Geschikt voor budget:** ${priceClass.budgetRange}`);
-  } else if (product.price) {
-    const priceClass = getPriceClass(product.price);
-    parts.push(`**Prijs:** €${product.price} - ${priceClass.description}`);
-    parts.push(`**Prijsklasse:** ${priceClass.range}, ${priceClass.keywords.join(', ')}`);
-    parts.push(`**Geschikt voor budget:** ${priceClass.budgetRange}`);
-  }
-  
-  // Beschikbaarheid
-  const availability = [];
-  if (product.stock > 0) {
-    availability.push(`Op voorraad (${product.stock} stuks)`);
-    availability.push('Direct leverbaar, meteen beschikbaar, snel verzonden');
-  } else {
-    availability.push('Tijdelijk uitverkocht, niet op voorraad');
-  }
-  if (product.salesCount > 0) {
-    availability.push(`Populair: al ${product.salesCount}x verkocht`);
-  }
-  parts.push(availability.join(' • '));
   
   // Description
   if (product.description) {
-    parts.push('\n' + product.description);
+    parts.push(product.description);
   }
   
-  // Metadata voor zoekbaarheid
-  const searchTerms = [];
-  if (product.categories?.length) {
-    searchTerms.push(`**Categorieën:** ${product.categories.join(', ')}`);
-  }
+  // Tags
   if (product.tags?.length) {
-    searchTerms.push(`**Kenmerken:** ${product.tags.join(', ')}`);
+    parts.push(product.tags.join(' '));
   }
   
-  if (searchTerms.length) {
-    parts.push('\n**Product informatie:**');
-    parts.push(searchTerms.join(' | '));
+  // Categories
+  if (product.categories?.length) {
+    parts.push(product.categories.join(' '));
   }
   
-  return parts.filter(Boolean).join('\n');
-}
-
-function getPriceClass(price) {
-  if (price < 25) {
-    return {
-      description: 'Zeer betaalbaar',
-      range: '0-25 euro',
-      budgetRange: '10-30 euro, rond 20 euro, ongeveer 20 euro',
-      keywords: ['budget', 'goedkoop', 'betaalbaar', 'klein budget', 'weinig geld']
-    };
-  }
-  if (price < 50) {
-    return {
-      description: 'Budget-vriendelijk',
-      range: '25-50 euro',
-      budgetRange: '20-60 euro, rond 40 euro, ongeveer 40 euro, 30-50 euro',
-      keywords: ['budget-vriendelijk', 'betaalbaar cadeau', 'kleine prijs', 'goede prijs']
-    };
-  }
-  if (price < 100) {
-    return {
-      description: 'Betaalbaar',
-      range: '50-100 euro',
-      budgetRange: '50-120 euro, rond 75 euro, ongeveer 75-100 euro',
-      keywords: ['betaalbaar', 'redelijke prijs', 'mid-budget', 'normale prijs']
-    };
-  }
-  if (price < 200) {
-    return {
-      description: 'Mid-range',
-      range: '100-200 euro',
-      budgetRange: '80-250 euro, rond 150 euro, ongeveer 150 euro, 100-200 euro',
-      keywords: ['mid-range', 'middensegment', 'normale prijs', 'standaard budget']
-    };
-  }
-  if (price < 400) {
-    return {
-      description: 'Kwaliteitsproduct',
-      range: '200-400 euro',
-      budgetRange: '200-500 euro, rond 300 euro, ongeveer 300 euro, 250-400 euro',
-      keywords: ['kwaliteit', 'mid-high', 'goede kwaliteit', 'kwalitatief']
-    };
-  }
-  if (price < 750) {
-  return {
-      description: 'Premium',
-      range: '400-750 euro',
-      budgetRange: '400-900 euro, rond 600 euro, ongeveer 500-750 euro',
-      keywords: ['premium', 'exclusief', 'high-end', 'luxe', 'duurder']
-    };
-  }
-  return {
-    description: 'Luxe kunstwerk',
-    range: 'boven 750 euro',
-    budgetRange: 'boven 750 euro, 800+ euro, 1000+ euro, exclusieve kunst',
-    keywords: ['luxe', 'exclusief', 'premium kunstwerk', 'high-end kunst', 'investering']
-  };
+  return parts.filter(Boolean).join('. ').toLowerCase();
 }
 
 async function cleanupStale(env, liveIds) {
@@ -589,12 +534,27 @@ async function cleanupStale(env, liveIds) {
     const list = await withTimeout(env.PRODUCTS_BUCKET.list({ cursor }), 10000, 'cleanup');
 
     for (const obj of list.objects || []) {
-      if (obj.key.endsWith('.md')) {
-        const id = obj.key.replace('.md', '');
-        if (/^\d+$/.test(id) && !liveIds.has(id)) {
-          await withTimeout(env.PRODUCTS_BUCKET.delete(obj.key), 5000, obj.key);
+      const key = obj.key;
+      const isJson = key.endsWith('.json');
+      const isMarkdown = key.endsWith('.md');
+
+      if (!isJson && !isMarkdown) continue;
+
+      const id = key.replace(isJson ? '.json' : '.md', '');
+
+      if (isMarkdown) {
+        try {
+          await withTimeout(env.PRODUCTS_BUCKET.delete(key), 5000, key);
           removed++;
+        } catch (err) {
+          console.error('Failed to delete markdown file during cleanup:', key, err);
         }
+        continue;
+      }
+
+      if (/^\d+$/.test(id) && !liveIds.has(id)) {
+        await withTimeout(env.PRODUCTS_BUCKET.delete(key), 5000, key);
+        removed++;
       }
     }
 
@@ -611,14 +571,22 @@ async function clearBucket(env) {
 
   while (true) {
     const list = await withTimeout(env.PRODUCTS_BUCKET.list({ cursor }), 10000, 'clear');
+    const objects = list.objects || [];
 
-    await Promise.all(
-      (list.objects || []).map(obj => 
-        withTimeout(env.PRODUCTS_BUCKET.delete(obj.key), 5000, obj.key)
-      )
-    );
-    
-    removed += list.objects?.length || 0;
+    for (const obj of objects) {
+      try {
+        await withTimeout(env.PRODUCTS_BUCKET.delete(obj.key), 5000, obj.key);
+          removed++;
+      } catch (err) {
+        console.error('Failed to delete object', obj.key, err);
+        }
+      }
+
+    if (objects.length && objects.length >= 500) {
+      // Yield control to avoid long single requests
+      await sleep(50);
+    }
+
     if (!list.truncated) break;
     cursor = list.cursor;
   }
@@ -628,23 +596,55 @@ async function clearBucket(env) {
 
 async function countR2Files(env) {
   let cursor;
-  let total = 0;
-  let first = null;
-  let last = null;
+
+  const stats = {
+    totalJson: 0,
+    firstJson: null,
+    lastJson: null,
+    totalMarkdown: 0,
+    firstMarkdown: null,
+    lastMarkdown: null,
+    totalOther: 0
+  };
 
   while (true) {
     const list = await withTimeout(env.PRODUCTS_BUCKET.list({ cursor }), 10000, 'count');
-    const mdFiles = (list.objects || []).filter(obj => obj.key.endsWith('.md'));
-    
-    total += mdFiles.length;
-    if (!first && mdFiles.length) first = mdFiles[0].key;
-    if (mdFiles.length) last = mdFiles[mdFiles.length - 1].key;
+    const objects = list.objects || [];
+
+    for (const obj of objects) {
+      const key = obj.key;
+
+      if (key.endsWith('.json')) {
+        stats.totalJson++;
+        if (!stats.firstJson) stats.firstJson = key;
+        stats.lastJson = key;
+        continue;
+      }
+
+      if (key.endsWith('.md')) {
+        stats.totalMarkdown++;
+        if (!stats.firstMarkdown) stats.firstMarkdown = key;
+        stats.lastMarkdown = key;
+        continue;
+      }
+
+      stats.totalOther++;
+    }
 
     if (!list.truncated) break;
     cursor = list.cursor;
   }
 
-  return { total, first, last };
+  return {
+    totalJson: stats.totalJson,
+    firstJson: stats.firstJson,
+    lastJson: stats.lastJson,
+    totalMarkdown: stats.totalMarkdown,
+    firstMarkdown: stats.firstMarkdown,
+    lastMarkdown: stats.lastMarkdown,
+    totalOther: stats.totalOther,
+    grandTotal: stats.totalJson + stats.totalMarkdown + stats.totalOther
+  };
 }
 
 // ============================================================================

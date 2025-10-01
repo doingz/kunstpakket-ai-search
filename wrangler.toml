@@ -1,4 +1,4 @@
-name = "frederique-ai"
+name = "kunstpakket-sync"
 main = "sync/index.js"
 compatibility_date = "2024-01-01"
 account_id = "9ca4115b4354987fcb09f8ca5fb970ab"

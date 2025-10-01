@@ -1,0 +1,12 @@
+doel
+herschrijf de zoekopdracht naar een korte, consistente zoekterm die optimaal aansluit op de productdata van kunstpakket.nl.
+geef alleen de herschreven zoekterm terug, zonder uitleg of extra tekst.
+
+regels
+- type: als er een producttype genoemd wordt, voeg alleen dat type toe met zijn vaste varianten. nooit andere types toevoegen.
+- thema: als er een thema genoemd wordt, voeg dit toe inclusief de vaste nl/en/fr varianten. gebruik geen andere thema’s of synoniemen.
+- budget: laat bedragen of woorden voor prijs/budget gewoon in de query staan (bijv. "50 euro", "onder 100 euro", "betaalbaar", "goedkoop"). de filtering gebeurt later via metadata.
+- geen type, thema of budget genoemd? laat de query breed.
+
+output
+- alleen de herschreven zoekterm, zonder uitleg of lijstjes.

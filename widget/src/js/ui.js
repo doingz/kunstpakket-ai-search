@@ -93,12 +93,13 @@ export const showResults = ({ answer, products }) => {
     html += '<div class="kp-ai-widget__products">';
     
     products.forEach(p => {
+      const priceHtml = renderPrice(p);
       html += `
         <a href="${escapeHtml(p.url)}" class="kp-ai-widget__product">
           ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" class="kp-ai-widget__product-img" loading="lazy">` : ''}
           <div class="kp-ai-widget__product-info">
             <h3 class="kp-ai-widget__product-title">${escapeHtml(p.title)}</h3>
-            <p class="kp-ai-widget__product-price">€${escapeHtml(p.price)}</p>
+            ${priceHtml}
           </div>
         </a>
       `;
@@ -124,8 +125,35 @@ export const closeModal = () => {
   inputEl = null;
 };
 
-const escapeHtml = (str) => {
+function renderPrice(product) {
+  const currentPrice = formatPrice(product.price);
+  if (!currentPrice) return '';
+
+  const pieces = [`<span class="kp-ai-widget__product-price-current">€${escapeHtml(currentPrice)}</span>`];
+
+  const originalPrice = formatPrice(product.originalPrice);
+  if (product.hasDiscount && originalPrice) {
+    pieces.unshift(`<span class="kp-ai-widget__product-price-old">€${escapeHtml(originalPrice)}</span>`);
+    if (product.discountPercent) {
+      const percent = Math.round(Number(product.discountPercent));
+      if (Number.isFinite(percent) && percent > 0) {
+        pieces.push(`<span class="kp-ai-widget__product-price-badge">-${percent}%</span>`);
+      }
+    }
+  }
+
+  return `<div class="kp-ai-widget__product-pricing">${pieces.join('')}</div>`;
+}
+
+function formatPrice(value) {
+  if (value == null || value === '') return '';
+  const num = Number(value);
+  if (!Number.isFinite(num)) return String(value);
+  return num.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapeHtml(str) {
   const div = document.createElement('div');
-  div.textContent = str;
+  div.textContent = str == null ? '' : String(str);
   return div.innerHTML;
-};
+}
