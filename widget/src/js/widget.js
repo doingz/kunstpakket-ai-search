@@ -12,6 +12,11 @@ export const initWidget = () => {
   // Attach click handlers to search triggers
   const desktopSearch = document.querySelector('#formSearch');
   const mobileSearch = document.querySelector('#nav .search');
+  const navInput = document.querySelector('#nav form input#q');
+
+  if (navInput) {
+    navInput.setAttribute('placeholder', 'Zoek met Frederique-ai');
+  }
   
   const openWidget = (e) => {
     e?.preventDefault();
