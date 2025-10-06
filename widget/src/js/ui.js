@@ -134,56 +134,81 @@ export const showLoading = () => {
   placeholderLabel?.classList.add('is-hidden');
 };
 
-export const showResults = ({ answer, products }) => {
+export const showResults = ({ query = {}, products = [], meta = {}, error }) => {
   if (!bodyEl) return;
-  
-  let html = '';
-  const displayAnswer = stripIdsLine(answer);
-  
-  // AI Answer
-  if (displayAnswer) {
-    html += `
-      <div class="kp-ai-widget__answer">
-        <p>${escapeHtml(displayAnswer)}</p>
+
+  const pieces = [];
+
+  if (query.corrected) {
+    pieces.push(`
+      <div class="kp-ai-widget__correction">
+        <p>Resultaten voor <strong>${escapeHtml(query.corrected)}</strong> (je zocht: ${escapeHtml(query.original)})</p>
       </div>
-    `;
+    `);
   }
-  
-  // Products
-  if (products?.length) {
-    html += '<div class="kp-ai-widget__products">';
-    
-    products.forEach(p => {
-      const priceHtml = renderPrice(p);
-      html += `
-        <a href="${escapeHtml(p.url)}" class="kp-ai-widget__product">
-          ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" class="kp-ai-widget__product-img" loading="lazy">` : ''}
-          <div class="kp-ai-widget__product-info">
-            <h3 class="kp-ai-widget__product-title">${escapeHtml(p.title)}</h3>
-            ${priceHtml}
-          </div>
-        </a>
-      `;
-    });
-    
-    html += '</div>';
+
+  if (typeof meta.total === 'number') {
+    pieces.push(renderMeta(meta));
   }
-  
-  if (html) {
-    setBodyContent(html);
-    placeholderLabel?.classList.add('is-hidden');
-  } else if (!answer) {
-    setBodyContent(`
+
+  if (error) {
+    pieces.push(`
+      <div class="kp-ai-widget__answer">
+        <p>${escapeHtml(error)}</p>
+      </div>
+    `);
+  }
+
+  if (products.length) {
+    pieces.push(renderProducts(products));
+  }
+
+  if (!products.length && !error) {
+    pieces.push(`
       <div class="kp-ai-widget__empty">
         <p>Geen resultaten gevonden. Probeer een andere zoekopdracht.</p>
       </div>
     `);
-    placeholderLabel?.classList.remove('is-hidden');
-  } else {
-    setBodyContent(placeholderHtml);
-    placeholderLabel?.classList.remove('is-hidden');
   }
+
+  const html = pieces.join('');
+  setBodyContent(html || placeholderHtml);
 };
+
+function renderProducts(products) {
+  let html = '<div class="kp-ai-widget__products">';
+
+  products.forEach((p) => {
+    const priceHtml = renderPrice(p);
+    const scoreHtml = renderScore(p);
+    const reasonHtml = renderReason(p);
+
+    html += `
+      <a href="${escapeHtml(p.url)}" class="kp-ai-widget__product">
+        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" class="kp-ai-widget__product-img" loading="lazy">` : ''}
+        <div class="kp-ai-widget__product-info">
+          <h3 class="kp-ai-widget__product-title">${escapeHtml(p.title)}</h3>
+          ${reasonHtml}
+          ${scoreHtml}
+          ${priceHtml}
+        </div>
+      </a>
+    `;
+  });
+
+  html += '</div>';
+  return html;
+}
+
+function renderScore(product) {
+  // Score and stock info removed from cards per user request
+  return '';
+}
+
+function renderReason(product) {
+  // Match reason removed from cards per user request
+  return '';
+}
 
 function setBodyContent(html) {
   if (bodyEl) {
@@ -205,11 +230,6 @@ function renderPlaceholder() {
       </ul>
     </div>
   `;
-}
-
-function stripIdsLine(answer) {
-  if (!answer) return '';
-  return answer.replace(/\n?\[\[IDs:[^\]]*\]\]\s*$/i, '').trim();
 }
 
 function attachPlaceholderHandlers() {
@@ -272,4 +292,38 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str == null ? '' : String(str);
   return div.innerHTML;
+}
+
+function renderMeta(meta) {
+  const infoParts = [];
+
+  if (meta.candidateCount != null) {
+    infoParts.push(`${meta.candidateCount} kandidaten`);
+  }
+
+  if (meta.llmMatchCount != null) {
+    infoParts.push(`${meta.llmMatchCount} door AI bevestigd`);
+  }
+
+  const timing = meta.tookMs ? `${meta.tookMs}ms` : null;
+  const infoText = infoParts.filter(Boolean).join(' · ');
+  const leftSide = `${meta.total ?? 0} resultaten${timing ? ` · ${timing}` : ''}${infoText ? ` · ${escapeHtml(infoText)}` : ''}`;
+
+  const badges = [];
+  if (meta.fallback) {
+    badges.push(`<span class="kp-ai-widget__meta-badge">${escapeHtml(meta.fallback)}</span>`);
+  }
+  if (meta.llmModel) {
+    badges.push(`<span class="kp-ai-widget__meta-badge">${escapeHtml(meta.llmModel)}</span>`);
+  }
+  if (meta.llmReason && (!meta.fallback || meta.fallback === 'no_llm_matches' || meta.fallback === 'invalid_llm_json')) {
+    badges.push(`<span class="kp-ai-widget__meta-badge">${escapeHtml(meta.llmReason)}</span>`);
+  }
+
+  return `
+    <div class="kp-ai-widget__meta">
+      <p>${leftSide}</p>
+      ${badges.length ? `<div class="kp-ai-widget__meta-badges">${badges.join('')}</div>` : ''}
+    </div>
+  `;
 }

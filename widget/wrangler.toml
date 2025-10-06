@@ -7,6 +7,18 @@ type = "Text"
 globs = ["**/*.txt"]
 fallthrough = true
 
+[[d1_databases]]
+binding = "DB"
+database_name = "kunstpakket-products"
+database_id = "b70bd81c-4555-4095-afc8-5787afca02f3"
+
 [[r2_buckets]]
-binding = "BUCKET"
+binding = "KUNSTPAKKET_PRODUCTS_BUCKET"
 bucket_name = "kunstpakket-products"
+
+[[vectorize]]
+binding = "KUNSTPAKKET_PRODUCTS_INDEX"
+index_name = "kunstpakket_products_index"
+
+[ai]
+binding = "AI"

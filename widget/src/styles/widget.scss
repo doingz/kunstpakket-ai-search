@@ -364,6 +364,8 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
 
   &__product-info {
     padding: 12px;
+    display: grid;
+    gap: 10px;
   }
 
   &__product-title {
@@ -413,6 +415,93 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     padding: 2px 6px;
     border-radius: 999px;
     font-weight: 600;
+  }
+
+  &__product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  &__product-score {
+    font-weight: 600;
+  }
+
+  &__product-sales {
+    color: #475569;
+  }
+
+  &__product-reason {
+    background: #eef2ff;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: $font;
+    color: #312e81;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+
+    &-label {
+      display: inline-block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #4338ca;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #312e81;
+    }
+  }
+
+  &__correction {
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 14px;
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+
+  &__meta {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .kp-ai-widget__meta-badge {
+      background: rgba(99, 102, 241, 0.12);
+      color: #4338ca;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
   }
 
   &__empty {

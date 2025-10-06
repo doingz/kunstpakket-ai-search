@@ -1,21 +1,25 @@
 /**
- * Cloudflare Worker - Lightspeed to R2 Product Sync
- * Syncs product data from Lightspeed API to R2 as Markdown files
- * v2.0 - with embedding text generation
+ * Cloudflare Worker - Lightspeed → R2 synchronisatie (pure data)
  */
 
 export default {
   async scheduled(event, env, ctx) {
-    const runId = crypto.randomUUID();
-    ctx.waitUntil(syncProducts(env, runId));
+    ctx.waitUntil(syncProducts(env, crypto.randomUUID()));
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const { pathname, searchParams } = new URL(request.url);
     const { method } = request;
 
     if (pathname === '/sync' && method === 'POST') {
       const runId = crypto.randomUUID();
+      const wait = searchParams.get('wait') === '1';
+
+      if (!wait && ctx?.waitUntil) {
+        ctx.waitUntil(syncProducts(env, runId));
+        return jsonResponse({ message: 'sync started', runId });
+      }
+
       await syncProducts(env, runId);
       return jsonResponse({ message: 'sync completed', runId });
     }
@@ -25,14 +29,12 @@ export default {
       if (env.SYNC_CLEAR_TOKEN && token !== env.SYNC_CLEAR_TOKEN) {
         return jsonResponse({ error: 'unauthorized' }, 401);
       }
-      const removed = await clearBucket(env);
-      return jsonResponse({ removed });
+      return jsonResponse({ removed: await clearBucket(env) });
     }
 
     if (pathname === '/sync/r2-count' && method === 'GET') {
       try {
-        const stats = await countR2Files(env);
-        return jsonResponse(stats);
+        return jsonResponse(await countR2Files(env));
       } catch (error) {
         return jsonResponse({ error: error.message }, 500);
       }
@@ -41,27 +43,76 @@ export default {
     if (pathname === '/sync/preview' && method === 'GET') {
       const id = searchParams.get('id');
       if (!id) return jsonResponse({ error: 'id required' }, 400);
-      const obj = await env.PRODUCTS_BUCKET.get(`${id}.json`);
+      const obj = await env.KUNSTPAKKET_PRODUCTS_BUCKET.get(`${id}.json`);
       if (!obj) return jsonResponse({ error: 'not found' }, 404);
-      const data = await obj.json();
-      return jsonResponse(data);
+      return jsonResponse(await obj.json());
+    }
+
+    if (pathname === '/sync/embeddings' && method === 'POST') {
+      const offset = Number(searchParams.get('offset')) || 0;
+      const limit = Number(searchParams.get('limit')) || 100;
+      const wait = searchParams.get('wait') === '1';
+      
+      const task = async () => {
+        try {
+          // Load products from D1 in chunks
+          const result = await env.DB.prepare(
+            'SELECT * FROM products ORDER BY id LIMIT ? OFFSET ?'
+          ).bind(limit, offset).all();
+          
+          const products = result.results || [];
+          if (!products.length) {
+            return { offset, count: 0, done: true };
+          }
+          
+          // Convert to records format
+          const records = products.map(p => ({
+            id: p.id,
+            metadata: {
+              title: p.title,
+              fulltitle: p.fulltitle,
+              description: p.description,
+              content: p.content,
+              type: p.type,
+              price: p.price,
+              originalPrice: p.originalPrice,
+              hasDiscount: Boolean(p.hasDiscount),
+              discountPercent: p.discountPercent,
+              stock: p.stock,
+              salesCount: p.salesCount,
+              imageUrl: p.imageUrl,
+              url: p.url,
+              tags: p.tags ? JSON.parse(p.tags) : [],
+              categories: p.categories ? JSON.parse(p.categories) : []
+            }
+          }));
+          
+          const embedded = await saveEmbeddingsToVectorize(env, records);
+          return { offset, count: embedded, done: products.length < limit };
+        } catch (error) {
+          console.error('Embedding chunk failed:', error);
+          return { offset, count: 0, error: error.message };
+        }
+      };
+      
+      if (!wait && ctx?.waitUntil) {
+        ctx.waitUntil(task());
+        return jsonResponse({ message: 'embedding started', offset, limit });
+      }
+      
+      return jsonResponse(await task());
     }
 
     return new Response('Not found', { status: 404 });
   },
 
-  async queue() {} // Deprecated - remove queue binding in dashboard
+  async queue() {}
 };
-
-// ============================================================================
-// Sync Flow
-// ============================================================================
 
 async function syncProducts(env, runId) {
   try {
     console.log(`🚀 Sync started - ${runId}`);
 
-    // Fetch all data from Lightspeed
     const [products, variants, tags, tagProducts, categories, categoryProducts] = await Promise.all([
       fetchLightspeedData(env, '/products.json', 'products'),
       fetchLightspeedData(env, '/variants.json', 'variants'),
@@ -71,24 +122,29 @@ async function syncProducts(env, runId) {
       fetchLightspeedData(env, '/categories/products.json', 'categoriesProducts')
     ]);
 
-    // Build lookups and enrich
     const lookups = buildLookups({ variants, tags, tagProducts, categories, categoryProducts });
-    const enriched = products
-      .map(p => enrichProduct(p, lookups))
-      .filter(p => p?.stock > 0 && p?.imageUrl);
+    const records = [];
 
-    console.log(`📊 ${products.length} → ${enriched.length} products`);
-
-    // Save to R2
-    const written = await saveMarkdown(env, enriched);
-    console.log(`✅ Saved ${written} files`);
-
-    // Cleanup
-    if (env.SKIP_CLEANUP !== '1') {
-      const liveIds = new Set(enriched.map(p => String(p.id)));
-      const removed = await cleanupStale(env, liveIds);
-      console.log(`🧹 Removed ${removed} stale files`);
+    for (const product of products) {
+      const record = buildProductRecord(product, lookups);
+      if (record) records.push(record);
+      if (records.length && records.length % 100 === 0) {
+        console.log(`Progress: ${records.length}/${products.length}`);
+      }
     }
+
+    console.log(`📊 ${products.length} → ${records.length}`);
+
+    const written = await saveProductsToD1(env, records, runId);
+    console.log(`✅ Saved ${written} products to D1`);
+
+    if (env.SKIP_CLEANUP !== '1') {
+      const removed = await cleanupStaleFromD1(env, new Set(records.map((r) => r.id)));
+      console.log(`🧹 Removed ${removed} stale products from D1`);
+    }
+
+    // NOTE: Embeddings are generated via separate /sync/embeddings endpoint
+    // to avoid timeout issues (use batch script to embed all products)
 
     console.log(`📊 Completed - ${runId}`);
   } catch (error) {
@@ -97,14 +153,9 @@ async function syncProducts(env, runId) {
   }
 }
 
-// ============================================================================
-// Lightspeed API
-// ============================================================================
-
 async function fetchLightspeedData(env, endpoint, key) {
   await checkRateLimit(env);
-  
-  // Only limit products, not relations!
+
   const limit = (key === 'products' && Number(env.DEBUG_LIMIT)) || 0;
   const items = [];
   let page = 1;
@@ -112,12 +163,11 @@ async function fetchLightspeedData(env, endpoint, key) {
   while (true) {
     const data = await lightspeedFetch(env, `${endpoint}?page=${page}&limit=250`);
     const pageItems = data[key] || [];
-    
     if (!pageItems.length) break;
-    
+
     items.push(...pageItems);
     console.log(`📦 ${key} p${page}: ${pageItems.length} (total: ${items.length})`);
-    
+
     if (pageItems.length < 250 || (limit && items.length >= limit)) break;
     page++;
   }
@@ -156,7 +206,7 @@ async function checkRateLimit(env) {
   try {
     const response = await withTimeout(
       fetch(`${env.LIGHTSPEED_BASE_URL}/account/ratelimit.json`, {
-      headers: {
+        headers: {
           Authorization: 'Basic ' + btoa(`${env.LIGHTSPEED_API_KEY}:${env.LIGHTSPEED_SECRET}`),
           Accept: 'application/json'
         }
@@ -170,143 +220,152 @@ async function checkRateLimit(env) {
       const remaining = limits.limit5Min.remaining;
       if (remaining < 50) console.log(`⚠️ Low rate limit: ${remaining}`);
     }
-  } catch (error) {
+  } catch {
     console.log('⚠️ Rate limit check failed');
   }
 }
 
-// ============================================================================
-// Data Processing
-// ============================================================================
+function buildProductRecord(product, { variantsByProduct, productTags, productCats }) {
+  const pid = Number(product.id);
+  const variants = variantsByProduct.get(pid) || [];
 
-const TYPE_SYNONYMS = {
-  mok: [
-    'mok','mokken','beker','bekers','kop','kopje','koffiemok','theemok',
-    'espresso mok','espresso kopje','mug','coffee mug','tea mug','cup'
-  ],
-  theepot: [
-    'theepot','theepotten','teapot'
-  ],
-  kan: [
-    'kan','kannen','pitcher','jug','karaf','karafje','decanter'
-  ],
-  vaas: [
-    'vaas','vazen','vase','vases','bloemenvaas','flower vase','vaasje'
-  ],
-  schaal: [
-    'schaal','schalen','kom','kommen','bowl','fruit bowl','serveerschaal','slakom','schaaltje'
-  ],
-  onderzetters: [
-    'onderzetter','onderzetters','coaster','coasters','glasonderzetter','glasonderzetters'
-  ],
-  wandbord: [
-    'wandbord','wandborden','muurbord','muurplaat','wandplaat','wall plate','wall plaque','plaque'
-  ],
-  bord: [
-    'bord','borden','plate','plates','serviesbord','decoratiebord','designbord'
-  ],
-  beeldje: [
-    'beeldje','beeldjes','figurine','statuette','statuet'
-  ],
-  beeld: [
-    'beeld','beelden','statue','sculptuur','sculpturen','kunstbeeld'
-  ],
-  kandelaar: [
-    'kandelaar','kandelaars','candlestick','candle stick'
-  ],
-  waxinelichthouder: [
-    'waxinelichthouder','waxinelichthouders','theelichthouder','theelichthouders',
-    'tealight holder','tea light holder','candle holder'
-  ],
-  theelicht: [
-    'theelicht','theelichten','tealight','tea light'
-  ],
-  schilderij: [
-    'schilderij','schilderijen','painting','artwork','canvas','doek','linnen','print',
-    'kunstdruk','art print','artprint'
-  ],
-  zeefdruk: [
-    'zeefdruk','serigrafie','serigraph'
-  ],
-  'giclée': [
-    'giclée','giclee'
-  ],
-  litho: [
-    'litho','lithografie','lithograph','lithography'
-  ],
-  ets: [
-    'ets','etsen','etching','engraving','gravure','prent'
-  ],
-  wijnstop: [
-    'wijnstop','bottle stopper','stopper'
-  ],
-  wijnpakket: [
-    'wijnpakket','wine gift','wine set'
-  ],
-  sokkel: [
-    'sokkel','sokkels','plint','plinth','voetstuk','voetstukken','standaard','display stand'
-  ],
-  masker: [
-    'masker','maskers','wandmasker','wall mask','mask','masks'
-  ],
-  poster: [
-    'poster','posters','kunstposter','art poster'
-  ],
-  zandloper: [
-    'zandloper','zandlopers','hourglass','hourglasses'
-  ],
-  schaakbord: [
-    'schaakbord','schaakborden','chessboard','chess board'
-  ],
-  spiegeldoosje: [
-    'spiegeldoosje','spiegeldoosjes','mirror box','jewel box','trinket box'
-  ],
-  kurkentrekker: [
-    'kurkentrekker','kurkentrekkers','corkscrew','wine opener'
-  ],
-  geurdispenser: [
-    'geurdispenser','geurdispensers','aroma diffuser','scent diffuser','fragrance dispenser'
-  ],
-  sfeerlamp: [
-    'sfeerlamp','sfeerlampen','mood lamp','ambience lamp','decor lamp'
-  ]
-};
+  const stock = extractStock(product, variants);
+  const imageUrl = extractImageUrl(product);
+  if (!stock || !imageUrl) return null;
 
-function detectType(product) {
-  const searchText = [
-    product.title,
-    product.fulltitle,
-    product.description,
-    ...(product.tags || []),
-    ...(product.categories || [])
-  ].filter(Boolean).join(' ').toLowerCase();
+  const tags = Array.from(new Set([...(productTags.get(pid) || [])].map(String))).filter(Boolean);
+  const categories = productCats.get(pid) || [];
+  const description = stripHtml(product.description || '');
+  const content = stripHtml(product.content || '');
 
-  // Find best match based on synonym occurrence
-  let bestMatch = null;
-  let maxMatches = 0;
+  const pricing = extractPricing(product, variants);
+  const salesCount = extractSalesCount(product, variants);
 
-  for (const [type, synonyms] of Object.entries(TYPE_SYNONYMS)) {
-    const matches = synonyms.filter(syn => searchText.includes(syn.toLowerCase())).length;
-    if (matches > maxMatches) {
-      maxMatches = matches;
-      bestMatch = type;
+  return {
+    id: String(pid),
+    metadata: {
+      title: product.title || '',
+      fulltitle: product.fulltitle || product.title || '',
+      description,
+      content,
+      url: product.url ? `https://kunstpakket.nl/${product.url}.html` : '',
+      imageUrl,
+      price: pricing?.currentPrice ?? null,
+      originalPrice: pricing?.originalPrice ?? null,
+      hasDiscount: pricing?.hasDiscount ?? false,
+      discountPercent: pricing?.discountPercent ?? null,
+      stock,
+      salesCount,
+      tags,
+      categories,
+      type: detectType(product, { tags, categories, description, content })
     }
-  }
+  };
+}
 
-  return bestMatch;
+const ALLOWED_TYPES = new Set([
+  'beeld','schilderij','mok','wandbord','vaas','schaal','kan','theepot','kandelaar',
+  'theelicht','poster','masker','klok','wijnpakket','onderzetters','wijnstop',
+  'kurkentrekker','sokkel','zandloper','schaakbord','geurdispenser','sfeerlamp'
+]);
+
+function detectType(product, { tags = [], categories = [], description = '', content = '' } = {}) {
+  const haystack = [
+    product.fulltitle,
+    product.title,
+    tags.join(' '),
+    categories.join(' '),
+    description,
+    content
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  for (const type of ALLOWED_TYPES) {
+    if (haystack.includes(type)) return type;
+  }
+  return null;
+}
+
+function extractPricing(product, variants) {
+  const items = [...variants, product];
+
+  const candidates = items
+    .map((item) => {
+      const base = [item?.priceIncl, item?.price_incl, item?.price]
+        .map(parseAmount)
+        .find((n) => n > 0) || 0;
+      if (base <= 0) return null;
+
+      const discount = [item?.discountPrice, item?.discount_price]
+        .map(parseAmount)
+        .find((n) => n > 0) || 0;
+      const old = [item?.oldPriceIncl, item?.oldPriceExcl, item?.oldPrice, item?.compareAtPrice]
+        .map(parseAmount)
+        .find((n) => n > 0) || 0;
+
+      let currentPrice = base;
+      let originalPrice = null;
+
+      if (discount > 0 && discount < base) {
+        originalPrice = base;
+        currentPrice = discount;
+      } else if (old > 0 && old > base) {
+        originalPrice = old;
+        currentPrice = base;
+      }
+
+      const strength = originalPrice ? originalPrice - currentPrice : 0;
+
+      return {
+        currentPrice,
+        originalPrice,
+        hasDiscount: Boolean(originalPrice),
+        discountPercent: originalPrice ? Math.round((1 - currentPrice / originalPrice) * 100) : null,
+        strength
+      };
+    })
+    .filter(Boolean);
+
+  if (!candidates.length) return null;
+
+  return candidates.reduce((acc, curr) => {
+    if (!acc) return curr;
+    if (curr.hasDiscount && !acc.hasDiscount) return curr;
+    if (curr.hasDiscount === acc.hasDiscount) {
+      if (curr.strength > acc.strength) return curr;
+      if (!curr.hasDiscount && curr.currentPrice < acc.currentPrice) return curr;
+    }
+    return acc;
+  }, null);
+}
+
+function extractSalesCount(product, variants) {
+  const stats = product.statistics || {};
+  const productSales = [stats.salesCount, stats.sold, product.salesCount, product.sold]
+    .map(Number)
+    .find((n) => Number.isFinite(n) && n > 0);
+  if (Number.isFinite(productSales) && productSales > 0) return productSales;
+
+  return variants.reduce((sum, variant) => {
+    const value = [variant.stockSold, variant.sold, variant.salesCount]
+      .map(Number)
+      .find((n) => Number.isFinite(n) && n > 0) || 0;
+    return sum + value;
+  }, 0);
 }
 
 function buildLookups({ variants, tags, tagProducts, categories, categoryProducts }) {
-  const tagMap = new Map(tags.map(t => [Number(t.id), t.title || t.name]));
-  const catMap = new Map(categories.map(c => [Number(c.id), c.title || c.name]));
+  const tagMap = new Map(tags.map((t) => [Number(t.id), t.title || t.name]));
+  const catMap = new Map(categories.map((c) => [Number(c.id), c.title || c.name]));
 
   const variantsByProduct = new Map();
   for (const v of variants) {
     const pid = Number(v.product?.resource?.id || v.product?.id || v.productId);
-    if (pid) {
-      if (!variantsByProduct.has(pid)) variantsByProduct.set(pid, []);
-      variantsByProduct.get(pid).push(v);
-    }
+    if (!pid) continue;
+    if (!variantsByProduct.has(pid)) variantsByProduct.set(pid, []);
+    variantsByProduct.get(pid).push(v);
   }
 
   const productTags = new Map();
@@ -332,237 +391,307 @@ function buildLookups({ variants, tags, tagProducts, categories, categoryProduct
   return { variantsByProduct, productTags, productCats };
 }
 
-function enrichProduct(product, { variantsByProduct, productTags, productCats }) {
-  const pid = Number(product.id);
-  const variants = variantsByProduct.get(pid) || [];
-
-  const pricing = extractPricing(product, variants);
-  if (!pricing) return null;
-
-  const stock = extractStock(product, variants);
-  const salesCount = extractSalesCount(product, variants);
-  const imageUrl = extractImageUrl(product);
-
-  // Filter services
-  const title = product.title?.toLowerCase() || '';
-  if (title.includes('verzendkosten') || title.includes('tekstplaatje')) {
-    console.log(`🚫 Service excluded: ${pid}`);
-      return null;
-    }
-    
-  // Build tags with discount markers
-  const tags = [...(productTags.get(pid) || [])];
-  if (pricing.hasDiscount) {
-    const lower = tags.map(t => t.toLowerCase());
-    if (!lower.includes('korting')) tags.push('korting');
-    if (!lower.includes('aanbieding')) tags.push('aanbieding');
-  }
-
-  const enrichedProduct = {
-    id: pid,
-    title: product.title,
-    fulltitle: product.fulltitle,
-    description: stripHtml(product.description),
-    url: product.url ? `https://kunstpakket.nl/${product.url}.html` : null,
-    imageUrl,
-    ...pricing,
-    stock,
-    salesCount,
-    tags,
-    categories: productCats.get(pid) || []
-  };
-
-  // Detect type based on all available data
-  const detectedType = detectType(enrichedProduct);
-  if (detectedType) enrichedProduct.type = detectedType;
-
-  return enrichedProduct;
-}
-
-function extractPricing(product, variants) {
-  const getPricing = (item) => {
-    const base = [item?.priceIncl, item?.price_incl, item?.price].map(parseAmount).find(n => n > 0) || 0;
-    const discount = [item?.discountPrice, item?.discount_price].map(parseAmount).find(n => n > 0) || 0;
-    const compare = [item?.compareAtPrice, item?.oldPrice].map(parseAmount).find(n => n > 0) || 0;
-
-    if (base <= 0) return null;
-    if (discount > 0 && discount < base) return { price: base, discountPrice: discount, hasDiscount: true, strength: base - discount };
-    if (compare > 0 && compare > base) return { price: compare, discountPrice: base, hasDiscount: true, strength: compare - base };
-    return { price: base, discountPrice: null, hasDiscount: false, strength: 0 };
-  };
-
-  const candidates = [...variants.map(getPricing), getPricing(product)].filter(Boolean);
-  const best = candidates.reduce((acc, curr) => (!acc || curr.strength > acc.strength) ? curr : acc, null);
-
-  if (!best) return null;
-
-  return {
-    price: best.price,
-    discountPrice: best.discountPrice,
-    hasDiscount: best.hasDiscount,
-    discountPercent: best.hasDiscount && best.price ? Math.round((1 - best.discountPrice / best.price) * 100) : null
-  };
-}
-
 function extractStock(product, variants) {
   const variantStock = variants.reduce((sum, v) => {
-    const stock = [v.stock, v.quantity, v.stockLevel].map(Number).find(n => n > 0) || 0;
+    const stock = [v.stock, v.quantity, v.stockLevel].map(Number).find((n) => n > 0) || 0;
     return sum + stock;
   }, 0);
 
-  return variantStock || [product.stock, product.quantity, product.stockLevel].map(Number).find(n => n > 0) || 0;
-}
-
-function extractSalesCount(product, variants) {
-  const stats = product.statistics || {};
-  const productSales = [stats.salesCount, stats.sold, product.salesCount, product.sold].map(Number).find(n => n > 0);
-  
-  if (productSales) return productSales;
-
-  return variants.reduce((sum, v) => {
-    const sales = [v.stockSold, v.sold, v.salesCount].map(Number).find(n => n > 0) || 0;
-    return sum + sales;
-  }, 0);
+  return variantStock || [product.stock, product.quantity, product.stockLevel].map(Number).find((n) => n > 0) || 0;
 }
 
 function extractImageUrl(product) {
   if (typeof product.image === 'string') return product.image;
   if (product.image?.src) return product.image.src;
-  
   const first = Array.isArray(product.images) ? product.images[0] : null;
   return typeof first === 'string' ? first : first?.src || null;
 }
 
-// ============================================================================
-// R2 Storage
-// ============================================================================
+async function saveProductsToD1(env, records, runId) {
+  if (!env.DB) {
+    throw new Error('D1 database binding missing');
+  }
 
-async function saveMarkdown(env, products) {
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 50;
   let written = 0;
 
-  for (let i = 0; i < products.length; i += BATCH_SIZE) {
-    const batch = products.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
+    
+    // Build batch insert statement (18 fields now with searchable_text)
+    const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+    const sql = `
+      INSERT OR REPLACE INTO products (
+        id, title, fulltitle, description, content, type, price, originalPrice,
+        hasDiscount, discountPercent, stock, salesCount, imageUrl, url,
+        tags, categories, searchable_text, syncVersion
+      ) VALUES ${placeholders}
+    `;
 
-    const results = await Promise.allSettled(
-      batch.map(async (product) => {
-        const json = productToJSON(product);
-        await withTimeout(
-          env.PRODUCTS_BUCKET.put(`${product.id}.json`, JSON.stringify(json, null, 2), {
-            httpMetadata: { contentType: 'application/json; charset=utf-8' }
-          }),
-          5000,
-          `${product.id}.json`
-        );
-        return product.id;
-      })
-    );
+    const values = batch.flatMap((record) => {
+      const m = record.metadata;
+      
+      // Build searchable_text: combine all text fields + unpacked tags/categories
+      const searchableParts = [];
+      if (m.title) searchableParts.push(m.title);
+      if (m.fulltitle) searchableParts.push(m.fulltitle);
+      if (m.description) searchableParts.push(m.description);
+      if (m.content) searchableParts.push(m.content);
+      if (m.tags && Array.isArray(m.tags)) {
+        searchableParts.push(m.tags.join(' '));
+      }
+      if (m.categories && Array.isArray(m.categories)) {
+        searchableParts.push(m.categories.join(' '));
+      }
+      const searchableText = searchableParts.filter(Boolean).join(' ');
+      
+      return [
+        record.id,
+        m.title || '',
+        m.fulltitle || '',
+        m.description || '',
+        m.content || '',
+        m.type || null,
+        m.price ?? null,
+        m.originalPrice ?? null,
+        m.hasDiscount ? 1 : 0,
+        m.discountPercent ?? null,
+        m.stock ?? 0,
+        m.salesCount ?? 0,
+        m.imageUrl || '',
+        m.url || '',
+        JSON.stringify(m.tags || []),
+        JSON.stringify(m.categories || []),
+        searchableText,
+        runId
+      ];
+    });
 
-    written += results.filter(r => r.status === 'fulfilled').length;
-    if (i + BATCH_SIZE < products.length) await sleep(200);
+    try {
+      await env.DB.prepare(sql).bind(...values).run();
+      written += batch.length;
+    } catch (error) {
+      console.error('Failed to save batch to D1:', error);
+      // Fallback to individual inserts
+      for (const record of batch) {
+        try {
+          const m = record.metadata;
+          
+          // Build searchable_text
+          const searchableParts = [];
+          if (m.title) searchableParts.push(m.title);
+          if (m.fulltitle) searchableParts.push(m.fulltitle);
+          if (m.description) searchableParts.push(m.description);
+          if (m.content) searchableParts.push(m.content);
+          if (m.tags && Array.isArray(m.tags)) {
+            searchableParts.push(m.tags.join(' '));
+          }
+          if (m.categories && Array.isArray(m.categories)) {
+            searchableParts.push(m.categories.join(' '));
+          }
+          const searchableText = searchableParts.filter(Boolean).join(' ');
+          
+          await env.DB.prepare(`
+            INSERT OR REPLACE INTO products (
+              id, title, fulltitle, description, content, type, price, originalPrice,
+              hasDiscount, discountPercent, stock, salesCount, imageUrl, url,
+              tags, categories, searchable_text, syncVersion
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            record.id,
+            m.title || '',
+            m.fulltitle || '',
+            m.description || '',
+            m.content || '',
+            m.type || null,
+            m.price ?? null,
+            m.originalPrice ?? null,
+            m.hasDiscount ? 1 : 0,
+            m.discountPercent ?? null,
+            m.stock ?? 0,
+            m.salesCount ?? 0,
+            m.imageUrl || '',
+            m.url || '',
+            JSON.stringify(m.tags || []),
+            JSON.stringify(m.categories || []),
+            searchableText,
+            runId
+          ).run();
+          written++;
+        } catch (err) {
+          console.error(`Failed to save product ${record.id}:`, err);
+        }
+      }
+    }
+
+    if (i + BATCH_SIZE < records.length) await sleep(50);
   }
 
   return written;
 }
 
-function productToJSON(product) {
-  const text = generateSearchText(product);
-  
-  // Prijs logica: 
-  // - price = huidige prijs (na discount)
-  // - originalPrice = originele prijs (alleen als hasDiscount)
-  const currentPrice = product.hasDiscount && product.discountPrice 
-    ? product.discountPrice 
-    : product.price;
-  
-  return {
-    id: String(product.id),
-    text,
-    metadata: {
-      title: product.title || '',
-      fulltitle: product.fulltitle || product.title || '',
-      type: product.type || '',
-      price: currentPrice || 0,
-      originalPrice: product.hasDiscount ? (product.price || null) : null,
-      hasDiscount: Boolean(product.hasDiscount),
-      discountPercent: product.discountPercent || null,
-      stock: product.stock || 0,
-      salesCount: product.salesCount || 0,
-      tags: product.tags || [],
-      categories: product.categories || [],
-      url: product.url || '',
-      imageUrl: product.imageUrl || ''
+async function cleanupStaleFromD1(env, liveIds) {
+  if (!env.DB) return 0;
+
+  try {
+    // Get all product IDs from D1
+    const result = await env.DB.prepare('SELECT id FROM products').all();
+    const dbIds = new Set(result.results.map((row) => row.id));
+
+    // Find stale IDs (in DB but not in live set)
+    const staleIds = Array.from(dbIds).filter((id) => !liveIds.has(id));
+
+    if (staleIds.length === 0) return 0;
+
+    // Delete stale products in batches
+    const BATCH_SIZE = 100;
+    let removed = 0;
+
+    for (let i = 0; i < staleIds.length; i += BATCH_SIZE) {
+      const batch = staleIds.slice(i, i + BATCH_SIZE);
+      const placeholders = batch.map(() => '?').join(', ');
+      
+      await env.DB.prepare(`DELETE FROM products WHERE id IN (${placeholders})`)
+        .bind(...batch)
+        .run();
+      
+      removed += batch.length;
     }
-  };
+
+    return removed;
+  } catch (error) {
+    console.error('Cleanup from D1 failed:', error);
+    return 0;
+  }
 }
 
-function generateSearchText(product) {
-  const parts = [];
-  
-  // Title
-  const title = product.fulltitle || product.title;
-  if (title) parts.push(title);
-  
-  // Type synoniemen
-  if (product.type && TYPE_SYNONYMS[product.type]) {
-    parts.push(TYPE_SYNONYMS[product.type].join(' '));
+async function saveEmbeddingsToVectorize(env, records) {
+  if (!env.OPENAI_API_KEY || !env.KUNSTPAKKET_PRODUCTS_INDEX) {
+    console.warn('⚠️ Skipping vectorize: OpenAI API key or INDEX binding missing');
+    return 0;
   }
-  
-  // Description
-  if (product.description) {
-    parts.push(product.description);
-  }
-  
-  // Tags
-  if (product.tags?.length) {
-    parts.push(product.tags.join(' '));
-  }
-  
-  // Categories
-  if (product.categories?.length) {
-    parts.push(product.categories.join(' '));
-  }
-  
-  return parts.filter(Boolean).join('. ').toLowerCase();
-}
 
-async function cleanupStale(env, liveIds) {
-  let cursor;
-  let removed = 0;
+  const BATCH_SIZE = 50; // OpenAI can handle larger batches
+  let embedded = 0;
 
-  while (true) {
-    const list = await withTimeout(env.PRODUCTS_BUCKET.list({ cursor }), 10000, 'cleanup');
-
-    for (const obj of list.objects || []) {
-      const key = obj.key;
-      const isJson = key.endsWith('.json');
-      const isMarkdown = key.endsWith('.md');
-
-      if (!isJson && !isMarkdown) continue;
-
-      const id = key.replace(isJson ? '.json' : '.md', '');
-
-      if (isMarkdown) {
-        try {
-          await withTimeout(env.PRODUCTS_BUCKET.delete(key), 5000, key);
-          removed++;
-        } catch (err) {
-          console.error('Failed to delete markdown file during cleanup:', key, err);
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
+    
+    try {
+      // Build rich text for each product - INCLUDE ALL METADATA
+      const textsToEmbed = batch.map(record => {
+        const m = record.metadata;
+        const parts = [];
+        
+        // Product type
+        if (m.type) parts.push(`Type: ${m.type}`);
+        
+        // Titles and descriptions
+        if (m.title) parts.push(m.title);
+        if (m.fulltitle) parts.push(m.fulltitle);
+        if (m.description) parts.push(m.description);
+        if (m.content) parts.push(m.content);
+        
+        // Price info
+        if (m.price) parts.push(`Prijs: €${m.price}`);
+        if (m.hasDiscount && m.discountPercent) {
+          parts.push(`Korting: ${m.discountPercent}%`);
         }
+        
+        // Popularity
+        if (m.salesCount > 0) parts.push(`${m.salesCount}× verkocht`);
+        
+        // Tags
+        if (m.tags && Array.isArray(m.tags)) {
+          parts.push(`Tags: ${m.tags.join(', ')}`);
+        }
+        
+        // Categories
+        if (m.categories && Array.isArray(m.categories)) {
+          parts.push(`Categorieën: ${m.categories.join(', ')}`);
+        }
+        
+        return parts.filter(Boolean).join(' ').substring(0, 8000); // OpenAI supports up to 8k tokens
+      });
+
+      // Generate embeddings using OpenAI text-embedding-3-small (1536-dimensional, multilingual)
+      const openaiResponse = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-small',
+          input: textsToEmbed,
+          encoding_format: 'float'
+        })
+      });
+
+      if (!openaiResponse.ok) {
+        throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+      }
+
+      const data = await openaiResponse.json();
+      const vectors = data.data.map(item => item.embedding);
+      
+      if (!vectors || vectors.length !== batch.length) {
+        console.warn(`⚠️ Embedding mismatch: expected ${batch.length}, got ${vectors?.length || 0}`);
         continue;
       }
 
-      if (/^\d+$/.test(id) && !liveIds.has(id)) {
-        await withTimeout(env.PRODUCTS_BUCKET.delete(key), 5000, key);
-        removed++;
-      }
-    }
+      // Prepare vectors for upload
+      const vectorsToUpload = batch.map((record, idx) => ({
+        id: record.id,
+        values: vectors[idx],
+        metadata: {
+          title: record.metadata.title || '',
+          description: (record.metadata.description || '').substring(0, 200),
+          price: record.metadata.price ?? null,
+          type: record.metadata.type || null,
+          image: record.metadata.imageUrl || '',
+          url: record.metadata.url || '',
+          stock: record.metadata.stock ?? 0,
+          salesCount: record.metadata.salesCount ?? 0
+        }
+      }));
 
-    if (!list.truncated) break;
-    cursor = list.cursor;
+      // Upload to Vectorize
+      await env.KUNSTPAKKET_PRODUCTS_INDEX.upsert(vectorsToUpload);
+      embedded += batch.length;
+
+      if (i + BATCH_SIZE < records.length) {
+        await sleep(100); // Small delay between batches
+      }
+    } catch (error) {
+      console.error(`Failed to embed batch ${i}-${i + BATCH_SIZE}:`, error);
+      // Continue with next batch
+    }
   }
 
-  return removed;
+  return embedded;
+}
+
+function extractEmbeddingVectors(response) {
+  // Handle different response formats from embedding models
+  
+  // bge-large-en-v1.5 format: { data: [[0.1, 0.2, ...], [0.3, 0.4, ...]] }
+  if (response?.data && Array.isArray(response.data)) {
+    // If data contains arrays of numbers, return them directly
+    if (response.data.length > 0 && Array.isArray(response.data[0])) {
+      return response.data;
+    }
+    // If data contains objects with values, extract them
+    return response.data.map(item => item.values || item);
+  }
+  
+  // Direct array format
+  if (Array.isArray(response)) {
+    return response;
+  }
+  
+  console.error('Unknown embedding response format:', JSON.stringify(response).substring(0, 200));
+  return [];
 }
 
 async function clearBucket(env) {
@@ -570,23 +699,19 @@ async function clearBucket(env) {
   let removed = 0;
 
   while (true) {
-    const list = await withTimeout(env.PRODUCTS_BUCKET.list({ cursor }), 10000, 'clear');
+    const list = await withTimeout(env.KUNSTPAKKET_PRODUCTS_BUCKET.list({ cursor }), 10000, 'clear');
     const objects = list.objects || [];
 
     for (const obj of objects) {
       try {
-        await withTimeout(env.PRODUCTS_BUCKET.delete(obj.key), 5000, obj.key);
-          removed++;
+        await withTimeout(env.KUNSTPAKKET_PRODUCTS_BUCKET.delete(obj.key), 5000, obj.key);
+        removed++;
       } catch (err) {
         console.error('Failed to delete object', obj.key, err);
-        }
       }
-
-    if (objects.length && objects.length >= 500) {
-      // Yield control to avoid long single requests
-      await sleep(50);
     }
 
+    if (objects.length >= 500) await sleep(50);
     if (!list.truncated) break;
     cursor = list.cursor;
   }
@@ -596,39 +721,24 @@ async function clearBucket(env) {
 
 async function countR2Files(env) {
   let cursor;
-
-  const stats = {
-    totalJson: 0,
-    firstJson: null,
-    lastJson: null,
-    totalMarkdown: 0,
-    firstMarkdown: null,
-    lastMarkdown: null,
-    totalOther: 0
-  };
+  const stats = { totalJson: 0, totalMarkdown: 0, totalOther: 0, firstJson: null, lastJson: null, firstMarkdown: null, lastMarkdown: null };
 
   while (true) {
-    const list = await withTimeout(env.PRODUCTS_BUCKET.list({ cursor }), 10000, 'count');
-    const objects = list.objects || [];
+    const list = await withTimeout(env.KUNSTPAKKET_PRODUCTS_BUCKET.list({ cursor }), 10000, 'count');
 
-    for (const obj of objects) {
+    for (const obj of list.objects || []) {
       const key = obj.key;
-
       if (key.endsWith('.json')) {
         stats.totalJson++;
         if (!stats.firstJson) stats.firstJson = key;
         stats.lastJson = key;
-        continue;
-      }
-
-      if (key.endsWith('.md')) {
+      } else if (key.endsWith('.md')) {
         stats.totalMarkdown++;
         if (!stats.firstMarkdown) stats.firstMarkdown = key;
         stats.lastMarkdown = key;
-        continue;
+      } else {
+        stats.totalOther++;
       }
-
-      stats.totalOther++;
     }
 
     if (!list.truncated) break;
@@ -647,10 +757,6 @@ async function countR2Files(env) {
   };
 }
 
-// ============================================================================
-// Utilities
-// ============================================================================
-
 function parseAmount(value) {
   if (value == null) return NaN;
   const num = Number(String(value).replace(/[^0-9,.]/g, '').replace(',', '.'));
@@ -658,20 +764,18 @@ function parseAmount(value) {
 }
 
 function stripHtml(html) {
-  return html?.replace(/<[^>]+>/g, '').trim() || '';
+  return html ? html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 }
 
 async function withTimeout(promise, ms, label) {
   return Promise.race([
     promise,
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error(`Timeout ${ms}ms: ${label}`)), ms)
-    )
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout ${ms}ms: ${label}`)), ms))
   ]);
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function jsonResponse(data, status = 200) {

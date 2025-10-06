@@ -41,5 +41,11 @@ if (isWatch) {
   console.log('👀 Watching for changes...');
 } else {
   await esbuild.build(buildOptions);
+  
+  // Copy to worker directory
+  const widgetContent = readFileSync('dist/widget.js', 'utf-8');
+  writeFileSync('worker/widget.txt', widgetContent);
+  
   console.log('✅ Build complete: dist/widget.js');
+  console.log('✅ Copied to: worker/widget.txt');
 }

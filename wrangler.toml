@@ -10,18 +10,25 @@ LIGHTSPEED_API_KEY = "08e288496a18419dc28ac87c8dca5a0f"
 LIGHTSPEED_SECRET = "03f81d0420d6c0d12f41d27a73376c7c"
 DEBUG_LIMIT = "0" # 0 = alle producten, getal = test limiet
 SKIP_CLEANUP = "0" # cleanup aan
+CLOUDFLARE_API_TOKEN = "PzJZY02SHHO3MQF1qhcDtJ8rfMRhkyw1Kq6ZE6R7"
 
 LS_DELAY_MS = "100"  # 100ms delay voor stabiele Lightspeed API calls
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 
-# Cloudflare AI Search
-# Zet deze secrets/vars in Dashboard of via wrangler secret put
-CF_ACCOUNT_ID = "9ca4115b4354987fcb09f8ca5fb970ab"
-AI_RAG_SLUG = "kunstpakket-ai-search"
+# D1 database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "kunstpakket-products"
+database_id = "b70bd81c-4555-4095-afc8-5787afca02f3"
 
-# R2 bucket binding
+# R2 bucket binding (kept for now, not used in queries)
 [[r2_buckets]]
-binding = "PRODUCTS_BUCKET"
+binding = "KUNSTPAKKET_PRODUCTS_BUCKET"
 bucket_name = "kunstpakket-products"
+
+[[vectorize]]
+binding = "KUNSTPAKKET_PRODUCTS_INDEX"
+index_name = "kunstpakket_products_index"
 
 # Cron trigger - elke nacht om 3:00
 [triggers]
@@ -37,3 +44,5 @@ enabled = true
 
 [ai]
 binding = "AI"
+
+

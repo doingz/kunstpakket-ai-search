@@ -2,6 +2,11 @@ import { searchProducts } from './search.js';
 import { renderUI, showLoading, showResults, closeModal } from './ui.js';
 
 let debounceTimer = null;
+let lastOptions = {
+  limit: 24,
+  sort: 'score:desc',
+  filters: {}
+};
 
 export const initWidget = () => {
   // Inject styles
@@ -36,18 +41,23 @@ export const initWidget = () => {
 };
 
 // Handle search (triggered on Enter)
-export const handleSearch = async (query) => {
+export const handleSearch = async (query, options = {}) => {
   if (!query.trim()) {
     return;
   }
 
+  lastOptions = {
+    ...lastOptions,
+    ...options
+  };
+
   showLoading();
   
   try {
-    const results = await searchProducts(query);
+    const results = await searchProducts(query, lastOptions);
     showResults(results);
   } catch (error) {
     console.error('Search error:', error);
-    showResults({ answer: 'Er ging iets mis. Probeer het opnieuw.', products: [] });
+    showResults({ query: { original: query }, meta: {}, filters: lastOptions.filters, products: [], error: error.message });
   }
 };
