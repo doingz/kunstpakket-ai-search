@@ -143,8 +143,23 @@ async function syncProducts(env, runId) {
       console.log(`🧹 Removed ${removed} stale products from D1`);
     }
 
-    // NOTE: Embeddings are generated via separate /sync/embeddings endpoint
-    // to avoid timeout issues (use batch script to embed all products)
+    // Automatically start embeddings in batches (non-blocking)
+    console.log(`🔄 Starting embeddings for ${written} products...`);
+    const totalProducts = written;
+    const batchSize = 100;
+    const batches = Math.ceil(totalProducts / batchSize);
+    
+    for (let i = 0; i < batches; i++) {
+      const offset = i * batchSize;
+      // Fire and forget - embeddings run in background
+      fetch(`https://kunstpakket-sync.lotapi.workers.dev/sync/embeddings?offset=${offset}&limit=${batchSize}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer a2af3bc58e3825d9320ad4cd394a8f82ca5ca76439aa0c79c17b1e7f33ce8d75'
+        }
+      }).catch(err => console.error(`Embedding batch ${i} failed:`, err));
+    }
+    console.log(`✅ Triggered ${batches} embedding batches`);
 
     console.log(`📊 Completed - ${runId}`);
   } catch (error) {
@@ -229,9 +244,35 @@ function buildProductRecord(product, { variantsByProduct, productTags, productCa
   const pid = Number(product.id);
   const variants = variantsByProduct.get(pid) || [];
 
+  // Debug specific product
+  if (pid === 121950347) {
+    console.log('🔍 DEBUG Product 121950347:');
+    console.log('  Title:', product.title);
+    console.log('  Variants:', variants.length);
+    console.log('  Stock tracking:', variants.map(v => ({ id: v.id, stockTracking: v.stockTracking, stockLevel: v.stockLevel })));
+  }
+
+  // Exclude special products (spoedbestelling, etc.)
+  const title = (product.title || '').toLowerCase();
+  const url = (product.url || '').toLowerCase();
+  if (title.includes('spoedbestelling') || url.includes('spoedbestelling')) {
+    return null;
+  }
+
   const stock = extractStock(product, variants);
   const imageUrl = extractImageUrl(product);
-  if (!stock || !imageUrl) return null;
+  
+  // Debug specific product
+  if (pid === 121950347) {
+    console.log('  Extracted stock:', stock);
+    console.log('  Image URL:', imageUrl);
+    console.log('  Will be filtered:', !imageUrl);
+  }
+  
+  // Filter: Must have image. Stock defaults to 1000 if not available (for products without stock tracking)
+  if (!imageUrl) return null;
+  
+  const finalStock = stock || 1000; // Default to 1000 if no stock info
 
   const tags = Array.from(new Set([...(productTags.get(pid) || [])].map(String))).filter(Boolean);
   const categories = productCats.get(pid) || [];
@@ -254,7 +295,7 @@ function buildProductRecord(product, { variantsByProduct, productTags, productCa
       originalPrice: pricing?.originalPrice ?? null,
       hasDiscount: pricing?.hasDiscount ?? false,
       discountPercent: pricing?.discountPercent ?? null,
-      stock,
+      stock: finalStock,
       salesCount,
       tags,
       categories,
@@ -282,9 +323,33 @@ function detectType(product, { tags = [], categories = [], description = '', con
     .join(' ')
     .toLowerCase();
 
+  // PRIORITY 1: Direct type match (most reliable)
   for (const type of ALLOWED_TYPES) {
     if (haystack.includes(type)) return type;
   }
+
+  // PRIORITY 2: Strong indicators (only if no direct type found)
+  // These are keywords that STRONGLY suggest a specific type
+  const strongIndicators = {
+    'poster': ['zeefdruk', 'lithografie', 'giclée', 'giclee'],
+    'beeld': ['sculptuur', 'bronze', 'brons', 'verbronsd']
+  };
+
+  for (const [type, keywords] of Object.entries(strongIndicators)) {
+    if (keywords.some(keyword => haystack.includes(keyword))) {
+      return type;
+    }
+  }
+
+  // PRIORITY 3: Weak indicators (only for specific cases like ballonhond, Jeff Koons)
+  // Only apply if title contains specific patterns
+  const title = product.title?.toLowerCase() || '';
+  
+  if (title.includes('ballon') || title.includes('koons')) {
+    // Ballonhond, Jeff Koons sculptures
+    return 'beeld';
+  }
+
   return null;
 }
 
@@ -614,7 +679,7 @@ async function saveEmbeddingsToVectorize(env, records) {
         return parts.filter(Boolean).join(' ').substring(0, 8000); // OpenAI supports up to 8k tokens
       });
 
-      // Generate embeddings using OpenAI text-embedding-3-small (1536-dimensional, multilingual)
+      // Generate embeddings using OpenAI text-embedding-3-small (1536-dimensional, multilingual, cost-effective)
       const openaiResponse = await fetch('https://api.openai.com/v1/embeddings', {
         method: 'POST',
         headers: {
@@ -652,19 +717,24 @@ async function saveEmbeddingsToVectorize(env, records) {
           image: record.metadata.imageUrl || '',
           url: record.metadata.url || '',
           stock: record.metadata.stock ?? 0,
-          salesCount: record.metadata.salesCount ?? 0
+          salesCount: record.metadata.salesCount ?? 0,
+          tags: (record.metadata.tags || []).join('|'), // Store tags as pipe-separated string
+          categories: (record.metadata.categories || []).join('|') // Store categories as pipe-separated string
         }
       }));
 
       // Upload to Vectorize
-      await env.KUNSTPAKKET_PRODUCTS_INDEX.upsert(vectorsToUpload);
+      console.log(`📤 Upserting ${batch.length} vectors to Vectorize...`);
+      const upsertResult = await env.KUNSTPAKKET_PRODUCTS_INDEX.upsert(vectorsToUpload);
+      console.log(`✅ Upsert result:`, upsertResult);
       embedded += batch.length;
 
       if (i + BATCH_SIZE < records.length) {
         await sleep(100); // Small delay between batches
       }
     } catch (error) {
-      console.error(`Failed to embed batch ${i}-${i + BATCH_SIZE}:`, error);
+      console.error(`❌ Failed to embed batch ${i}-${i + BATCH_SIZE}:`, error);
+      console.error(`Error details:`, error.message, error.stack);
       // Continue with next batch
     }
   }

@@ -22,3 +22,13 @@ index_name = "kunstpakket_products_index"
 
 [ai]
 binding = "AI"
+
+[[services]]
+binding = "ANALYTICS"
+service = "bluestars-analytics"
+
+[vars]
+WIDGET_LIVE = "true"  # Set to "false" to disable widget (only show with ?f=1)
+ANALYTICS_API_URL = "https://bluestars-analytics.lotapi.workers.dev/event"
+ANALYTICS_API_KEY = "a2af3bc58e3825d9320ad4cd394a8f82ca5cad077bdac0dcbe7b13e78c5a188d"
+ANALYTICS_SITE_ID = "kunstpakket-001"

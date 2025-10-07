@@ -14,7 +14,7 @@ const MAX_TOP_K = 50;
 const ALLOWED_SORT_KEYS = new Set(['score', 'price', 'salesCount']);
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const { pathname, searchParams } = url;
 
@@ -23,7 +23,12 @@ export default {
     }
 
     if (pathname === '/widget.js') {
-      return new Response(widgetCode, {
+      // Inject WIDGET_LIVE config into the widget code
+      const isLive = env.WIDGET_LIVE === 'true';
+      const configInjection = `window.__KP_WIDGET_LIVE__ = ${isLive};\n`;
+      const modifiedCode = configInjection + widgetCode;
+      
+      return new Response(modifiedCode, {
         headers: {
           'Content-Type': 'application/javascript; charset=utf-8',
           'Cache-Control': 'no-cache, no-store, must-revalidate', // No cache during development
@@ -33,7 +38,15 @@ export default {
     }
 
     if (pathname === '/ai-search' && request.method === 'POST') {
-      return handleAiSearch(request, env);
+      return handleAiSearch(request, env, ctx);
+    }
+
+    if (pathname === '/lightspeed-webhook' && request.method === 'POST') {
+      return handleLightspeedWebhook(request, env, ctx);
+    }
+
+    if (pathname === '/track-purchase-thankyou' && request.method === 'POST') {
+      return handleThankyouPurchase(request, env, ctx);
     }
 
     return new Response('Not Found', { status: 404 });
@@ -42,7 +55,7 @@ export default {
   async queue() {}
 };
 
-async function handleAiSearch(request, env) {
+async function handleAiSearch(request, env, ctx) {
   const startedAt = Date.now();
 
   try {
@@ -53,7 +66,7 @@ async function handleAiSearch(request, env) {
       return json({ error: 'Invalid JSON payload' }, 400);
     }
 
-    const { query = '', limit = 20 } = body;
+    const { query = '', limit = 20, session_id } = body;
 
     if (!query || !query.trim()) {
       return json({
@@ -70,9 +83,15 @@ async function handleAiSearch(request, env) {
     // Step 2: Pure vector search with AI-parsed metadata filters
     const vectorResults = await vectorSearchWithFilters(query, limit, env, parsedQuery);
 
-    return json({
+    const tookMs = Date.now() - startedAt;
+    
+    // Generate friendly message with AI
+    const friendlyMessage = await generateFriendlyMessage(query, vectorResults.length, parsedQuery.filters, env);
+    
+    const response = {
       query: parsedQuery.original,
       filters: parsedQuery.filters,
+      friendlyMessage,
       products: vectorResults.map(p => ({
         id: p.id,
         title: p.title,
@@ -89,14 +108,106 @@ async function handleAiSearch(request, env) {
       })),
       meta: {
         total: vectorResults.length,
-        tookMs: Date.now() - startedAt,
+        tookMs,
         method: 'vector_search_with_ai_filters'
       }
-    });
+    };
+
+    // Track analytics (with waitUntil to ensure completion)
+    if (ctx && ctx.waitUntil) {
+      ctx.waitUntil(
+        trackSearchEvent(env, {
+          sessionId: session_id,
+          query: parsedQuery.original,
+          filters: parsedQuery.filters,
+          totalResults: vectorResults.length,
+          tookMs,
+          method: 'vector_search_with_ai_filters',
+          productIds: vectorResults.slice(0, 5).map(p => p.id).join(',')
+        }).catch(err => console.error('Analytics tracking failed:', err))
+      );
+    }
+
+    return json(response);
   } catch (error) {
     console.error('AI search error:', error);
     return json({ error: error.message || 'Search failed' }, 500);
   }
+}
+
+async function generateFriendlyMessage(query, resultCount, filters, env) {
+  try {
+    const hasType = !!filters.type;
+    const hasBudget = filters.minPrice !== null || filters.maxPrice !== null;
+    const hasKeywords = filters.keywords && filters.keywords.length > 0;
+    const isVague = !hasType && !hasBudget && (!hasKeywords || filters.keywords.length <= 1);
+
+    const prompt = `Je bent Frederique, een enthousiaste kunstadviseur. Schrijf een persoonlijk berichtje over de zoekresultaten.
+
+Zoekopdracht: "${query}"
+Aantal resultaten: ${resultCount}
+Type: ${filters.type || 'niet gespecificeerd'}
+Budget: ${filters.minPrice || 0}-${filters.maxPrice || '∞'} euro
+Kenmerken gevonden: Type ${hasType ? '✓' : '✗'}, Budget ${hasBudget ? '✓' : '✗'}, Thema ${hasKeywords ? '✓' : '✗'}
+
+Regels:
+- Maximaal 2 zinnen (of 1 langere zin)
+- Gebruik 1-2 emoji's die bij kunst passen (🎨✨🖼️💎🎭)
+- Wees enthousiast, persoonlijk en natuurlijk
+- Begin ALTIJD met "Ik heb [aantal] [item(s)] gevonden" of variatie daarop
+- Wees EERLIJK en ACCURAAT: als iemand zoekt naar "Herman Brood schilderijen" maar niet alle resultaten zijn van Herman Brood, vermeld dat er ook andere kunstenaars tussen zitten
+- Als zoekterm een specifieke kunstenaar/thema is, wees dan eerlijk over wat je gevonden hebt (bijv. "waaronder ook werk van andere kunstenaars")
+- Als er weinig kenmerken zijn (vage zoekopdracht), geef dan een vriendelijke tip om specifieker te zoeken
+- Bij geen resultaten: "Ik heb helaas niets gevonden..." en moedig aan om anders te zoeken
+- Bij veel resultaten: complimenteer de keuze maar blijf eerlijk
+- Spreek in "ik"-vorm (als Frederique)
+
+Voorbeelden van goede openingszinnen:
+- "Ik heb ${resultCount} prachtige beeldjes met een hart gevonden..."
+- "Ik vond ${resultCount} mooie schilderijen voor je..."
+- "Ik heb ${resultCount} kunstwerken geselecteerd..."
+
+Tips voor vage zoekopdrachten (gebruik variatie):
+- "Vertel me gerust welk type kunstwerk je zoekt, of welk budget je in gedachten hebt!"
+- "Tip: noem een thema of gelegenheid, dan vind ik nóg betere matches"
+- "Geef me wat meer aanknopingspunten – type, budget of thema – dan help ik je beter!"
+
+Genereer alleen het bericht, zonder quotes of uitleg:`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 60,
+        temperature: 0.8
+        })
+      });
+
+    if (!response.ok) {
+      throw new Error('OpenAI API failed');
+    }
+
+    const data = await response.json();
+    const message = data.choices?.[0]?.message?.content?.trim();
+    
+    if (message) {
+      return message;
+    }
+  } catch (error) {
+    console.error('Failed to generate friendly message:', error);
+  }
+
+  // Fallback messages
+  if (resultCount === 0) return '🎨 Geen match gevonden';
+  if (resultCount === 1) return '✨ Perfect gevonden!';
+  if (resultCount <= 5) return `✨ ${resultCount} toppers voor jou`;
+  if (resultCount <= 20) return `🎨 ${resultCount} kunstwerken geselecteerd`;
+  return `🎨 ${resultCount} kunstwerken gevonden`;
 }
 
 function isQueryConcrete(parsedQuery) {
@@ -187,12 +298,13 @@ async function parseQueryForDirectSearch(query, env) {
 
 TYPES: beeld (beeldje/beelden/sculptuur), schilderij (schilderijen), vaas (vazen), mok (mokken/koffiemok/theemok/beker), wandbord (wandborden), poster (posters/print)
 
-PRICE: Calculate generous ranges based on mentioned price.
-- "rond 40" → min:20, max:120
-- "rond 100" → min:50, max:200  
-- "rond 500" → min:200, max:1000
-- "onder 50" → max:60
-- "boven 100" → min:80
+PRICE: Use these rules to calculate ranges:
+- APPROXIMATE (rond/rondom/ongeveer/circa/±/plusminus/om en nabij/zo'n/pakweg/ruwweg/tegen de/omtrent/around/about/approximately/approx/roughly/near/close to/somewhere around/more or less) X → min: X×0.5, max: X×2
+- UNDER (onder/maximaal/tot/minder dan/under/maximum/up to/less than/below) X → min: 0, max: X×1.2
+- ABOVE (boven/minimaal/meer dan/vanaf/above/over/minimum/from/starting at/at least) X → min: X×0.8, max: X×5
+- BETWEEN (tussen/between) X (en/tot/and/to) Y → min: X, max: Y
+- EXACT X euro (no modifier) → min: X×0.6, max: X×1.6
+IMPORTANT: Always extract BOTH minPrice and maxPrice when price is mentioned!
 
 KEYWORDS: Extract ROOT FORM (word stem) for better matching: bloemen→bloem, honden→hond, voetballer→voetbal, schilder→schilder. Fix spelling (monderian→mondriaan, climt→klimt, moweder→moeder). Remove stopwords (de/het/een/voor/van/met/mijn/cadeau/mooi/leuk/rond/euro).` 
           }
@@ -497,25 +609,19 @@ async function queryD1Products(env, parsedQuery, limit) {
 
 async function vectorSearchWithFilters(query, limit, env, parsedQuery) {
   try {
-    // Build rich query text including keywords for better embedding
-    let queryText = query;
-    if (parsedQuery.filters.keywords && parsedQuery.filters.keywords.length > 0) {
-      queryText = `${query} ${parsedQuery.filters.keywords.join(' ')}`;
-    }
-
-    // Generate embedding
-    const vector = await textToEmbedding(queryText, env);
+    // Generate embedding from the original query
+    // No hacks - just semantic search with metadata filtering
+    const vector = await textToEmbedding(query, env);
     if (!vector.length) return [];
 
     const queryOptions = {
-      topK: Math.min(limit * 3, 100),
+      topK: 100, // Increased to 100 (Vectorize maximum with returnMetadata='indexed')
       returnValues: false,
-      returnMetadata: 'all'
+      returnMetadata: 'indexed' // Changed from 'all' to support topK=100
     };
 
     // Build Vectorize native metadata filter
-    // Per Cloudflare docs: filters should be a flat object with field-level conditions
-    // Docs: https://developers.cloudflare.com/vectorize/reference/metadata-filtering/
+    // Filter on type, price, and stock
     const filter = {};
     
     if (parsedQuery.filters.type) {
@@ -544,23 +650,70 @@ async function vectorSearchWithFilters(query, limit, env, parsedQuery) {
 
     if (!Array.isArray(results?.matches)) return [];
 
-    // Map to product format (metadata already contains everything we need!)
-    return results.matches.slice(0, limit).map(match => ({
+    // Map to product format and calculate keyword relevance score
+    const keywords = parsedQuery.filters.keywords || [];
+    const productsWithScore = results.matches.map(match => {
+      const title = (match.metadata.title || '').toLowerCase();
+      const description = (match.metadata.description || '').toLowerCase();
+      const tagsString = (match.metadata.tags || '').toLowerCase(); // pipe-separated tags
+      const categoriesString = (match.metadata.categories || '').toLowerCase(); // pipe-separated categories
+      
+      // Explode tags and categories into individual words for better matching
+      const tagWords = tagsString.split(/[\|\s,]+/).filter(Boolean);
+      const categoryWords = categoriesString.split(/[\|\s,]+/).filter(Boolean);
+      
+      // Calculate keyword match score with priority: tags > title > categories > description
+      let keywordScore = 0;
+      keywords.forEach(keyword => {
+        const keywordLower = keyword.toLowerCase();
+        
+        // Check if keyword matches any tag word (exploded, bidirectional substring matching)
+        if (tagWords.some(w => w.includes(keywordLower) || keywordLower.includes(w))) {
+          keywordScore += 20; // Tags match is MOST important
+        }
+        
+        if (title.includes(keywordLower)) keywordScore += 10; // Title match is very important
+        
+        // Check if keyword matches any category word (exploded, bidirectional)
+        if (categoryWords.some(w => w.includes(keywordLower) || keywordLower.includes(w))) {
+          keywordScore += 5; // Categories match is good
+        }
+        
+        if (description.includes(keywordLower)) keywordScore += 3; // Description match is okay
+      });
+      
+      return {
+        product: {
       id: match.id,
-      title: match.metadata.title || '',
-      description: match.metadata.description || '',
-      price: match.metadata.price,
-      originalPrice: null, // Not in vector metadata
-      hasDiscount: false, // Not in vector metadata
-      discountPercent: null, // Not in vector metadata
-      image: match.metadata.image || '',
-      url: match.metadata.url || '',
-      stock: match.metadata.stock || 0,
-      salesCount: match.metadata.salesCount || 0,
-      type: match.metadata.type || null,
-      tags: [], // Not in vector metadata, but can add if needed
-      categories: [] // Not in vector metadata
-    }));
+          title: match.metadata.title || '',
+          description: match.metadata.description || '',
+          price: match.metadata.price,
+          originalPrice: null,
+          hasDiscount: false,
+          discountPercent: null,
+          image: match.metadata.image || '',
+          url: match.metadata.url || '',
+          stock: match.metadata.stock || 0,
+          salesCount: match.metadata.salesCount || 0,
+          type: match.metadata.type || null,
+          tags: (match.metadata.tags || '').split('|').filter(Boolean),
+          categories: (match.metadata.categories || '').split('|').filter(Boolean)
+        },
+        keywordScore,
+        vectorScore: match.score || 0
+      };
+    });
+    
+    // Sort by keyword relevance first, then by vector similarity
+    productsWithScore.sort((a, b) => {
+      if (b.keywordScore !== a.keywordScore) {
+        return b.keywordScore - a.keywordScore; // Higher keyword score first
+      }
+      return b.vectorScore - a.vectorScore; // Then by vector similarity
+    });
+    
+    // Return top results based on combined scoring
+    return productsWithScore.slice(0, limit).map(item => item.product);
   } catch (error) {
     console.error('Vector search with filters failed:', error);
     return [];
@@ -570,7 +723,7 @@ async function vectorSearchWithFilters(query, limit, env, parsedQuery) {
 async function textToEmbedding(text, env) {
   if (!env.OPENAI_API_KEY) return [];
   try {
-    // Use OpenAI text-embedding-3-small (1536-dimensional, excellent for multilingual)
+    // Use OpenAI text-embedding-3-small (1536-dimensional, cost-effective, multilingual)
     const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {
@@ -1067,6 +1220,56 @@ function json(data, status = 200) {
   });
 }
 
+async function trackSearchEvent(env, data) {
+  // Skip if analytics not configured
+  if (!env.ANALYTICS_API_URL || !env.ANALYTICS_API_KEY || !env.ANALYTICS_SITE_ID || !env.ANALYTICS) {
+    return;
+  }
+
+  try {
+    const summary = data.totalResults > 0
+      ? `${data.totalResults} resultaten gevonden (${data.tookMs}ms)`
+      : 'Geen resultaten';
+
+    const payload = {
+      event_type: 'interaction',
+      site_id: env.ANALYTICS_SITE_ID,
+      session_id: data.sessionId || crypto.randomUUID(),
+      question_text: data.query,
+      answer_text: summary,
+      products_summary: data.productIds || '',
+      metadata: {
+        total_results: data.totalResults,
+        response_time_ms: data.tookMs,
+        method: data.method,
+        filters: data.filters
+      }
+    };
+
+    // Base64 encode the API key as required by the analytics API
+    const base64ApiKey = btoa(env.ANALYTICS_API_KEY);
+    
+    // Use Service Binding for direct worker-to-worker communication (faster & more reliable)
+    const response = await env.ANALYTICS.fetch(env.ANALYTICS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${base64ApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // Silent success - only log errors
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Analytics tracking error: ${response.status} - ${errorText}`);
+    }
+  } catch (error) {
+    // Silent fail - analytics should never break search
+    console.error('Analytics tracking error:', error);
+  }
+}
+
 function buildFallbackResponse({ startedAt, limit, offset, sort, intent, queryInfo, filters, fallbackReason }) {
   const resolvedIntent = intent?.intent || intent || 'general';
   const originalQuery = queryInfo?.original || intent?.searchText || '';
@@ -1095,6 +1298,167 @@ function buildFallbackResponse({ startedAt, limit, offset, sort, intent, queryIn
       llmReason: fallbackReason || 'fallback'
     })
   };
+}
+
+async function handleLightspeedWebhook(request, env, ctx) {
+  try {
+    const webhook = await request.json();
+    const order = webhook.resource;
+
+    if (!order || !order.products) {
+      console.error('Invalid webhook payload');
+      return new Response('invalid payload', { status: 400 });
+    }
+
+    // Extract product IDs from order
+    const productIds = order.products.map(p => p.product?.id || p.id).filter(Boolean).join(',');
+    const productCount = order.products.length;
+
+    if (!productIds) {
+      console.log('⚠️ No product IDs in order:', order.number);
+      return new Response('no products');
+    }
+
+    // Check D1: is there a recent interaction with these products?
+    const interaction = await findRecentInteraction(env, productIds);
+
+    if (!interaction) {
+      console.log('⚠️ No AI interaction found for order:', order.number, 'products:', productIds);
+      return new Response('ignored - no AI interaction');
+    }
+
+    // Commission: €10 per product (fixed rate for kunstpakket)
+    const commissionAmount = productCount * 10;
+
+    const purchasePayload = {
+      event_type: 'purchase',
+      site_id: env.ANALYTICS_SITE_ID,
+      interaction_id: interaction.id,
+      total_amount: parseFloat(order.priceIncl || order.total || 0),
+      commission_amount: commissionAmount,
+      currency_code: 'EUR',
+      products_summary: productIds,
+      metadata: {
+        order_number: order.number,
+        product_count: productCount
+      }
+    };
+
+    // Send to analytics (non-blocking)
+    if (ctx && ctx.waitUntil && env.ANALYTICS) {
+      ctx.waitUntil(
+        env.ANALYTICS.fetch(env.ANALYTICS_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${btoa(env.ANALYTICS_API_KEY)}`
+          },
+          body: JSON.stringify(purchasePayload)
+        }).then(res => {
+          if (res.ok) {
+            console.log('✅ Purchase tracked:', {
+              order: order.number,
+              products: productCount,
+              commission: `€${commissionAmount}`,
+              interaction: interaction.id
+            });
+          } else {
+            console.error('Analytics error:', res.status);
+          }
+        }).catch(err => {
+          console.error('Purchase tracking failed:', err);
+        })
+      );
+    }
+
+    return new Response('ok');
+
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return new Response('error', { status: 500 });
+  }
+}
+
+async function findRecentInteraction(env, productIds) {
+  try {
+    // Call analytics worker to find matching interaction
+    const response = await env.ANALYTICS.fetch(
+      'https://bluestars-analytics.lotapi.workers.dev/internal/find-interaction',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${btoa(env.ANALYTICS_API_KEY)}`
+        },
+        body: JSON.stringify({
+          site_id: env.ANALYTICS_SITE_ID,
+          product_ids: productIds,
+          days_back: 7
+        })
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Find interaction error:', response.status);
+      return null;
+    }
+
+    const result = await response.json();
+    return result.interaction || null;
+  } catch (error) {
+    console.error('findRecentInteraction error:', error);
+    return null;
+  }
+}
+
+/**
+ * Handle purchase tracking from thankyou page (temporary solution)
+ */
+async function handleThankyouPurchase(request, env, ctx) {
+  try {
+    const body = await request.json();
+    const { interaction_id, order_id, commission_amount, source } = body;
+
+    if (!interaction_id) {
+      return new Response(JSON.stringify({ error: 'Missing interaction_id' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+      });
+    }
+
+    // Track the purchase via analytics worker
+    const trackPromise = env.ANALYTICS.fetch(
+      'https://bluestars-analytics.lotapi.workers.dev/track',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${btoa(env.ANALYTICS_API_KEY)}`
+        },
+        body: JSON.stringify({
+          site_id: env.ANALYTICS_SITE_ID,
+          event_type: 'purchase',
+          interaction_id,
+          order_id: order_id || 'unknown',
+          commission_amount: commission_amount || 10,
+          metadata: { source: source || 'thankyou_page' }
+        })
+      }
+    );
+
+    // Fire-and-forget but guarantee completion
+    ctx.waitUntil(trackPromise);
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+    });
+  } catch (error) {
+    console.error('handleThankyouPurchase error:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+    });
+  }
 }
 
 function determineTopK(limit) {

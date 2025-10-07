@@ -34,7 +34,8 @@ export const searchProducts = async (query, options = {}) => {
     query: data.query || {},
     filters: data.filters || {},
     meta: data.meta || {},
-    products: parseProducts(data.products || [])
+    products: parseProducts(data.products || []),
+    friendlyMessage: data.friendlyMessage || null
   };
 };
 
