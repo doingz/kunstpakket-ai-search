@@ -2,6 +2,32 @@
  * Cloudflare Worker - Lightspeed → R2 synchronisatie (pure data)
  */
 
+// Helper function for OpenAI Responses API calls
+async function callOpenAIResponses(env, { model = 'gpt-4o-mini', instructions, input, tools, tool_choice, temperature, max_tokens }) {
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model,
+      instructions,
+      input,
+      tools,
+      tool_choice,
+      temperature,
+      max_tokens
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(syncProducts(env, crypto.randomUUID()));
@@ -65,7 +91,7 @@ export default {
             return { offset, count: 0, done: true };
           }
           
-          // Convert to records format
+          // Convert to records format (include AI enrichment data)
           const records = products.map(p => ({
             id: p.id,
             metadata: {
@@ -83,7 +109,10 @@ export default {
               imageUrl: p.imageUrl,
               url: p.url,
               tags: p.tags ? JSON.parse(p.tags) : [],
-              categories: p.categories ? JSON.parse(p.categories) : []
+              categories: p.categories ? JSON.parse(p.categories) : [],
+              ai_tags: p.ai_tags ? JSON.parse(p.ai_tags) : [],
+              ai_keywords: p.ai_keywords || null,
+              ai_summary: p.ai_summary || null
             }
           }));
           
@@ -98,6 +127,75 @@ export default {
       if (!wait && ctx?.waitUntil) {
         ctx.waitUntil(task());
         return jsonResponse({ message: 'embedding started', offset, limit });
+      }
+      
+      return jsonResponse(await task());
+    }
+
+    if (pathname === '/sync/enrich' && method === 'POST') {
+      const offset = Number(searchParams.get('offset')) || 0;
+      const limit = Number(searchParams.get('limit')) || 20; // Smaller batches for AI
+      const wait = searchParams.get('wait') === '1';
+      
+      const task = async () => {
+        try {
+          // Load products from D1 that haven't been enriched yet
+          const result = await env.DB.prepare(
+            'SELECT * FROM products WHERE ai_summary IS NULL ORDER BY id LIMIT ? OFFSET ?'
+          ).bind(limit, offset).all();
+          
+          const products = result.results || [];
+          if (!products.length) {
+            return { offset, count: 0, done: true };
+          }
+          
+          // Enrich each product with AI
+          let enriched = 0;
+          for (const p of products) {
+            try {
+              const aiData = await enrichProductWithAI({
+                title: p.title,
+                fulltitle: p.fulltitle,
+                description: p.description,
+                content: p.content,
+                price: p.price,
+                tags: p.tags ? JSON.parse(p.tags) : [],
+                categories: p.categories ? JSON.parse(p.categories) : []
+              }, env);
+              
+              // Update product with AI data
+              await env.DB.prepare(`
+                UPDATE products 
+                SET ai_tags = ?, ai_keywords = ?, ai_summary = ?
+                WHERE id = ?
+              `).bind(
+                JSON.stringify(aiData.ai_tags),
+                aiData.ai_keywords,
+                aiData.ai_summary,
+                p.id
+              ).run();
+              
+              enriched++;
+              
+              // Log progress every 5 products
+              if (enriched % 5 === 0) {
+                console.log(`Enriched ${enriched}/${products.length} products (offset ${offset})`);
+              }
+            } catch (error) {
+              console.error(`Failed to enrich product ${p.id}:`, error.message);
+            }
+          }
+          
+          return { offset, count: enriched, total: products.length, done: products.length < limit };
+        } catch (error) {
+          console.error('Enrichment chunk failed:', error);
+          return { offset, count: 0, error: error.message };
+        }
+      };
+      
+      if (!wait && ctx?.waitUntil) {
+        ctx.waitUntil(task());
+        return jsonResponse({ message: 'enrichment started', offset, limit });
       }
       
       return jsonResponse(await task());
@@ -310,6 +408,126 @@ const ALLOWED_TYPES = new Set([
   'kurkentrekker','sokkel','zandloper','schaakbord','geurdispenser','sfeerlamp'
 ]);
 
+/**
+ * AI-powered product enrichment
+ * Generates: better type, tags, keywords, and rich summary
+ */
+async function enrichProductWithAI(product, env) {
+  // Use OpenAI GPT-4o-mini (best quality, only $0.26 total) or Cloudflare AI (free but lower quality)
+  const useCloudflareAI = false; // Set to true for FREE Cloudflare AI, false for better OpenAI
+
+  try {
+    const { title, fulltitle, description, content, tags, categories, price } = product;
+    
+    const prompt = `Analyseer dit kunstproduct en genereer metadata voor betere zoekbaarheid.
+
+PRODUCT:
+Titel: ${title}
+${fulltitle && fulltitle !== title ? `Volledige titel: ${fulltitle}` : ''}
+${description ? `Beschrijving: ${description.substring(0, 500)}` : ''}
+${content ? `Details: ${content.substring(0, 500)}` : ''}
+Prijs: €${price || '?'}
+Tags: ${tags.join(', ')}
+Categorieën: ${categories.join(', ')}
+
+TAAK: Genereer JSON met:
+1. "type": enkelvoud product type uit: ${Array.from(ALLOWED_TYPES).join(', ')} (of null)
+2. "tags": array met 5-10 relevante zoektags (Nederlands, enkelvoud)
+3. "keywords": komma-gescheiden zoektermen die mensen zouden gebruiken
+4. "summary": 2-3 zinnen rijke beschrijving voor semantic search
+
+REGELS:
+- Type moet exact matchen met allowed types of null zijn
+- Tags: array van strings, concreet en relevant (kunstenaar, stijl, materiaal, thema)
+- Keywords: string met komma's
+- Summary: beschrijvend, natuurlijk Nederlands
+
+Geef alleen valid JSON terug zonder markdown formatting.`;
+
+    let result;
+
+    if (useCloudflareAI && env.AI) {
+      // Use FREE Cloudflare AI (Llama 3.1)
+      const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', {
+        messages: [
+          { role: 'system', content: 'Je bent een product metadata expert voor een Nederlandse kunstwebshop. Antwoord alleen met valid JSON, geen markdown.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 500,
+        temperature: 0.3
+      });
+
+      // Parse Cloudflare AI response
+      let text = aiResponse.response || '';
+      // Remove markdown code blocks if present
+      text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      result = JSON.parse(text);
+
+    } else if (env.OPENAI_API_KEY) {
+      // Use OpenAI Responses API with structured outputs
+      const data = await callOpenAIResponses(env, {
+        instructions: 'Je bent een product metadata expert voor een Nederlandse kunstwebshop.',
+        input: prompt,
+        tools: [{
+          type: 'function',
+          name: 'enrich_product',
+          description: 'Generate product metadata',
+          parameters: {
+            type: 'object',
+            properties: {
+              type: { 
+                type: ['string', 'null'],
+                enum: [...ALLOWED_TYPES, null],
+                description: 'Product type or null'
+              },
+              tags: { 
+                type: 'array',
+                items: { type: 'string' },
+                description: '5-10 relevant search tags'
+              },
+              keywords: { 
+                type: 'string',
+                description: 'Comma-separated search terms'
+              },
+              summary: { 
+                type: 'string',
+                description: '2-3 sentence rich description'
+              }
+            },
+            required: ['type', 'tags', 'keywords', 'summary'],
+            additionalProperties: false
+          },
+          strict: true
+        }],
+        tool_choice: { type: 'function', name: 'enrich_product' },
+        temperature: 0.3
+      });
+
+      const functionCall = data.output?.find(item => item.type === 'function_call');
+      if (!functionCall) {
+        console.warn(`No function call in OpenAI response for ${title}`);
+        return { ai_type: null, ai_tags: [], ai_keywords: '', ai_summary: '' };
+      }
+
+      result = JSON.parse(functionCall.arguments);
+    } else {
+      // No AI available
+      return { ai_type: null, ai_tags: [], ai_keywords: '', ai_summary: '' };
+    }
+
+    return {
+      ai_type: ALLOWED_TYPES.has(result.type) ? result.type : null,
+      ai_tags: Array.isArray(result.tags) ? result.tags : [],
+      ai_keywords: result.keywords || '',
+      ai_summary: result.summary || ''
+    };
+
+  } catch (error) {
+    console.warn(`AI enrichment error for ${product.title}:`, error.message);
+    return { ai_type: null, ai_tags: [], ai_keywords: '', ai_summary: '' };
+  }
+}
+
 function detectType(product, { tags = [], categories = [], description = '', content = '' } = {}) {
   const haystack = [
     product.fulltitle,
@@ -324,8 +542,12 @@ function detectType(product, { tags = [], categories = [], description = '', con
     .toLowerCase();
 
   // PRIORITY 1: Direct type match (most reliable)
+  // Check for both singular and plural forms
   for (const type of ALLOWED_TYPES) {
     if (haystack.includes(type)) return type;
+    // Also check plural (add 's' or common variations)
+    if (haystack.includes(type + 's')) return type;
+    if (haystack.includes(type + 'en')) return type; // Dutch plural: beeld → beelden
   }
 
   // PRIORITY 2: Strong indicators (only if no direct type found)
@@ -483,13 +705,13 @@ async function saveProductsToD1(env, records, runId) {
   for (let i = 0; i < records.length; i += BATCH_SIZE) {
     const batch = records.slice(i, i + BATCH_SIZE);
     
-    // Build batch insert statement (18 fields now with searchable_text)
-    const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+    // Build batch insert statement (21 fields with AI enrichment columns)
+    const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
     const sql = `
       INSERT OR REPLACE INTO products (
         id, title, fulltitle, description, content, type, price, originalPrice,
         hasDiscount, discountPercent, stock, salesCount, imageUrl, url,
-        tags, categories, searchable_text, syncVersion
+        tags, categories, ai_tags, ai_keywords, ai_summary, searchable_text, syncVersion
       ) VALUES ${placeholders}
     `;
 
@@ -527,6 +749,9 @@ async function saveProductsToD1(env, records, runId) {
         m.url || '',
         JSON.stringify(m.tags || []),
         JSON.stringify(m.categories || []),
+        JSON.stringify(m.ai_tags || []),
+        m.ai_keywords || null,
+        m.ai_summary || null,
         searchableText,
         runId
       ];
@@ -643,40 +868,64 @@ async function saveEmbeddingsToVectorize(env, records) {
     const batch = records.slice(i, i + BATCH_SIZE);
     
     try {
-      // Build rich text for each product - INCLUDE ALL METADATA
+      // Build rich MARKDOWN text for each product following Cloudflare best practices
+      // Using structured markdown significantly improves embedding quality
       const textsToEmbed = batch.map(record => {
         const m = record.metadata;
-        const parts = [];
+        const sections = [];
         
-        // Product type
-        if (m.type) parts.push(`Type: ${m.type}`);
+        // Main title as H2
+        sections.push(`## ${m.title || m.fulltitle || 'Product'}`);
         
-        // Titles and descriptions
-        if (m.title) parts.push(m.title);
-        if (m.fulltitle) parts.push(m.fulltitle);
-        if (m.description) parts.push(m.description);
-        if (m.content) parts.push(m.content);
+        // AI summary first (if available) - this is the most important semantic text
+        if (m.ai_summary) {
+          sections.push(`### AI Beschrijving\n${m.ai_summary}`);
+        }
         
-        // Price info
-        if (m.price) parts.push(`Prijs: €${m.price}`);
-        if (m.hasDiscount && m.discountPercent) {
-          parts.push(`Korting: ${m.discountPercent}%`);
+        // Full description and content
+        if (m.description) sections.push(m.description);
+        if (m.content) sections.push(m.content);
+        
+        // Type section
+        if (m.type) {
+          sections.push(`### Type\n${m.type}`);
+        }
+        
+        // AI tags (if available) - more relevant than original tags
+        if (m.ai_tags && Array.isArray(m.ai_tags) && m.ai_tags.length > 0) {
+          sections.push(`### AI Tags\n${m.ai_tags.join(', ')}`);
+        }
+        
+        // Original tags section (deduplicate and clean)
+        if (m.tags && Array.isArray(m.tags) && m.tags.length > 0) {
+          const uniqueTags = Array.from(new Set(m.tags.map(t => String(t).toLowerCase().trim())));
+          sections.push(`### Tags\n${uniqueTags.join(', ')}`);
+        }
+        
+        // AI keywords for search
+        if (m.ai_keywords) {
+          sections.push(`### Zoektermen\n${m.ai_keywords}`);
+        }
+        
+        // Categories section
+        if (m.categories && Array.isArray(m.categories) && m.categories.length > 0) {
+          sections.push(`### Categories\n${m.categories.join(', ')}`);
+        }
+        
+        // Price and discount info
+        const priceInfo = [];
+        if (m.price) priceInfo.push(`Prijs: €${m.price}`);
+        if (m.hasDiscount && m.discountPercent) priceInfo.push(`Korting: ${m.discountPercent}%`);
+        if (priceInfo.length > 0) {
+          sections.push(`### Prijs\n${priceInfo.join(' | ')}`);
         }
         
         // Popularity
-        if (m.salesCount > 0) parts.push(`${m.salesCount}× verkocht`);
-        
-        // Tags
-        if (m.tags && Array.isArray(m.tags)) {
-          parts.push(`Tags: ${m.tags.join(', ')}`);
+        if (m.salesCount > 0) {
+          sections.push(`### Populariteit\n${m.salesCount}× verkocht`);
         }
         
-        // Categories
-        if (m.categories && Array.isArray(m.categories)) {
-          parts.push(`Categorieën: ${m.categories.join(', ')}`);
-        }
-        
-        return parts.filter(Boolean).join(' ').substring(0, 8000); // OpenAI supports up to 8k tokens
+        return sections.filter(Boolean).join('\n\n').substring(0, 8000); // OpenAI supports up to 8k tokens
       });
 
       // Generate embeddings using OpenAI text-embedding-3-small (1536-dimensional, multilingual, cost-effective)

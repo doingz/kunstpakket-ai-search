@@ -30,11 +30,12 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     @media (max-width: 640px) {
       align-items: stretch;
       padding: 0;
+      background: #ffffff;
     }
   }
 
   &__modal {
-    background: white;
+    background: #ffffff;
     border-radius: $radius;
     box-shadow: $shadow;
     width: 100%;
@@ -52,18 +53,18 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     @media (max-width: 640px) {
       max-width: 100%;
       border-radius: 0;
-      max-height: 100dvh;
-      height: 100dvh;
+      max-height: 100vh;
+      height: 100vh;
     }
   }
 
   &__header {
     padding: 16px 20px 12px;
-    background: #fff;
+    background: transparent;
     display: flex;
     flex-direction: column;
     gap: 0;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    border-bottom: 1px solid #e5e7eb;
   }
 
   &__header-top {
@@ -77,51 +78,71 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
   &__title {
     display: flex;
     align-items: center;
-    gap: 10px;
     font-weight: 600;
     font-size: 18px;
-    color: #0f172a;
-  }
-
-  &__title-icon {
-    display: inline-flex;
-    width: 32px;
-    height: 32px;
-    align-items: center;
-    justify-content: center;
-    background: rgba(110, 100, 222, 0.12);
-    border-radius: 8px;
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
+    color: #4b5563;
   }
 
   &__title-text {
     font-family: $font;
-    color: $primary;
+    color: #4b5563;
   }
 
   &__hint {
     margin: 0;
     padding: 16px 20px;
-    background: #ffffff;
+    background: transparent;
     font-size: 15px;
     font-weight: 400;
-    color: #1a1a1a;
+    color: #4b5563;
     font-family: $font;
     line-height: 1.4;
+    opacity: 0.95;
   }
 
   &__search {
     width: 100%;
-    padding: 0 20px;
+    padding: 20px;
   }
 
   &__input-wrap {
     position: relative;
     width: 100%;
+    background: #ffffff;
+    border-radius: 60px;
+    border: 1px solid #4b5563;
+    opacity: 0.9;
+    transition: border-color 0.2s, opacity 0.2s;
+    
+    &:focus-within {
+      border-color: #1f2937;
+      opacity: 1;
+    }
+  }
+
+  &__search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__visual-placeholder {
+    position: absolute;
+    left: 46px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 14px;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1;
+    background: transparent;
   }
 
   &__input {
@@ -130,23 +151,17 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     font-size: 14px !important;
     font-family: $font !important;
     outline: none !important;
-    background: #ffffff !important;
+    background: transparent !important;
     color: #1e293b !important;
-    padding: 12px 46px 12px 16px !important;
+    padding: 14px 90px 14px 46px !important;
     margin: 0 !important;
     line-height: 1.5 !important;
-    border-radius: 14px;
-    border: 1px solid #d0d7e2 !important;
-    box-shadow: 0 6px 18px -12px rgba(15, 23, 42, 0.25);
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-
-    &:focus {
-      border-color: #94a3b8 !important;
-      box-shadow: 0 10px 24px -14px rgba(15, 23, 42, 0.35);
-    }
+    border-radius: 60px;
+    position: relative;
+    z-index: 2;
 
     &::placeholder {
-      color: #94a3b8 !important;
+      color: #64748b !important;
     }
   }
 
@@ -176,26 +191,25 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
 
   &__clear {
     position: absolute;
-    right: 16px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
+    padding: 6px 12px;
+    border-radius: 6px;
     font-family: $font !important;
-    font-size: 18px !important;
-    font-weight: 400 !important;
-    color: #6b7280 !important;
-    background: #f1f5f9 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: #4b5563 !important;
+    background: rgba(241, 245, 249, 0.9) !important;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: all 0.2s;
     border: none !important;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
     user-select: none;
-    z-index: 1;
+    z-index: 3;
     &.is-hidden {
       visibility: hidden;
       opacity: 0;
@@ -203,19 +217,18 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     }
 
     &.is-disabled {
-      opacity: 0.4;
-      cursor: default;
+      opacity: 0;
+      pointer-events: none;
     }
 
     &:hover {
-      background: #e2e8f0 !important;
-      color: #1e293b !important;
+      background: rgba(226, 232, 240, 0.95) !important;
     }
   }
 
   &__close {
     font-size: 20px;
-    color: #475569;
+    color: #4b5563;
     cursor: pointer;
     width: 32px;
     height: 32px;
@@ -229,8 +242,8 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     touch-action: manipulation;
     
     &:hover, &:active {
-      background: rgba(148, 163, 184, 0.18);
-      color: #0f172a;
+      background: rgba(75, 85, 99, 0.1);
+      color: #1f2937;
     }
   }
 
@@ -238,6 +251,7 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     flex: 1;
     overflow-y: auto;
     padding: 20px;
+    background: transparent;
   }
 
   &__placeholder {
@@ -291,9 +305,9 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
       font-weight: 300;
 
       &:hover {
-        border-color: $primary;
+        border-color: #DDCA63;
         background: #e2e8f0;
-        box-shadow: 0 3px 12px -4px rgba(37, 99, 235, 0.35);
+        box-shadow: 0 3px 12px -4px rgba(221, 202, 99, 0.35);
         transform: translateY(-1px);
       }
     }
@@ -302,14 +316,14 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
   &__loading {
     text-align: center;
     padding: 40px;
-    color: #6b7280;
+    color: #4b5563;
   }
 
   &__spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid #e5e7eb;
-    border-top-color: $primary;
+    border: 3px solid rgba(75, 85, 99, 0.2);
+    border-top-color: #4b5563;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin: 0 auto 12px;
@@ -333,54 +347,67 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
   }
 
   &__products {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-    
-    @media (min-width: 640px) {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   &__product {
-    display: block;
+    display: flex;
     text-decoration: none;
     color: inherit;
+    background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
     
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border-color: #d1d5db;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
   }
 
   &__product-img {
-    width: 100%;
-    aspect-ratio: 1;
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
+    min-height: 120px;
+    flex-shrink: 0;
     object-fit: contain;
     background: #f9fafb;
+    padding: 8px;
+    aspect-ratio: 1 / 1;
+    
+    @media (min-width: 640px) {
+      width: 140px;
+      min-width: 140px;
+      height: 140px;
+      min-height: 140px;
+      padding: 10px;
+    }
   }
 
   &__product-info {
-    padding: 12px;
-    display: grid;
-    gap: 10px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
   }
 
   &__product-title {
-    font-size: 14px !important;
+    font-size: 15px !important;
     font-family: $font !important;
     font-weight: 500 !important;
     line-height: 1.4 !important;
     margin: 0 0 8px !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
     color: #1e293b !important;
+    
+    @media (min-width: 640px) {
+      font-size: 16px !important;
+    }
   }
 
   &__product-price {
@@ -396,11 +423,12 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     align-items: center;
     gap: 8px;
     font-family: $font !important;
+    margin-top: 4px;
   }
 
   &__product-price-current {
-    font-size: 16px !important;
-    font-weight: 600 !important;
+    font-size: 14px !important;
+    font-weight: 300 !important;
     color: #1e293b !important;
   }
 
@@ -477,28 +505,29 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
   }
 
   &__meta {
-    background: linear-gradient(135deg, #fffbeb 0%, #fef9c3 50%, #fef3c7 100%);
+    background: transparent;
     border-radius: 12px;
-    padding: 14px 16px;
+    padding: 0 0 20px 0;
     font-size: 15px;
-    color: #1e293b;
+    color: #4b5563;
     font-weight: 500;
     margin-bottom: 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border: none;
     gap: 12px;
-    border: 1px solid rgba(251, 191, 36, 0.2);
 
     p {
       margin: 0;
       font-size: 15px;
       line-height: 1.6;
+      color: #4b5563;
     }
 
     .kp-ai-widget__meta-badge {
-      background: rgba(99, 102, 241, 0.12);
-      color: #4338ca;
+      background: rgba(75, 85, 99, 0.1);
+      color: #4b5563;
       padding: 4px 8px;
       border-radius: 999px;
       font-size: 11px;
@@ -519,6 +548,41 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
       margin: 0 auto 16px;
       opacity: 0.5;
     }
+  }
+
+  &__help {
+    text-align: center;
+    padding: 60px 40px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  &__help-icon {
+    color: #9ca3af;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    
+    svg {
+      width: 48px;
+      height: 48px;
+    }
+  }
+
+  &__help-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: #1f2937 !important;
+    margin: 0 0 12px 0 !important;
+    font-family: $font !important;
+  }
+
+  &__help-text {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+    font-family: $font !important;
   }
 }
 

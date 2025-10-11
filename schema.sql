@@ -17,8 +17,11 @@ CREATE TABLE products (
   salesCount INTEGER DEFAULT 0,
   imageUrl TEXT,
   url TEXT,
-  tags TEXT,           -- JSON array stored as string
-  categories TEXT,     -- JSON array stored as string
+  tags TEXT,           -- JSON array stored as string (from Lightspeed)
+  categories TEXT,     -- JSON array stored as string (from Lightspeed)
+  ai_tags TEXT,        -- JSON array of AI-generated tags for better search
+  ai_keywords TEXT,    -- AI-generated search keywords (comma-separated)
+  ai_summary TEXT,     -- AI-generated rich summary for embeddings
   searchable_text TEXT, -- Combined text for FTS: title + fulltitle + description + content + tags + categories
   syncVersion TEXT,
   updatedAt INTEGER DEFAULT (strftime('%s', 'now'))

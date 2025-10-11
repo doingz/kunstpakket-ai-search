@@ -5,10 +5,11 @@ let modal = null;
 let bodyEl = null;
 let inputEl = null;
 let clearBtn = null;
+let visualPlaceholder = null;
 let placeholderLabel = null;
 let placeholderHtml = '';
 
-export const renderUI = () => {
+export const renderUI = (initialQuery = '') => {
   // Create overlay
   overlay = document.createElement('div');
   overlay.className = 'kp-ai-widget__overlay';
@@ -21,25 +22,27 @@ export const renderUI = () => {
     <div class="kp-ai-widget__header">
       <div class="kp-ai-widget__header-top">
         <div class="kp-ai-widget__title">
-          <span class="kp-ai-widget__title-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" xmlns:v="https://vecta.io/nano"><path d="M16.269 18.626c-1.526 1.267-3.502 2.032-5.661 2.032-4.834 0-8.749-3.834-8.749-8.543s3.915-8.543 8.749-8.543c.483 0 .957.038 1.419.112a.8.8 0 1 1-.252 1.58 7.41 7.41 0 0 0-1.167-.092c-3.94 0-7.149 3.105-7.149 6.943s3.209 6.943 7.149 6.943c1.959 0 3.737-.767 5.03-2.01a.83.83 0 0 1 .072-.084.81.81 0 0 1 .102-.089c.999-1.029 1.678-2.356 1.881-3.829a.8.8 0 1 1 1.585.219 8.41 8.41 0 0 1-1.876 4.231l3.92 3.819a.8.8 0 0 1-1.116 1.146l-3.936-3.834zM18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z" fill="#6E64DE"/></svg>
-          </span>
-          <span class="kp-ai-widget__title-text">Ai Cadeau tips</span>
+          <span class="kp-ai-widget__title-text">Zoek met Frederique</span>
         </div>
         <div class="kp-ai-widget__close" role="button" aria-label="Sluiten">×</div>
       </div>
     </div>
-    <div class="kp-ai-widget__hint">💡 Tip: geef gerust aan welk type, thema of budget je in gedachten hebt.</div>
     <div class="kp-ai-widget__search">
       <div class="kp-ai-widget__input-wrap">
+        <div class="kp-ai-widget__search-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+            <path d="M16.269 18.626c-1.526 1.267-3.502 2.032-5.661 2.032-4.834 0-8.749-3.834-8.749-8.543s3.915-8.543 8.749-8.543c.483 0 .957.038 1.419.112a.8.8 0 1 1-.252 1.58 7.41 7.41 0 0 0-1.167-.092c-3.94 0-7.149 3.105-7.149 6.943s3.209 6.943 7.149 6.943c1.959 0 3.737-.767 5.03-2.01a.83.83 0 0 1 .072-.084.81.81 0 0 1 .102-.089c.999-1.029 1.678-2.356 1.881-3.829a.8.8 0 1 1 1.585.219 8.41 8.41 0 0 1-1.876 4.231l3.92 3.819a.8.8 0 0 1-1.116 1.146l-3.936-3.834zM18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z" fill="#4b5563"/>
+          </svg>
+        </div>
         <input 
           type="search"
           class="kp-ai-widget__input" 
-          placeholder="Vertel wat je zoekt..."
+          placeholder=""
           enterkeyhint="search"
           inputmode="search"
         />
-        <div class="kp-ai-widget__clear" role="button" aria-label="Wis zoekopdracht">×</div>
+        <div class="kp-ai-widget__visual-placeholder">Hoi, waar ben je naar opzoek?</div>
+        <div class="kp-ai-widget__clear" role="button" aria-label="Wis zoekopdracht">Wissen</div>
       </div>
     </div>
     <div class="kp-ai-widget__body"></div>
@@ -52,9 +55,30 @@ export const renderUI = () => {
   bodyEl = modal.querySelector('.kp-ai-widget__body');
   inputEl = modal.querySelector('.kp-ai-widget__input');
   clearBtn = modal.querySelector('.kp-ai-widget__clear');
+  visualPlaceholder = modal.querySelector('.kp-ai-widget__visual-placeholder');
   placeholderLabel = null;
   placeholderHtml = renderPlaceholder();
   setBodyContent(placeholderHtml);
+  
+  // Set initial query if provided
+  if (initialQuery) {
+    inputEl.value = initialQuery;
+    if (clearBtn) {
+      clearBtn.classList.remove('is-disabled');
+      clearBtn.removeAttribute('aria-disabled');
+    }
+    if (visualPlaceholder) {
+      visualPlaceholder.style.display = 'none';
+    }
+  }
+
+  // Track modal open in Google Analytics
+  if (typeof gtag === 'function') {
+    gtag('event', 'frederique_open', {
+      event_category: 'AI Search',
+      event_label: 'Modal Opened'
+    });
+  }
 
   if ('enterKeyHint' in inputEl) {
     inputEl.enterKeyHint = 'search';
@@ -77,6 +101,9 @@ export const renderUI = () => {
       clearBtn.classList.toggle('is-disabled', !inputEl.value);
       clearBtn.toggleAttribute('aria-disabled', !inputEl.value);
     }
+    if (visualPlaceholder) {
+      visualPlaceholder.style.display = inputEl.value ? 'none' : 'block';
+    }
     if (!inputEl.value) {
       setBodyContent(placeholderHtml);
     }
@@ -91,6 +118,9 @@ export const renderUI = () => {
       inputEl.focus();
       clearBtn.classList.add('is-disabled');
       clearBtn.setAttribute('aria-disabled', 'true');
+      if (visualPlaceholder) {
+        visualPlaceholder.style.display = 'block';
+      }
       setBodyContent(placeholderHtml);
     };
     clearBtn.addEventListener('click', clearHandler);
@@ -118,8 +148,10 @@ export const renderUI = () => {
     }
   }, { passive: false });
   
-  // Focus input
-  setTimeout(() => inputEl.focus({ preventScroll: true }), 100);
+  // Auto-focus with delay to show modal animation first
+  setTimeout(() => {
+    inputEl.focus({ preventScroll: true });
+  }, 100);
 };
 
 export const showLoading = () => {
@@ -219,15 +251,19 @@ function setBodyContent(html) {
 
 function renderPlaceholder() {
   return `
-    <div class="kp-ai-widget__placeholder">
-      <h2>Een beetje inspiratie?</h2>
-      <p>Probeer een van deze zoekopdrachten:</p>
-      <ul>
-        <li><button type="button" data-query="Vaas met bloemen voor ongeveer 80 euro">Vaas met bloemen voor ongeveer 80 euro</button></li>
-        <li><button type="button" data-query="Iets voor een huwelijk">Iets voor een huwelijk</button></li>
-        <li><button type="button" data-query="Een beeldje met een hart">Een beeldje met een hart</button></li>
-        <li><button type="button" data-query="Schilderij van rond de 300 euro">Schilderij van rond de 300 euro</button></li>
-      </ul>
+    <div class="kp-ai-widget__help">
+      <div class="kp-ai-widget__help-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <path d="M12 17h.01"/>
+        </svg>
+      </div>
+      <h3 class="kp-ai-widget__help-title">Zoek met volzinnen</h3>
+      <p class="kp-ai-widget__help-text">
+        Je kunt gewoon typen wat je zoekt in normale taal! Probeer bijvoorbeeld: 
+        "Een mooi beeldje voor in de tuin" of "Een vaas van blauw glas voor €50".
+      </p>
     </div>
   `;
 }

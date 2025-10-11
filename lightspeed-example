@@ -1,0 +1,269 @@
+# Lightspeed API Samenvatting
+
+## Overzicht
+Dit project gebruikt de Lightspeed WebshopApp API om producten te synchroniseren tussen een PIM-systeem en Lightspeed webshops. De API wordt gebruikt voor het ophalen, aanmaken en bijwerken van producten, varianten, merken en leveranciers.
+
+## API Basis URL
+```
+https://api.webshopapp.com/{taal}/
+```
+
+## Authenticatie
+- **Type**: HTTP Basic Authentication
+- **Username**: API Key
+- **Password**: API Secret
+- **Headers**: `Accept: application/json`
+
+## Belangrijkste Endpoints
+
+### 1. Producten
+- **GET** `/products.json` - Lijst van alle producten
+- **GET** `/products/{id}.json` - Specifiek product ophalen
+- **POST** `/products.json` - Nieuw product aanmaken
+- **PUT** `/products/{id}.json` - Product bijwerken
+- **GET** `/products/{id}/images.json` - Productafbeeldingen ophalen
+- **POST** `/products/{id}/images.json` - Afbeelding uploaden
+- **DELETE** `/products/{id}/images/{imageId}.json` - Afbeelding verwijderen
+
+### 2. Varianten
+- **GET** `/variants.json` - Lijst van alle varianten
+- **GET** `/variants/{id}.json` - Specifieke variant ophalen
+- **GET** `/variants.json?product={productId}` - Varianten per product
+- **GET** `/variants.json?sku={sku}` - Variant zoeken op SKU
+- **POST** `/variants.json` - Nieuwe variant aanmaken
+- **PUT** `/variants/{id}.json` - Variant bijwerken
+
+### 3. Merken (Brands)
+- **GET** `/brands.json` - Lijst van alle merken
+- **GET** `/brands/{id}.json` - Specifiek merk ophalen
+
+### 4. Leveranciers (Suppliers)
+- **GET** `/suppliers.json` - Lijst van alle leveranciers
+- **GET** `/suppliers/{id}.json` - Specifieke leverancier ophalen
+
+## Verschil tussen Product en Variant
+
+### Product
+- **Hoofdentiteit** van een artikel
+- Bevat **algemene informatie** zoals:
+  - Titel, beschrijving, content
+  - Merk (brand)
+  - Leverancier (supplier)
+  - Zichtbaarheid (visibility)
+  - Afbeeldingen
+  - Categorieën
+- **Meertalig** - kan content hebben in verschillende talen
+- **Eén product** kan **meerdere varianten** hebben
+
+### Variant
+- **Specifieke uitvoering** van een product
+- Bevat **specifieke eigenschappen** zoals:
+  - SKU (unieke identificatie)
+  - EAN code
+  - Prijzen (incl/excl BTW)
+  - Voorraad niveau
+  - Gewicht en volume
+  - Kleur, maat, materiaal etc.
+- **Gekoppeld aan één product** via `product_id`
+- **Meertalig** - kan eigen titel hebben per taal
+
+## Belangrijke Velden
+
+### Product Velden
+```json
+{
+  "id": 12345,
+  "title": "Product Titel",
+  "fulltitle": "Volledige Product Titel",
+  "description": "Product beschrijving",
+  "content": "Uitgebreide product content",
+  "visibility": "visible|hidden",
+  "brand": {
+    "resource": {
+      "id": 1,
+      "title": "Merk Naam"
+    }
+  },
+  "supplier": {
+    "resource": {
+      "id": 1,
+      "title": "Leverancier Naam"
+    }
+  },
+  "images": [
+    {
+      "id": 1,
+      "src": "https://...",
+      "filename": "image.jpg"
+    }
+  ]
+}
+```
+
+### Variant Velden
+```json
+{
+  "id": 67890,
+  "sku": "UNIQUE-SKU-CODE",
+  "ean": "1234567890123",
+  "title": "Variant Titel",
+  "priceIncl": 29.99,
+  "priceExcl": 24.79,
+  "priceCost": 15.00,
+  "oldPriceIncl": 39.99,
+  "oldPriceExcl": 33.05,
+  "stockLevel": 100,
+  "weightValue": 0.5,
+  "weightUnit": "kg",
+  "volumeValue": 500,
+  "volumeUnit": "ml",
+  "articleCode": "ART-001",
+  "product": {
+    "resource": {
+      "id": 12345
+    }
+  }
+}
+```
+
+## Meertaligheid
+De API ondersteunt meertaligheid via de taalcode in de URL:
+- **Nederlands**: `/nl/products/{id}.json`
+- **Engels**: `/en/products/{id}.json`
+- **Duits**: `/de/products/{id}.json`
+
+## Paginering
+- **Parameter**: `?page={nummer}&limit={aantal}`
+- **Maximum**: 250 items per pagina
+- **Standaard**: 50 items per pagina
+
+## Rate Limiting
+- **Vertraging**: 200ms tussen API calls
+- **Timeout**: 10 seconden per request
+- **Retry**: Automatische retry bij fouten
+
+## Database Integratie
+Het project gebruikt Supabase voor:
+- **Variant Lookup**: SKU → Product ID mapping
+- **Brands Cache**: Merken opslag
+- **Suppliers Cache**: Leveranciers opslag
+- **Image Tracking**: Afbeelding fingerprinting
+- **Import Logs**: Import geschiedenis
+
+## Belangrijke Functionaliteiten
+
+### 1. SKU Resolutie
+- SKU wordt gebruikt als primaire identifier
+- Lookup tabel koppelt SKU aan Product ID en Variant ID
+- Fallback naar API zoeken als lookup faalt
+
+### 2. Image Synchronisatie
+- Complete vervanging van productafbeeldingen
+- Fingerprinting om duplicaten te voorkomen
+- Base64 upload naar Lightspeed
+
+### 3. Meertalige Updates
+- Aparte API calls per taal
+- Expliciete lege strings om overschrijven te voorkomen
+- Taal-specifieke velden per product/variant
+
+### 4. Error Handling
+- Uitgebreide logging van alle API calls
+- Retry mechanisme bij tijdelijke fouten
+- Graceful degradation bij API problemen
+
+## Voorbeeld Productstructuur JSON
+
+```json
+{
+  "product": {
+    "id": 12345,
+    "title": "Premium Wireless Headphones",
+    "fulltitle": "Premium Wireless Headphones - Noise Cancelling",
+    "description": "High-quality wireless headphones with active noise cancellation",
+    "content": "<p>Experience superior sound quality with these premium wireless headphones...</p>",
+    "visibility": "visible",
+    "brand": {
+      "resource": {
+        "id": 1,
+        "title": "AudioTech"
+      }
+    },
+    "supplier": {
+      "resource": {
+        "id": 1,
+        "title": "TechSupplier BV"
+      }
+    },
+    "images": [
+      {
+        "id": 1,
+        "src": "https://cdn.example.com/headphones-main.jpg",
+        "filename": "headphones-main.jpg"
+      },
+      {
+        "id": 2,
+        "src": "https://cdn.example.com/headphones-side.jpg",
+        "filename": "headphones-side.jpg"
+      }
+    ],
+    "variants": [
+      {
+        "id": 67890,
+        "sku": "AUDIO-WH-001-BLK",
+        "ean": "1234567890123",
+        "title": "Premium Wireless Headphones - Black",
+        "priceIncl": 299.99,
+        "priceExcl": 247.93,
+        "priceCost": 150.00,
+        "oldPriceIncl": 399.99,
+        "oldPriceExcl": 330.57,
+        "stockLevel": 50,
+        "weightValue": 0.3,
+        "weightUnit": "kg",
+        "volumeValue": 2000,
+        "volumeUnit": "cm3",
+        "articleCode": "AUDIO-WH-001",
+        "product": {
+          "resource": {
+            "id": 12345
+          }
+        }
+      },
+      {
+        "id": 67891,
+        "sku": "AUDIO-WH-001-WHT",
+        "ean": "1234567890124",
+        "title": "Premium Wireless Headphones - White",
+        "priceIncl": 299.99,
+        "priceExcl": 247.93,
+        "priceCost": 150.00,
+        "oldPriceIncl": 399.99,
+        "oldPriceExcl": 330.57,
+        "stockLevel": 25,
+        "weightValue": 0.3,
+        "weightUnit": "kg",
+        "volumeValue": 2000,
+        "volumeUnit": "cm3",
+        "articleCode": "AUDIO-WH-001",
+        "product": {
+          "resource": {
+            "id": 12345
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+## Tips en Best Practices
+
+1. **Altijd SKU gebruiken** als primaire identifier
+2. **Product eerst aanmaken**, dan varianten
+3. **Visibility altijd op "visible"** zetten
+4. **Meertalige updates** apart uitvoeren
+5. **Rate limiting respecteren** (200ms tussen calls)
+6. **Error handling** implementeren voor alle API calls
+7. **Lookup database** gebruiken voor performance
+8. **Image fingerprinting** om duplicaten te voorkomen

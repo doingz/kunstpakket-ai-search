@@ -1,4 +1,10 @@
-import { initWidget } from './widget.js';
+import { initWidget, handleSearch } from './widget.js';
+import { renderUI } from './ui.js';
+
+// Check for ?frederique=open parameter IMMEDIATELY before anything else can modify URL
+const urlParams = new URLSearchParams(window.location.search);
+const shouldAutoOpen = urlParams.get('frederique') === 'open';
+const autoSearchQuery = urlParams.get('search') || urlParams.get('query');
 
 // Feature flag check: load if WIDGET_LIVE=true OR ?f=1 OR session enabled
 const checkFeatureFlag = () => {
@@ -21,14 +27,47 @@ const checkFeatureFlag = () => {
 
 // Track purchase on thankyou page (temporary solution until webhook is available)
 const trackPurchaseIfThankyou = async () => {
-  // Check if this is the thankyou page
-  if (!window.location.pathname.includes('/checkout/thankyou')) {
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+  const isTestMode = params.get('thankyou') === 'true';
+  
+  // Check if this is the thankyou/success page OR test mode
+  // Note: both /checkout/ and /checkouts/ (plural) are used
+  const isThankyouPage = isTestMode ||
+                         path.includes('/checkout/thank_you') || 
+                         path.includes('/checkout/thankyou') ||
+                         path.includes('/checkout/success') ||
+                         path.includes('/checkouts/thankyou') ||
+                         path.includes('/checkouts/thank_you') ||
+                         path.includes('/checkouts/success');
+  
+  // Debug logging to console
+  console.log('[Frederique] Purchase tracking check:', {
+    path,
+    isTestMode,
+    isThankyouPage,
+    hasInteraction: !!localStorage.getItem('kp_last_interaction')
+  });
+  
+  if (!isThankyouPage) {
     return;
   }
 
   // Check if we have a recent interaction in localStorage
-  const lastInteraction = localStorage.getItem('kp_last_interaction');
+  let lastInteraction = localStorage.getItem('kp_last_interaction');
+  
+  // In test mode, create a fake interaction if none exists
+  if (!lastInteraction && isTestMode) {
+    console.log('[Frederique] Test mode: Creating fake interaction');
+    lastInteraction = JSON.stringify({
+      id: 'test-interaction-' + Date.now(),
+      timestamp: new Date().toISOString(),
+      query: 'test query'
+    });
+  }
+  
   if (!lastInteraction) {
+    console.log('[Frederique] No interaction found - skipping tracking');
     return;
   }
 
@@ -43,14 +82,25 @@ const trackPurchaseIfThankyou = async () => {
     }
 
     // Extract order_id from URL if available
-    const pathParts = window.location.pathname.split('/');
-    const thankyouIndex = pathParts.indexOf('thankyou');
+    // URL format: /checkouts/thankyou/[order_id] or /checkout/thankyou/[order_id]
+    const pathParts = path.split('/').filter(Boolean);
+    const thankyouIndex = Math.max(
+      pathParts.indexOf('thank_you'),
+      pathParts.indexOf('thankyou'),
+      pathParts.indexOf('success')
+    );
     const orderId = thankyouIndex >= 0 && pathParts[thankyouIndex + 1] 
       ? pathParts[thankyouIndex + 1] 
       : 'unknown';
 
     // Send purchase event to analytics worker
-    await fetch('https://frederique-ai.lotapi.workers.dev/track-purchase-thankyou', {
+    console.log('[Frederique] Tracking purchase:', {
+      interaction_id: interaction.id,
+      order_id: orderId,
+      path: window.location.pathname
+    });
+    
+    const response = await fetch('https://frederique-ai.lotapi.workers.dev/track-purchase-thankyou', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -61,8 +111,24 @@ const trackPurchaseIfThankyou = async () => {
       })
     });
 
-    // Clear the interaction after tracking
-    localStorage.removeItem('kp_last_interaction');
+    const responseData = await response.json().catch(() => null);
+    console.log('[Frederique] Purchase tracking response:', {
+      status: response.status,
+      ok: response.ok,
+      data: responseData
+    });
+
+    if (!response.ok) {
+      console.error('[Frederique] Purchase tracking failed:', responseData);
+    }
+
+    // Clear the interaction only if tracking was successful
+    if (response.ok) {
+      localStorage.removeItem('kp_last_interaction');
+      console.log('[Frederique] Purchase tracked successfully and interaction cleared');
+    } else {
+      console.log('[Frederique] Keeping interaction in localStorage due to failed tracking');
+    }
   } catch (err) {
     console.error('Failed to track purchase:', err);
   }
@@ -74,10 +140,38 @@ if (checkFeatureFlag()) {
     document.addEventListener('DOMContentLoaded', () => {
       initWidget();
       trackPurchaseIfThankyou();
+      
+      // Auto-open if ?frederique was in URL or auto-search if ?search was in URL
+      if (shouldAutoOpen || autoSearchQuery) {
+        setTimeout(() => {
+          renderUI(autoSearchQuery || '');
+          
+          // If there's a search query, execute it after opening
+          if (autoSearchQuery) {
+            setTimeout(() => {
+              handleSearch(autoSearchQuery);
+            }, 300);
+          }
+        }, 500);
+      }
     });
   } else {
     initWidget();
     trackPurchaseIfThankyou();
+    
+    // Auto-open if ?frederique was in URL or auto-search if ?search was in URL
+    if (shouldAutoOpen || autoSearchQuery) {
+      setTimeout(() => {
+        renderUI(autoSearchQuery || '');
+        
+        // If there's a search query, execute it after opening
+        if (autoSearchQuery) {
+          setTimeout(() => {
+            handleSearch(autoSearchQuery);
+          }, 300);
+        }
+      }, 500);
+    }
   }
 } else {
   // Even if widget is not enabled, still track purchases

@@ -1,0 +1,41 @@
+🚀 Starting full re-index with new rich markdown embeddings...
+Worker: https://kunstpakket-sync.lotapi.workers.dev
+Batch size: 100
+
+📦 Processing batch at offset 0...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 100...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 200...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 300...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 400...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 500...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 600...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 700...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 800...
+✅ Batch completed: 100 products indexed
+
+📦 Processing batch at offset 900...
+✅ Batch completed: 55 products indexed
+
+🎉 All products re-indexed!
+
+📊 Re-indexing Summary:
+   ✅ Successful batches: 10
+   ❌ Failed batches: 0
+
+Done! Your vector search now uses rich markdown embeddings 🎨
