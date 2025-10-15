@@ -4,12 +4,22 @@ let overlay = null;
 let modal = null;
 let bodyEl = null;
 let inputEl = null;
-let clearBtn = null;
 let visualPlaceholder = null;
 let placeholderLabel = null;
 let placeholderHtml = '';
 
 export const renderUI = (initialQuery = '') => {
+  // Prevent multiple overlays - close any existing modal first
+  if (overlay) {
+    closeModal();
+  }
+  
+  // Fix z-index conflicts with site elements
+  const sidebar = document.querySelector('#wwkSidebarMobile');
+  if (sidebar) {
+    sidebar.style.setProperty('z-index', '999', 'important');
+  }
+  
   // Create overlay
   overlay = document.createElement('div');
   overlay.className = 'kp-ai-widget__overlay';
@@ -42,7 +52,6 @@ export const renderUI = (initialQuery = '') => {
           inputmode="search"
         />
         <div class="kp-ai-widget__visual-placeholder">Hoi, waar ben je naar opzoek?</div>
-        <div class="kp-ai-widget__clear" role="button" aria-label="Wis zoekopdracht">Wissen</div>
       </div>
     </div>
     <div class="kp-ai-widget__body"></div>
@@ -54,7 +63,6 @@ export const renderUI = (initialQuery = '') => {
   // Get references
   bodyEl = modal.querySelector('.kp-ai-widget__body');
   inputEl = modal.querySelector('.kp-ai-widget__input');
-  clearBtn = modal.querySelector('.kp-ai-widget__clear');
   visualPlaceholder = modal.querySelector('.kp-ai-widget__visual-placeholder');
   placeholderLabel = null;
   placeholderHtml = renderPlaceholder();
@@ -63,10 +71,6 @@ export const renderUI = (initialQuery = '') => {
   // Set initial query if provided
   if (initialQuery) {
     inputEl.value = initialQuery;
-    if (clearBtn) {
-      clearBtn.classList.remove('is-disabled');
-      clearBtn.removeAttribute('aria-disabled');
-    }
     if (visualPlaceholder) {
       visualPlaceholder.style.display = 'none';
     }
@@ -97,10 +101,6 @@ export const renderUI = (initialQuery = '') => {
   });
 
   inputEl.addEventListener('input', () => {
-    if (clearBtn) {
-      clearBtn.classList.toggle('is-disabled', !inputEl.value);
-      clearBtn.toggleAttribute('aria-disabled', !inputEl.value);
-    }
     if (visualPlaceholder) {
       visualPlaceholder.style.display = inputEl.value ? 'none' : 'block';
     }
@@ -108,28 +108,6 @@ export const renderUI = (initialQuery = '') => {
       setBodyContent(placeholderHtml);
     }
   });
-
-  if (clearBtn) {
-    clearBtn.classList.add('is-disabled');
-    clearBtn.setAttribute('aria-disabled', 'true');
-    const clearHandler = (e) => {
-      e.preventDefault();
-      inputEl.value = '';
-      inputEl.focus();
-      clearBtn.classList.add('is-disabled');
-      clearBtn.setAttribute('aria-disabled', 'true');
-      if (visualPlaceholder) {
-        visualPlaceholder.style.display = 'block';
-      }
-      setBodyContent(placeholderHtml);
-    };
-    clearBtn.addEventListener('click', clearHandler);
-    clearBtn.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        clearHandler(e);
-      }
-    });
-  }
   
   const closeBtn = modal.querySelector('.kp-ai-widget__close');
   closeBtn.addEventListener('click', closeModal);
@@ -216,7 +194,7 @@ function renderProducts(products) {
     const reasonHtml = renderReason(p);
 
     html += `
-      <a href="${escapeHtml(p.url)}" class="kp-ai-widget__product">
+      <a href="${escapeHtml(p.url)}" class="kp-ai-widget__product" data-product-id="${escapeHtml(p.id || '')}" data-product-name="${escapeHtml(p.title)}" data-product-price="${escapeHtml(p.price || 0)}">
         ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" class="kp-ai-widget__product-img" loading="lazy">` : ''}
         <div class="kp-ai-widget__product-info">
           <h3 class="kp-ai-widget__product-title">${escapeHtml(p.title)}</h3>
@@ -246,6 +224,7 @@ function setBodyContent(html) {
   if (bodyEl) {
     bodyEl.innerHTML = html;
     attachPlaceholderHandlers();
+    attachProductClickHandlers();
   }
 }
 
@@ -278,23 +257,61 @@ function attachPlaceholderHandlers() {
       const query = button.getAttribute('data-query');
       if (!query) return;
       inputEl.value = query;
-      if (clearBtn) {
-        clearBtn.hidden = false;
-      }
       handleSearch(query);
     });
   });
 }
 
+function attachProductClickHandlers() {
+  if (!bodyEl) return;
+  const productLinks = bodyEl.querySelectorAll('.kp-ai-widget__product[data-product-id]');
+  
+  productLinks.forEach((link) => {
+    link.addEventListener('click', (e) => {
+      const productId = link.getAttribute('data-product-id');
+      const productName = link.getAttribute('data-product-name');
+      const productPrice = parseFloat(link.getAttribute('data-product-price')) || 0;
+      
+      if (productId && productName) {
+        // Store the clicked product as the last clicked product
+        const productData = {
+          id: productId,
+          name: productName,
+          price: productPrice,
+          url: link.href,
+          timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('kp_last_clicked_product', JSON.stringify(productData));
+        console.log('[Frederique] Product clicked and stored:', productData);
+      }
+    });
+  });
+}
+
 export const closeModal = () => {
+  // AGGRESSIVE CLEANUP to prevent payment blocking
+  // Remove all overlays, even duplicates
+  document.querySelectorAll('.kp-ai-widget__overlay').forEach(el => el.remove());
+  
+  // Restore z-index of site elements
+  const sidebar = document.querySelector('#wwkSidebarMobile');
+  if (sidebar) {
+    sidebar.style.removeProperty('z-index');
+  }
+  
   overlay?.remove();
   overlay = null;
   modal = null;
   bodyEl = null;
   inputEl = null;
-  clearBtn = null;
   placeholderLabel = null;
   placeholderHtml = '';
+  
+  // Force garbage collection hint
+  if (typeof window !== 'undefined' && window.gc) {
+    try { window.gc(); } catch (e) {}
+  }
 };
 
 function renderPrice(product) {

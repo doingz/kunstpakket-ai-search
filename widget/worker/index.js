@@ -67,9 +67,10 @@ export default {
       return handleAiSearch(request, env, ctx);
     }
 
-    if (pathname === '/lightspeed-webhook' && request.method === 'POST') {
-      return handleLightspeedWebhook(request, env, ctx);
-    }
+    // Lightspeed webhook disabled - DOM scraper handles all tracking with widget attribution
+    // if (pathname === '/lightspeed-webhook' && request.method === 'POST') {
+    //   return handleLightspeedWebhook(request, env, ctx);
+    // }
 
     if (pathname === '/track-purchase-thankyou' && request.method === 'POST') {
       return handleThankyouPurchase(request, env, ctx);
@@ -138,11 +139,12 @@ async function handleAiSearch(request, env, ctx) {
       interactionId = await trackSearchEvent(env, {
         sessionId: session_id,
         query,
+        friendlyMessage,
         filters,
         totalResults: products.length,
         tookMs,
         method: 'vector_search',
-        productIds: products.slice(0, 5).map(p => p.id).join(',')
+        productIds: products.slice(0, 5).map(p => p.id)
       });
     } catch (err) {
       console.error('Analytics tracking failed:', err);
@@ -218,14 +220,14 @@ PRICE RULES:
 - "vanaf X" → minPrice: X, maxPrice: null
 - "tussen X en Y" → minPrice: X, maxPrice: Y`,
       input: query,
-      tools: [{
-        type: 'function',
-        name: 'extract_filters',
+        tools: [{
+          type: 'function',
+            name: 'extract_filters',
         description: 'Extract type and price range from query',
-        parameters: {
-          type: 'object',
-          properties: {
-            type: {
+            parameters: {
+              type: 'object',
+              properties: {
+                type: {
               type: ['string', 'null'],
               enum: [...ALLOWED_TYPES, null],
               description: 'Product type or null if not mentioned'
@@ -381,16 +383,16 @@ Bevat een van de titels/tags het gezochte thema? Check dit EERST!
 - Voorbeeld: zoekt "wandelen" maar ziet "wanddecoratie" → "Sorry, geen wandel-items 😕"
 - Voorbeeld: zoekt "€300 schilderij" en ziet schilderijen €295 → GOED: prijzen kloppen!
 
-TAAK: Schrijf kort, warm verhaaltje (max 2 zinnen, max 250 tekens).
+TAAK: Schrijf kort, warm praatje (max 1-2 zinnen, max 120 tekens).
 
 STIJL:
-- Perfect Nederlands, natuurlijk
-- Passende emoticons (⚽ voetbal, ❤️ hart, 🐱 kat, 🐄 koe, 🎨 kunst)
-- Noem aantal
+- Perfect Nederlands, to the point
+- 1 passende emoticon (⚽ voetbal, ❤️ hart, 🐱 kat, 🐄 koe, 🎨 kunst)
+- Noem aantal als relevant
 - Spreek neutraal (vaak cadeau)
 - NOOIT prijzen noemen of "similarity"
 - Geen vragen
-- Tip bij veel resultaten of korte beeldje-query
+- Alleen tip bij 60+ resultaten
 
 Alleen het verhaaltje:`;
 
@@ -400,15 +402,15 @@ Alleen het verhaaltje:`;
         const data = await callOpenAIResponses(env, {
           instructions: 'Je bent Frederique, een vrolijke Nederlandse kunstassistent. Schrijf perfecte, natuurlijke Nederlandse teksten met correcte grammatica en idiomatische uitdrukkingen.',
           input: prompt,
-          max_tokens: 150,
+          max_tokens: 80,
           temperature: 0.8
         });
 
         const aiText = data.output_text?.trim();
-        if (aiText && aiText.length > 0 && aiText.length < 500) {
+        if (aiText && aiText.length > 0 && aiText.length < 200) {
           return aiText;
         }
-      } catch (error) {
+  } catch (error) {
         console.warn('OpenAI Responses API failed, falling back to Cloudflare AI');
       }
     }
@@ -419,13 +421,13 @@ Alleen het verhaaltje:`;
         { role: 'system', content: 'Je bent Frederique, een vrolijke Nederlandse kunstassistent. Schrijf perfecte, natuurlijke Nederlandse teksten met correcte grammatica en idiomatische uitdrukkingen.' },
           { role: 'user', content: prompt }
         ],
-      max_tokens: 150,
+      max_tokens: 80,
       temperature: 0.8
     });
 
     const aiText = extractAiText(response).trim();
     
-    if (aiText && aiText.length > 0 && aiText.length < 500) {
+    if (aiText && aiText.length > 0 && aiText.length < 200) {
       return aiText;
     }
 
@@ -616,116 +618,330 @@ async function textToEmbedding(text, env) {
 // ========================================
 
 async function trackSearchEvent(env, data) {
-  // Track search interactions for analytics
-  if (!env.ANALYTICS || !env.ANALYTICS_API_URL || !env.ANALYTICS_API_KEY) {
-    return null; // Analytics not configured
+  // Track search interactions via service binding (preferred) or HTTP fallback
+  if (!env.ANALYTICS && !env.ANALYTICS_API_URL) {
+    console.warn('⚠️ Analytics not configured');
+    return null;
   }
 
   try {
     const payload = {
-      event: 'search',
+      event_type: 'interaction',
       site_id: env.ANALYTICS_SITE_ID || 'kunstpakket-001',
       session_id: data.sessionId,
-      query: data.query,
-      filters: data.filters,
-        total_results: data.totalResults,
-      took_ms: data.tookMs,
-        method: data.method,
-      product_ids: data.productIds,
-      timestamp: new Date().toISOString()
+      question_text: data.query,
+      answer_text: data.friendlyMessage || '',
+      products_summary: data.productIds ? data.productIds.join(',') : ''
     };
 
-    const response = await fetch(`${env.ANALYTICS_API_URL}/event`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.ANALYTICS_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+    let response;
+    
+    // Try service binding first (more reliable for worker-to-worker)
+    if (env.ANALYTICS) {
+      console.log('📤 Using service binding for analytics');
+      const encodedKey = base64EncodeApiKey(env.ANALYTICS_API_KEY);
+      
+      response = await env.ANALYTICS.fetch('https://internal/event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+    } else if (env.ANALYTICS_API_URL) {
+      // Fallback to HTTP
+      console.log('📤 Using HTTP fetch for analytics:', env.ANALYTICS_API_URL);
+      const encodedKey = base64EncodeApiKey(env.ANALYTICS_API_KEY);
+      
+      response = await fetch(env.ANALYTICS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!response) {
+      console.error('❌ No analytics response');
+      return null;
+    }
+
+    console.log('📥 Analytics status:', response.status);
 
     if (!response.ok) {
-      console.warn('Analytics tracking failed:', response.status);
+      const errorText = await response.text();
+      console.error('❌ Analytics failed:', {
+        status: response.status,
+        error: errorText
+      });
       return null;
     }
 
     const result = await response.json();
+    console.log('✅ Analytics success:', result.interaction_id);
     return result.interaction_id || null;
   } catch (error) {
-    console.error('Analytics error:', error);
+    console.error('❌ Analytics exception:', error.message);
     return null;
   }
 }
 
-async function handleThankyouPurchase(request, env, ctx) {
-  // Handle purchase tracking from thank-you page
+async function handleLightspeedWebhook(request, env, ctx) {
+  // Handle Lightspeed order webhook - PRIMARY method for tracking
   try {
     const body = await request.json();
-    const { interaction_id, order_id, order_total, items } = body;
-
-    console.log('Received thankyou purchase request:', {
-      interaction_id,
-      order_id,
-      order_total,
-      items_count: items?.length
+    
+    console.log('📦 Received Lightspeed webhook:', {
+      event: body.event,
+      order_id: body.order?.id,
+      total: body.order?.total
     });
 
-    if (!interaction_id) {
-      console.warn('No interaction_id provided for purchase tracking');
-      return json({
-        success: false,
-        message: 'interaction_id is required'
-      }, 400);
+    // Lightspeed sends different events - we only want completed orders
+    if (body.event !== 'order.completed' && body.event !== 'order.paid') {
+      console.log('⏭️  Ignoring non-completed order event:', body.event);
+      return json({ success: true, message: 'Event ignored' });
     }
 
-    if (!env.ANALYTICS || !env.ANALYTICS_API_URL || !env.ANALYTICS_API_KEY) {
-      console.warn('Analytics not configured');
-      return json({
-        success: false,
-        message: 'Analytics not configured'
-      }, 500);
-    }
+    const order = body.order || {};
+    const orderId = order.id || order.number || 'unknown';
+    const orderTotal = parseFloat(order.total || order.grandTotal || 0);
+    
+    // Extract products from Lightspeed webhook
+    const items = (order.items || order.products || []).map(item => ({
+      name: item.title || item.name || item.productTitle,
+      title: item.title || item.name || item.productTitle,
+      quantity: parseInt(item.quantity || item.qty || 1),
+      price: parseFloat(item.price || item.priceIncl || 0),
+      product_id: item.productId || item.id
+    }));
 
-    const payload = {
-      event: 'purchase',
+    console.log('📦 Webhook order data:', {
+      order_id: orderId,
+      total: orderTotal,
+      items_count: items.length
+    });
+
+    // Strategy: Try to find a recent interaction_id that matches this order
+    // If found: track with that interaction_id (perfect!)
+    // If not found: create synthetic interaction for webhook-only orders
+    // Analytics API will validate if interaction exists
+    
+    // Try to extract customer email from order to find matching interaction
+    const customerEmail = order.customer?.email || order.email || null;
+    
+    console.log('🔍 Looking for matching interaction for customer:', customerEmail);
+    
+    const productsSummary = items.map(i => {
+      const qty = i.quantity || 1;
+      return qty > 1 ? `${i.name} (${qty}x)` : i.name;
+    }).join(', ');
+
+    // For now: create a synthetic interaction
+    // Later: query analytics DB to find real interaction_id by customer email/session
+    // Analytics will validate if this is a real widget-driven purchase
+    console.log('📝 Creating webhook interaction (will be validated by analytics)');
+    
+    // Create interaction first
+    const interactionPayload = {
+      event_type: 'interaction',
       site_id: env.ANALYTICS_SITE_ID || 'kunstpakket-001',
-      interaction_id,
-      order_id,
-      order_total,
-      items,
-      timestamp: new Date().toISOString()
+      session_id: 'webhook-' + orderId,
+      question_text: 'Direct purchase (no widget search)',
+      answer_text: 'Order via webhook',
+      products_summary: productsSummary
     };
 
-    console.log('Sending purchase event to analytics:', payload);
+    if (!env.ANALYTICS && !env.ANALYTICS_API_URL) {
+      return json({ success: false, message: 'Analytics not configured' }, 500);
+    }
 
-    const response = await fetch(`${env.ANALYTICS_API_URL}/event`, {
-          method: 'POST',
-          headers: {
-        'Authorization': `Bearer ${env.ANALYTICS_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+    const encodedKey = base64EncodeApiKey(env.ANALYTICS_API_KEY);
+    let interactionResponse;
 
-    console.log('Analytics response status:', response.status);
+    // Create interaction
+    if (env.ANALYTICS) {
+      interactionResponse = await env.ANALYTICS.fetch('https://internal/event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(interactionPayload)
+      });
+    } else {
+      interactionResponse = await fetch(env.ANALYTICS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(interactionPayload)
+      });
+    }
+
+    if (!interactionResponse.ok) {
+      console.error('❌ Failed to create interaction:', await interactionResponse.text());
+      return json({ success: false, message: 'Failed to create interaction' }, 500);
+    }
+
+    const interactionResult = await interactionResponse.json();
+    const interactionId = interactionResult.interaction_id;
+    
+    console.log('✅ Created interaction:', interactionId);
+
+    // Now create the purchase with the real interaction_id
+    const purchasePayload = {
+      event_type: 'purchase',
+      site_id: env.ANALYTICS_SITE_ID || 'kunstpakket-001',
+      interaction_id: interactionId,
+      total_amount: orderTotal,
+      commission_amount: orderTotal * 0.10,
+      currency_code: 'EUR',
+      products_summary: productsSummary
+    };
+
+    console.log('📤 Sending purchase to analytics:', purchasePayload);
+
+    let response;
+
+    if (env.ANALYTICS) {
+      response = await env.ANALYTICS.fetch('https://internal/event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(purchasePayload)
+      });
+    } else {
+      response = await fetch(env.ANALYTICS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(purchasePayload)
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Analytics tracking failed:', response.status, errorText);
+      console.error('❌ Analytics tracking failed:', errorText);
       return json({
         success: false,
-        status: response.status,
         message: 'Analytics tracking failed',
         error: errorText
       }, response.status);
     }
 
     const result = await response.json();
-    console.log('Analytics response:', result);
-
+    console.log('✅ Webhook purchase tracked successfully');
+    
     return json({
       success: true,
-      status: response.status,
+      message: 'Purchase tracked via webhook (synthetic interaction)',
+      response: result,
+      note: 'Widget interactions from DOM scraper take precedence'
+    });
+    
+  } catch (error) {
+    console.error('❌ Lightspeed webhook error:', error);
+    return json({
+      success: false,
+      message: error.message || 'Webhook processing failed'
+    }, 500);
+  }
+}
+
+async function handleThankyouPurchase(request, env, ctx) {
+  // Handle purchase tracking via service binding or HTTP
+  try {
+    const body = await request.json();
+    const { interaction_id, order_id, order_total, commission_amount, items } = body;
+
+    console.log('Received thankyou purchase request:', {
+      interaction_id,
+      order_id,
+      order_total,
+      commission_amount,
+      items_count: items?.length
+    });
+
+    if (!interaction_id) {
+      return json({ success: false, message: 'interaction_id is required' }, 400);
+    }
+
+    if (!env.ANALYTICS && !env.ANALYTICS_API_URL) {
+      return json({ success: false, message: 'Analytics not configured' }, 500);
+    }
+
+    // Calculate commission: either from order_total (10%) or use provided commission_amount
+    const commission = commission_amount || (order_total ? order_total * 0.10 : 10);
+    const totalAmount = order_total || (commission_amount ? commission_amount * 10 : 100);
+    
+    // Format products_summary: "Product 1 (2x), Product 2 (1x), ..." or from array
+    let productsSummary = '';
+    if (typeof items === 'string') {
+      productsSummary = items; // Already a string
+    } else if (Array.isArray(items) && items.length > 0) {
+      productsSummary = items.map(item => {
+        const name = item.title || item.name || 'Product';
+        const qty = item.quantity || 1;
+        return qty > 1 ? `${name} (${qty}x)` : name;
+      }).join(', ');
+    }
+    
+    const payload = {
+      event_type: 'purchase',
+      site_id: env.ANALYTICS_SITE_ID || 'kunstpakket-001',
+      interaction_id,
+      total_amount: totalAmount,
+      commission_amount: commission,
+      currency_code: 'EUR',
+      products_summary: productsSummary || null
+    };
+
+    const encodedKey = base64EncodeApiKey(env.ANALYTICS_API_KEY);
+    let response;
+
+    if (env.ANALYTICS) {
+      console.log('Using service binding for purchase');
+      response = await env.ANALYTICS.fetch('https://internal/event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      console.log('Using HTTP for purchase');
+      response = await fetch(env.ANALYTICS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${encodedKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return json({
+        success: false,
+        message: 'Analytics tracking failed',
+        error: errorText
+      }, response.status);
+    }
+
+    const result = await response.json();
+    return json({
+      success: true,
       response: result,
       message: 'Purchase tracked successfully'
     });
@@ -741,6 +957,22 @@ async function handleThankyouPurchase(request, env, ctx) {
 // ========================================
 // HELPER FUNCTIONS
 // ========================================
+
+function base64EncodeApiKey(apiKey) {
+  // Cloudflare Workers compatible base64 encoding
+  try {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(apiKey);
+    let binary = '';
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary);
+  } catch (error) {
+    console.error('Base64 encoding failed:', error);
+    return apiKey; // fallback to plain key
+  }
+}
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {

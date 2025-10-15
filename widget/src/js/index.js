@@ -25,6 +25,77 @@ const checkFeatureFlag = () => {
   return enabled === '1';
 };
 
+// Extract order items from thankyou page DOM (Lightspeed specific)
+const extractOrderItems = () => {
+  const items = [];
+  
+  try {
+    // Try Lightspeed order items structure
+    const orderItems = document.querySelectorAll('.order-item, .checkout-item, [class*="order-line"], [class*="product-line"]');
+    
+    orderItems.forEach(item => {
+      // Try to find product name
+      const nameEl = item.querySelector('.product-title, .item-title, .product-name, [class*="product-title"], [class*="item-name"]');
+      const name = nameEl ? nameEl.textContent.trim() : '';
+      
+      // Try to find quantity
+      const qtyEl = item.querySelector('.quantity, .qty, [class*="quantity"]');
+      const quantity = qtyEl ? parseInt(qtyEl.textContent.trim()) || 1 : 1;
+      
+      // Try to find price
+      const priceEl = item.querySelector('.price, .item-price, [class*="price"]');
+      const priceText = priceEl ? priceEl.textContent.trim() : '';
+      const price = parseFloat(priceText.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
+      
+      if (name) {
+        items.push({
+          name: name,
+          title: name,
+          quantity: quantity,
+          price: price
+        });
+      }
+    });
+    
+    console.log('[Frederique] Extracted items from DOM:', items);
+  } catch (err) {
+    console.error('[Frederique] Failed to extract order items:', err);
+  }
+  
+  return items;
+};
+
+// Extract order total from thankyou page DOM
+const extractOrderTotal = () => {
+  try {
+    // Try to find order total in various common locations
+    const totalSelectors = [
+      '.order-total .price',
+      '.total-price',
+      '[class*="order-total"]',
+      '[class*="grand-total"]',
+      '.checkout-total',
+      '#order-total'
+    ];
+    
+    for (const selector of totalSelectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        const text = el.textContent.trim();
+        const total = parseFloat(text.replace(/[^0-9,.]/g, '').replace(',', '.'));
+        if (total && total > 0) {
+          console.log('[Frederique] Extracted order total:', total);
+          return total;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[Frederique] Failed to extract order total:', err);
+  }
+  
+  return null;
+};
+
 // Track purchase on thankyou page (temporary solution until webhook is available)
 const trackPurchaseIfThankyou = async () => {
   const path = window.location.pathname;
@@ -32,14 +103,18 @@ const trackPurchaseIfThankyou = async () => {
   const isTestMode = params.get('thankyou') === 'true';
   
   // Check if this is the thankyou/success page OR test mode
-  // Note: both /checkout/ and /checkouts/ (plural) are used
+  // Support multiple e-commerce platforms (Lightspeed, WooCommerce, Shopify, etc.)
+  const pathLower = path.toLowerCase();
   const isThankyouPage = isTestMode ||
-                         path.includes('/checkout/thank_you') || 
-                         path.includes('/checkout/thankyou') ||
-                         path.includes('/checkout/success') ||
-                         path.includes('/checkouts/thankyou') ||
-                         path.includes('/checkouts/thank_you') ||
-                         path.includes('/checkouts/success');
+                         pathLower.includes('/checkout/thank') || 
+                         pathLower.includes('/checkout/success') ||
+                         pathLower.includes('/checkouts/thank') ||
+                         pathLower.includes('/checkouts/success') ||
+                         pathLower.includes('/order-received') ||
+                         pathLower.includes('/bedankt') ||
+                         pathLower.includes('/dankjewel') ||
+                         pathLower.includes('/payment-success') ||
+                         pathLower.match(/\/(bestelling|order)-voltooid/);
   
   // Debug logging to console
   console.log('[Frederique] Purchase tracking check:', {
@@ -76,8 +151,10 @@ const trackPurchaseIfThankyou = async () => {
     const interactionTime = new Date(interaction.timestamp).getTime();
     const now = Date.now();
     
-    // Only track if interaction was within last 2 hours
-    if (now - interactionTime > 2 * 60 * 60 * 1000) {
+    // Only track if interaction was within last 7 days (people can take time to decide)
+    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+    if (now - interactionTime > sevenDaysInMs) {
+      console.log('[Frederique] Interaction too old (>7 days), skipping tracking');
       return;
     }
 
@@ -93,10 +170,43 @@ const trackPurchaseIfThankyou = async () => {
       ? pathParts[thankyouIndex + 1] 
       : 'unknown';
 
+    // Get last clicked product from localStorage
+    const lastClickedProduct = JSON.parse(localStorage.getItem('kp_last_clicked_product') || 'null');
+    
+    // Use last clicked product data instead of DOM scraping
+    let orderTotal = 0;
+    let items = [];
+    
+    if (lastClickedProduct) {
+      orderTotal = lastClickedProduct.price;
+      items = [{
+        name: lastClickedProduct.name,
+        title: lastClickedProduct.name,
+        quantity: 1,
+        price: lastClickedProduct.price,
+        product_id: lastClickedProduct.id
+      }];
+      console.log('[Frederique] Using last clicked product data:', lastClickedProduct);
+    } else {
+      // Fallback: try DOM extraction (for iframe compatibility)
+      const extractedItems = extractOrderItems();
+      const extractedTotal = extractOrderTotal();
+      if (extractedItems.length > 0) {
+        items = extractedItems;
+        orderTotal = extractedTotal || 0;
+        console.log('[Frederique] Fallback: extracted from DOM');
+      } else {
+        console.log('[Frederique] No product data available (iframe issue)');
+      }
+    }
+
     // Send purchase event to analytics worker
     console.log('[Frederique] Tracking purchase:', {
       interaction_id: interaction.id,
       order_id: orderId,
+      order_total: orderTotal,
+      items_count: items.length,
+      source: lastClickedProduct ? 'last_clicked_product' : 'dom_extraction',
       path: window.location.pathname
     });
     
@@ -106,8 +216,9 @@ const trackPurchaseIfThankyou = async () => {
       body: JSON.stringify({
         interaction_id: interaction.id,
         order_id: orderId,
-        commission_amount: 10, // Fixed €10 per order (temporary)
-        source: 'thankyou_page'
+        order_total: orderTotal,
+        items: items,
+        source: lastClickedProduct ? 'last_clicked_product' : 'thankyou_page'
       })
     });
 
@@ -119,15 +230,17 @@ const trackPurchaseIfThankyou = async () => {
     });
 
     if (!response.ok) {
-      console.error('[Frederique] Purchase tracking failed:', responseData);
+      console.error('[Frederique] ❌ Purchase tracking failed:', responseData);
     }
 
-    // Clear the interaction only if tracking was successful
+    // Clear the interaction and last clicked product only if tracking was successful
     if (response.ok) {
       localStorage.removeItem('kp_last_interaction');
-      console.log('[Frederique] Purchase tracked successfully and interaction cleared');
+      localStorage.removeItem('kp_last_clicked_product');
+      console.log('[Frederique] ✅ Purchase tracked successfully! Interaction and product data cleared.');
+      console.log('[Frederique] 💰 Commission: €10 for order', orderId);
     } else {
-      console.log('[Frederique] Keeping interaction in localStorage due to failed tracking');
+      console.log('[Frederique] ⚠️ Keeping interaction in localStorage due to failed tracking');
     }
   } catch (err) {
     console.error('Failed to track purchase:', err);

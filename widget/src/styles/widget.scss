@@ -16,7 +16,7 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     inset: 0;
     background: $bg-dark;
     backdrop-filter: blur(4px);
-    z-index: 2147483647;
+    z-index: 999999; // High but not insanely high to avoid payment API blocking
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -109,7 +109,6 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     position: relative;
     width: 100%;
     background: #ffffff;
-    border-radius: 60px;
     border: 1px solid #4b5563;
     opacity: 0.9;
     transition: border-color 0.2s, opacity 0.2s;
@@ -153,7 +152,7 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
     outline: none !important;
     background: transparent !important;
     color: #1e293b !important;
-    padding: 14px 90px 14px 46px !important;
+    padding: 14px 14px 14px 46px !important;
     margin: 0 !important;
     line-height: 1.5 !important;
     border-radius: 60px;
@@ -186,43 +185,6 @@ $font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 
 
     &.is-hidden {
       opacity: 0;
-    }
-  }
-
-  &__clear {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-family: $font !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    color: #4b5563 !important;
-    background: rgba(241, 245, 249, 0.9) !important;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    user-select: none;
-    z-index: 3;
-    &.is-hidden {
-      visibility: hidden;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    &.is-disabled {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    &:hover {
-      background: rgba(226, 232, 240, 0.95) !important;
     }
   }
 

@@ -3,6 +3,7 @@ const API_ENDPOINT = 'https://frederique-ai.lotapi.workers.dev/ai-search';
 export const searchProducts = async (query, options = {}) => {
   const payload = {
     query,
+    session_id: crypto.randomUUID(), // Nieuwe unieke ID per query
     filters: options.filters || {}
   };
 
