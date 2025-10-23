@@ -43,7 +43,11 @@ CRITICAL INSTRUCTIONS:
 
 3. Extract attributes as tags WITH synonyms (hart → hart, hartje, love, hearts, heart, liefde)
 
-4. Parse price ranges (max 80 euro, onder 50, tussen 30-100, tot 75)
+4. Parse price ranges intelligently:
+   - "max 80 euro", "onder 50" → price_max
+   - "vanaf 100", "boven 50" → price_min
+   - "tussen 30 en 100", "30-100 euro" → price_min + price_max
+   - "rond 50", "ongeveer 40", "om en nabij 60" → price_min = X * 0.8, price_max = X * 1.2
 
 Return JSON with:
 - keywords: array of search terms INCLUDING synonyms and variations (Dutch + English)
@@ -172,8 +176,39 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Categories are stored for ranking, not filtering
-  // We want to show ALL relevant products, just rank them better
+  // Categories - STRICT type filtering
+  // If AI detects a product type category, use it as a hard filter
+  if (filters.categories && filters.categories.length > 0) {
+    const typeCategories = ['Schilderijen', 'Schalen', 'Vazen', 'Wandborden', 'Beelden'];
+    const detectedType = filters.categories.find((cat: string) => 
+      typeCategories.some(type => cat.includes(type))
+    );
+    
+    if (detectedType) {
+      // Map to actual database category name
+      let categoryPattern = '';
+      if (detectedType.includes('Schilderij')) {
+        categoryPattern = '%Schilderij%';
+      } else if (detectedType.includes('Vazen') || detectedType.includes('Schalen')) {
+        categoryPattern = '%Schalen & Vazen%';
+      } else if (detectedType.includes('Wandbord')) {
+        categoryPattern = '%Wandbord%';
+      } else if (detectedType.includes('Beeld')) {
+        categoryPattern = '%beeld%'; // lowercase for all beeld variations
+      }
+      
+      if (categoryPattern) {
+        params.push(categoryPattern);
+        conditions.push(`id IN (
+          SELECT product_id FROM product_categories 
+          WHERE category_id IN (
+            SELECT id FROM categories WHERE title ILIKE $${paramIndex}
+          )
+        )`);
+        paramIndex++;
+      }
+    }
+  }
 
   return { conditions, params };
 }
@@ -189,54 +224,12 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const countResult = await sql.query(countQuery, params);
   const total = parseInt(countResult.rows[0]?.total || '0');
 
-  // Build smart ranking ORDER BY clause
-  let rankingClauses: string[] = [];
-  
-  // Priority 1: Exact keyword match in TITLE (highest score)
-  if (filters.keywords && filters.keywords.length > 0) {
-    const titleMatches = filters.keywords.slice(0, 3).map((kw: string, i: number) => 
-      `CASE WHEN LOWER(title) LIKE LOWER('%${kw}%') THEN ${100 - i * 10} ELSE 0 END`
-    );
-    rankingClauses.push(`(${titleMatches.join(' + ')})`);
-  }
-  
-  // Priority 2: Category match boost (huge bonus)
-  if (filters.categories && filters.categories.length > 0) {
-    const catKeywords = filters.categories.join(' ');
-    rankingClauses.push(`
-      CASE WHEN id IN (
-        SELECT product_id FROM product_categories pc
-        JOIN categories c ON pc.category_id = c.id
-        WHERE c.title ILIKE '%${catKeywords}%'
-      ) THEN 200 ELSE 0 END
-    `);
-  }
-  
-  // Priority 3: Penalize wrong product types
-  // If searching for schilderij, reduce score for mokken, vazen, etc
-  if (filters.keywords && filters.keywords.some((kw: string) => 
-    kw.toLowerCase().includes('schilderij') || kw.toLowerCase().includes('painting')
-  )) {
-    rankingClauses.push(`
-      CASE 
-        WHEN LOWER(title) LIKE '%mok%' OR LOWER(title) LIKE '%cup%' THEN -50
-        WHEN LOWER(title) LIKE '%vaas%' OR LOWER(title) LIKE '%vase%' THEN -50
-        WHEN LOWER(title) LIKE '%doosje%' OR LOWER(title) LIKE '%box%' THEN -50
-        ELSE 0 
-      END
-    `);
-  }
-  
-  const rankingSQL = rankingClauses.length > 0 
-    ? rankingClauses.join(' + ') + ' DESC, '
-    : '';
-
-  // Get products with smart ranking
+  // Simple, clean sorting - just by price
   const searchQuery = `
     SELECT id, title, full_title, content, brand, price, image, url
     FROM products
     WHERE ${whereClause}
-    ORDER BY ${rankingSQL}price ASC
+    ORDER BY price ASC
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
   
