@@ -1,0 +1,22 @@
+{
+  "name": "kunstpakket-ai-search",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Advanced search engine for Kunstpakket.nl - Lightspeed sync + Neon Postgres full-text search",
+  "scripts": {
+    "sync": "node scripts/sync-lightspeed.js"
+  },
+  "keywords": [
+    "search",
+    "lightspeed",
+    "postgres",
+    "full-text-search",
+    "neon"
+  ],
+  "author": "Kunstpakket.nl",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
