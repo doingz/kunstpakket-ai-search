@@ -28,11 +28,15 @@ Available product categories:
 - Jubileum & Afscheid (anniversary & farewell)
 
 CRITICAL INSTRUCTIONS:
-1. **ALWAYS include synonyms and variations** for keywords:
+1. **Include RELEVANT synonyms only** for keywords:
    - Singular/plural forms (beeldje → beeldje, beeld, beelden, beeldjes)
-   - Dutch AND English equivalents (beeldje → sculptuur, sculpture, figurine, statue)
-   - Common typos and alternatives
-   - DO NOT just return the exact search term!
+   - Dutch AND English equivalents for THE SAME THING (beeldje → sculptuur, sculpture, figurine, statue)
+   - Common typos and alternatives (beedje → beeldje)
+   - IMPORTANT: Do NOT mix different product types!
+     * schilderij → schilderij, schilderijen, painting, art (NOT vaas, schaal, etc!)
+     * vaas → vaas, vazen, vase, vases (NOT schilderij, schaal, etc!)
+     * mok → mok, mokken, cup, mug (NOT vaas, glas, etc!)
+   - DO NOT just return the exact search term - always add variations!
 
 2. Detect if query matches a category and include ALL relevant ones
 
@@ -48,24 +52,31 @@ Return JSON with:
 - price_max: number or null
 - confidence: 0.0-1.0
 
-GOOD Examples (notice how MANY synonyms are included):
+GOOD Examples (notice RELEVANT synonyms only):
 
 Input: "beeldje"
 Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue","figuur"],"categories":["Beelden & Beeldjes"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+
+Input: "schilderij"
+Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings","kunst","art"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+
+Input: "vaas"
+Output: {"keywords":["vaas","vazen","vase","vases"],"categories":["Vazen & Schalen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
 Input: "beeldje met hart max 80 euro"
 Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue"],"categories":["Beelden & Beeldjes"],"tags":["hart","hartje","heart","hearts","love","liefde"],"price_min":null,"price_max":80,"confidence":0.95}
 
 Input: "klein schilderij voor moederdag onder 50 euro"
-Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings","kunst","art","doek"],"categories":["Schilderijen","Moederdag Cadeau"],"tags":["klein","kleine","small","compact"],"price_min":null,"price_max":50,"confidence":0.92}
+Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings"],"categories":["Schilderijen","Moederdag Cadeau"],"tags":["klein","kleine","small","compact"],"price_min":null,"price_max":50,"confidence":0.92}
 
-Input: "bronzen beeld muzikant"
-Output: {"keywords":["brons","bronzen","bronze","beeld","beelden","beeldjes","sculptuur","sculpture","statue"],"categories":["Bronzen Beelden","Beelden Muziek"],"tags":["muzikant","musicus","musician","music","muziek"],"price_min":null,"price_max":null,"confidence":0.88}
+BAD Examples (DO NOT DO THIS):
+Input: "schilderij"
+Output: {"keywords":["schilderij","vaas","schaal","beeld"],...}
+^ WRONG - vaas and schaal are NOT synonyms for schilderij!
 
-BAD Example (DO NOT DO THIS):
-Input: "beeldje"
-Output: {"keywords":["beeldje"],"categories":[],"tags":[],"price_min":null,"price_max":null,"confidence":0.5}
-^ This is WRONG - always include synonyms!
+Input: "vaas"
+Output: {"keywords":["vaas","vazen","schaal","schalen","bowl"],...}
+^ WRONG - schaal is different from vaas, don't mix them!
 
 Only return valid JSON, no explanation.`;
 
