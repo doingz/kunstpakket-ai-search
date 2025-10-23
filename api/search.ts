@@ -12,21 +12,44 @@ const openai = new OpenAI({
 async function parseQuery(query: string) {
   const start = Date.now();
   
-  const prompt = `Parse this Dutch e-commerce search query and extract structured filters.
+  const prompt = `Parse this Dutch e-commerce search query for an art & gift webshop and extract structured filters.
 
 Search query: "${query}"
 
+Available product categories:
+- Beelden & Beeldjes (sculptures, figurines)
+- Schilderijen (paintings)
+- Vazen & Schalen (vases, bowls)
+- Bronzen Beelden (bronze sculptures)
+- Moederdag Cadeau (Mother's Day gifts)
+- Relatiegeschenken (corporate gifts)
+- Sportbeelden (sports figurines)
+- Liefde & Huwelijk (love & wedding)
+- Jubileum & Afscheid (anniversary & farewell)
+
+Instructions:
+1. Extract keywords AND include synonyms/variations (e.g. "beeldje" → ["beeldje","beeld","beelden","beeldjes","sculptuur","figurine"])
+2. Detect if query matches a category (e.g. "beeldje" → categories: ["Beelden & Beeldjes"])
+3. Extract attributes as tags (e.g. "hart" → ["hart","hartje","love","hearts"])
+4. Parse price ranges (e.g. "max 80 euro", "tussen 50 en 100", "onder 30")
+
 Return JSON with:
-- keywords: array of search terms (Dutch)
-- categories: array of category names if mentioned
-- tags: array of tags/attributes if mentioned
+- keywords: array of search terms INCLUDING synonyms and variations (Dutch + English)
+- categories: array of matching category names
+- tags: array of tags/attributes with synonyms
 - price_min: number or null
 - price_max: number or null
 - confidence: 0.0-1.0
 
-Example:
+Examples:
 Input: "beeldje met hart max 80 euro"
-Output: {"keywords":["beeldje"],"categories":["Beelden & Beeldjes"],"tags":["hart","hartje","hearts","love"],"price_min":null,"price_max":80,"confidence":0.95}
+Output: {"keywords":["beeldje","beeld","beelden","sculptuur","figurine"],"categories":["Beelden & Beeldjes"],"tags":["hart","hartje","love","hearts"],"price_min":null,"price_max":80,"confidence":0.95}
+
+Input: "klein schilderij voor moederdag onder 50 euro"
+Output: {"keywords":["schilderij","schilderijen","painting","kunst"],"categories":["Schilderijen","Moederdag Cadeau"],"tags":["klein","small"],"price_min":null,"price_max":50,"confidence":0.9}
+
+Input: "bronzen beeld muzikant"
+Output: {"keywords":["bronzen","brons","bronze","beeld","beelden","sculptuur"],"categories":["Bronzen Beelden","Beelden Muziek"],"tags":["muzikant","musicus","musician","music"],"price_min":null,"price_max":null,"confidence":0.85}
 
 Only return valid JSON, no explanation.`;
 
@@ -101,14 +124,18 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Categories
+  // Categories (fuzzy matching)
   if (filters.categories && filters.categories.length > 0) {
-    params.push(filters.categories);
+    const categoryConditions = filters.categories.map((cat: string) => {
+      params.push(`%${cat}%`);
+      const idx = paramIndex++;
+      return `title ILIKE $${idx}`;
+    }).join(' OR ');
+    
     conditions.push(`id IN (
       SELECT product_id FROM product_categories 
-      WHERE category_id IN (SELECT id FROM categories WHERE title = ANY($${paramIndex}))
+      WHERE category_id IN (SELECT id FROM categories WHERE ${categoryConditions})
     )`);
-    paramIndex++;
   }
 
   return { conditions, params };
