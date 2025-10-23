@@ -64,12 +64,19 @@ function buildSearchQuery(filters: any) {
   const params: any[] = [];
   let paramIndex = 1;
 
-  // Full-text search
+  // Full-text search with fuzzy matching
   if (filters.keywords && filters.keywords.length > 0) {
     const searchTerm = filters.keywords.join(' ');
     params.push(searchTerm);
-    conditions.push(`search_vector @@ plainto_tsquery('dutch', $${paramIndex})`);
-    paramIndex++;
+    params.push(`%${searchTerm}%`);
+    
+    // Combine full-text search with LIKE for broader matching
+    conditions.push(`(
+      search_vector @@ plainto_tsquery('dutch', $${paramIndex}) 
+      OR LOWER(title) LIKE LOWER($${paramIndex + 1})
+      OR LOWER(content) LIKE LOWER($${paramIndex + 1})
+    )`);
+    paramIndex += 2;
   }
 
   // Price filters
