@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.0.0';
+  const WIDGET_VERSION = '1.0.1';
   const API_BASE = 'https://kunstpakket.bluestars.app/api';
   
   // Configuration (can be overridden via data attributes)
