@@ -27,11 +27,18 @@ Available product categories:
 - Liefde & Huwelijk (love & wedding)
 - Jubileum & Afscheid (anniversary & farewell)
 
-Instructions:
-1. Extract keywords AND include synonyms/variations (e.g. "beeldje" → ["beeldje","beeld","beelden","beeldjes","sculptuur","figurine"])
-2. Detect if query matches a category (e.g. "beeldje" → categories: ["Beelden & Beeldjes"])
-3. Extract attributes as tags (e.g. "hart" → ["hart","hartje","love","hearts"])
-4. Parse price ranges (e.g. "max 80 euro", "tussen 50 en 100", "onder 30")
+CRITICAL INSTRUCTIONS:
+1. **ALWAYS include synonyms and variations** for keywords:
+   - Singular/plural forms (beeldje → beeldje, beeld, beelden, beeldjes)
+   - Dutch AND English equivalents (beeldje → sculptuur, sculpture, figurine, statue)
+   - Common typos and alternatives
+   - DO NOT just return the exact search term!
+
+2. Detect if query matches a category and include ALL relevant ones
+
+3. Extract attributes as tags WITH synonyms (hart → hart, hartje, love, hearts, heart, liefde)
+
+4. Parse price ranges (max 80 euro, onder 50, tussen 30-100, tot 75)
 
 Return JSON with:
 - keywords: array of search terms INCLUDING synonyms and variations (Dutch + English)
@@ -41,15 +48,24 @@ Return JSON with:
 - price_max: number or null
 - confidence: 0.0-1.0
 
-Examples:
+GOOD Examples (notice how MANY synonyms are included):
+
+Input: "beeldje"
+Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue","figuur"],"categories":["Beelden & Beeldjes"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+
 Input: "beeldje met hart max 80 euro"
-Output: {"keywords":["beeldje","beeld","beelden","sculptuur","figurine"],"categories":["Beelden & Beeldjes"],"tags":["hart","hartje","love","hearts"],"price_min":null,"price_max":80,"confidence":0.95}
+Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue"],"categories":["Beelden & Beeldjes"],"tags":["hart","hartje","heart","hearts","love","liefde"],"price_min":null,"price_max":80,"confidence":0.95}
 
 Input: "klein schilderij voor moederdag onder 50 euro"
-Output: {"keywords":["schilderij","schilderijen","painting","kunst"],"categories":["Schilderijen","Moederdag Cadeau"],"tags":["klein","small"],"price_min":null,"price_max":50,"confidence":0.9}
+Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings","kunst","art","doek"],"categories":["Schilderijen","Moederdag Cadeau"],"tags":["klein","kleine","small","compact"],"price_min":null,"price_max":50,"confidence":0.92}
 
 Input: "bronzen beeld muzikant"
-Output: {"keywords":["bronzen","brons","bronze","beeld","beelden","sculptuur"],"categories":["Bronzen Beelden","Beelden Muziek"],"tags":["muzikant","musicus","musician","music"],"price_min":null,"price_max":null,"confidence":0.85}
+Output: {"keywords":["brons","bronzen","bronze","beeld","beelden","beeldjes","sculptuur","sculpture","statue"],"categories":["Bronzen Beelden","Beelden Muziek"],"tags":["muzikant","musicus","musician","music","muziek"],"price_min":null,"price_max":null,"confidence":0.88}
+
+BAD Example (DO NOT DO THIS):
+Input: "beeldje"
+Output: {"keywords":["beeldje"],"categories":[],"tags":[],"price_min":null,"price_max":null,"confidence":0.5}
+^ This is WRONG - always include synonyms!
 
 Only return valid JSON, no explanation.`;
 
@@ -58,11 +74,19 @@ Only return valid JSON, no explanation.`;
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
-      max_tokens: 500
+      max_tokens: 500,
+      response_format: { type: 'json_object' }
     });
 
     const content = response.choices[0].message.content?.trim() || '{}';
     const parsed = JSON.parse(content);
+    
+    // Ensure we always have arrays
+    if (!parsed.keywords || !Array.isArray(parsed.keywords)) {
+      parsed.keywords = [query];
+    }
+    if (!parsed.categories) parsed.categories = [];
+    if (!parsed.tags) parsed.tags = [];
     
     return {
       original: query,
@@ -74,7 +98,14 @@ Only return valid JSON, no explanation.`;
     console.error('AI parse error:', error);
     return {
       original: query,
-      parsed: { keywords: [query] },
+      parsed: { 
+        keywords: [query],
+        categories: [],
+        tags: [],
+        price_min: null,
+        price_max: null,
+        confidence: 0.5
+      },
       confidence: 0.5,
       took_ms: Date.now() - start
     };
