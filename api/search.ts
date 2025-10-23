@@ -231,12 +231,12 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const countResult = await sql.query(countQuery, params);
   const total = parseInt(countResult.rows[0]?.total || '0');
 
-  // Simple, clean sorting - just by price
+  // Sort by popularity (bestsellers first)
   const searchQuery = `
     SELECT id, title, full_title, content, brand, price, image, url
     FROM products
     WHERE ${whereClause}
-    ORDER BY price ASC
+    ORDER BY stock_sold DESC NULLS LAST, price ASC
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
   

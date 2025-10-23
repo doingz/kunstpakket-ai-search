@@ -14,7 +14,7 @@
   const config = {
     placeholder: 'Zoek naar kunst... bijv. "beeldje met hart max 80 euro"',
     buttonText: 'Zoeken',
-    maxResults: 10
+    maxResults: 1000  // Show ALL results
   };
   
   // Widget state

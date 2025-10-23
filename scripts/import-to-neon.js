@@ -248,7 +248,7 @@ async function importVariants(variants) {
       if (variant.isDefault && variant.priceIncl && variant.product?.resource?.id) {
         await sql`
           UPDATE products 
-          SET price = ${variant.priceIncl}
+          SET price = ${variant.priceIncl}, stock_sold = ${variant.stockSold || 0}
           WHERE id = ${variant.product.resource.id}
           AND price IS NULL
         `;
