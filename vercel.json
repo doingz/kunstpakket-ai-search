@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/search",
-      "destination": "/api/search-endpoint.js"
+      "destination": "/api/search.ts"
     }
   ],
   "headers": [
