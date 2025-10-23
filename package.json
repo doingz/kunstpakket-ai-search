@@ -4,7 +4,11 @@
   "type": "module",
   "description": "Advanced search engine for Kunstpakket.nl - Lightspeed sync + Neon Postgres full-text search",
   "scripts": {
-    "sync": "node scripts/sync-lightspeed.js"
+    "sync": "node scripts/sync-lightspeed.js",
+    "db:schema": "node scripts/setup-schema.js",
+    "import": "node scripts/import-to-neon.js",
+    "search": "node scripts/test-search.js",
+    "setup": "node scripts/full-setup.js"
   },
   "keywords": [
     "search",
@@ -17,6 +21,8 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "@vercel/postgres": "^0.10.0",
+    "openai": "^4.70.0"
   }
 }
