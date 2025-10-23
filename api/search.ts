@@ -32,10 +32,11 @@ CRITICAL INSTRUCTIONS:
    - Singular/plural forms (beeldje → beeldje, beeld, beelden, beeldjes)
    - Dutch AND English equivalents for THE SAME THING (beeldje → sculptuur, sculpture, figurine, statue)
    - Common typos and alternatives (beedje → beeldje)
-   - IMPORTANT: Do NOT mix different product types!
-     * schilderij → schilderij, schilderijen, painting, art (NOT vaas, schaal, etc!)
-     * vaas → vaas, vazen, vase, vases (NOT schilderij, schaal, etc!)
-     * mok → mok, mokken, cup, mug (NOT vaas, glas, etc!)
+   - IMPORTANT: Do NOT mix different product types! Be specific!
+     * schilderij → schilderij, schilderijen, schildering, painting (NOT kunst, art - too broad!)
+     * vaas → vaas, vazen, vase, vases (NOT schaal - that's different!)
+     * mok → mok, mokken, cup, mug (NOT vaas, glas!)
+     * Avoid generic terms like "kunst", "art", "cadeau" as keywords
    - DO NOT just return the exact search term - always add variations!
 
 2. Detect if query matches a category and include ALL relevant ones
@@ -58,7 +59,7 @@ Input: "beeldje"
 Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue","figuur"],"categories":["Beelden & Beeldjes"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
 Input: "schilderij"
-Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings","kunst","art"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
 Input: "vaas"
 Output: {"keywords":["vaas","vazen","vase","vases"],"categories":["Vazen & Schalen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
