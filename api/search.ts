@@ -120,17 +120,22 @@ function buildSearchQuery(filters: any) {
 
   // Full-text search with fuzzy matching
   if (filters.keywords && filters.keywords.length > 0) {
-    const searchTerm = filters.keywords.join(' ');
-    params.push(searchTerm);
-    params.push(`%${searchTerm}%`);
+    // Create OR conditions for each keyword
+    const keywordConditions = filters.keywords.map((keyword: string) => {
+      const likePattern = `%${keyword}%`;
+      params.push(keyword, likePattern);
+      const tsIdx = paramIndex;
+      const likeIdx = paramIndex + 1;
+      paramIndex += 2;
+      
+      return `(
+        search_vector @@ plainto_tsquery('dutch', $${tsIdx})
+        OR LOWER(title) LIKE LOWER($${likeIdx})
+        OR LOWER(content) LIKE LOWER($${likeIdx})
+      )`;
+    }).join(' OR ');
     
-    // Combine full-text search with LIKE for broader matching
-    conditions.push(`(
-      search_vector @@ plainto_tsquery('dutch', $${paramIndex}) 
-      OR LOWER(title) LIKE LOWER($${paramIndex + 1})
-      OR LOWER(content) LIKE LOWER($${paramIndex + 1})
-    )`);
-    paramIndex += 2;
+    conditions.push(`(${keywordConditions})`);
   }
 
   // Price filters
@@ -183,16 +188,12 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const countResult = await sql.query(countQuery, params);
   const total = parseInt(countResult.rows[0]?.total || '0');
 
-  // Get products
+  // Get products - use simple relevance sorting
   const searchQuery = `
     SELECT id, title, full_title, content, brand, price, image, url
     FROM products
     WHERE ${whereClause}
-    ORDER BY 
-      CASE WHEN search_vector @@ plainto_tsquery('dutch', $1) 
-           THEN ts_rank(search_vector, plainto_tsquery('dutch', $1)) 
-           ELSE 0 END DESC,
-      price ASC
+    ORDER BY price ASC
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
   
