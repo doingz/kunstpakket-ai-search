@@ -5,7 +5,7 @@
 import { search } from '../api/search.js';
 
 export const config = {
-  runtime: 'nodejs20.x',
+  runtime: 'nodejs',
   maxDuration: 30, // 30 seconds timeout for AI processing
 };
 
