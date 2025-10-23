@@ -183,25 +183,39 @@ function buildSearchQuery(filters: any) {
     
     if (matchedTypes.length > 0) {
       // Restrict to these product types only
-      // Extract core type words (Schilderijen → Schilderij, Beelden → Beeld, etc)
       const categoryConditions = matchedTypes.flatMap((cat: string) => {
-        // For "Beelden & Beeldjes" match anything with "Beeld" or "Beeldjes"
-        if (cat.includes('Beeld')) {
+        // Map AI categories to actual database categories
+        if (cat.includes('Schilderij')) {
+          // Match "Schilderijen" category
+          params.push('%Schilderij%');
+          const idx = paramIndex++;
+          return [`title ILIKE $${idx}`];
+        } else if (cat.includes('Vazen') || cat.includes('Schalen')) {
+          // Match "Schalen & Vazen" category
+          params.push('%Schalen & Vazen%');
+          const idx = paramIndex++;
+          return [`title ILIKE $${idx}`];
+        } else if (cat.includes('Wandbord')) {
+          // Match "Wandborden" category
+          params.push('%Wandbord%');
+          const idx = paramIndex++;
+          return [`title ILIKE $${idx}`];
+        } else if (cat.includes('Beeld')) {
+          // Match any category with "Beeld" in it
           params.push('%Beeld%', '%beeld%');
           const idx1 = paramIndex++;
           const idx2 = paramIndex++;
           return [`title ILIKE $${idx1}`, `title ILIKE $${idx2}`];
         }
-        // For exact category names
-        params.push(`%${cat}%`);
-        const idx = paramIndex++;
-        return [`title ILIKE $${idx}`];
-      }).join(' OR ');
+        return [];
+      }).filter(c => c).join(' OR ');
       
-      conditions.push(`id IN (
-        SELECT product_id FROM product_categories 
-        WHERE category_id IN (SELECT id FROM categories WHERE ${categoryConditions})
-      )`);
+      if (categoryConditions) {
+        conditions.push(`id IN (
+          SELECT product_id FROM product_categories 
+          WHERE category_id IN (SELECT id FROM categories WHERE ${categoryConditions})
+        )`);
+      }
     }
   }
 
