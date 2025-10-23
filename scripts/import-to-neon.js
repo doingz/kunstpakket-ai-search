@@ -244,13 +244,14 @@ async function importVariants(variants) {
           stock = EXCLUDED.stock
       `;
       
-      // Update product price with first variant price (if default variant)
-      if (variant.isDefault && variant.priceIncl && variant.product?.resource?.id) {
+      // Update product price and stock_sold from default variant
+      if (variant.isDefault && variant.product?.resource?.id) {
         await sql`
           UPDATE products 
-          SET price = ${variant.priceIncl}, stock_sold = ${variant.stockSold || 0}
+          SET 
+            price = COALESCE(price, ${variant.priceIncl || null}),
+            stock_sold = ${variant.stockSold || 0}
           WHERE id = ${variant.product.resource.id}
-          AND price IS NULL
         `;
         pricesUpdated++;
       }
