@@ -104,6 +104,15 @@
       <p>Voeg deze regel toe aan je website:</p>
       <pre>&lt;script src="https://kunstpakket.bluestars.app/widget.js"&gt;&lt;/script&gt;</pre>
       
+      <p style="margin-top: 1.5rem;"><strong>✨ Belangrijk:</strong> De widget laadt alleen als je <code>?f=1</code> aan de URL toevoegt. Dit blijft de hele sessie actief!</p>
+      
+      <p style="margin-top: 1rem;"><strong>Voorbeeld:</strong></p>
+      <ul style="line-height: 2; color: #475569;">
+        <li><code>https://kunstpakket.nl/?f=1</code> → Widget wordt getoond</li>
+        <li><code>https://kunstpakket.nl/product/beeldje</code> → Widget blijft getoond (zelfde sessie)</li>
+        <li>Nieuwe tab/browser → Widget niet getoond (nieuwe sessie)</li>
+      </ul>
+      
       <p style="margin-top: 1.5rem;">Of plaats de widget op een specifieke plek:</p>
       <pre>&lt;div data-kp-search&gt;&lt;/div&gt;
 &lt;script src="https://kunstpakket.bluestars.app/widget.js"&gt;&lt;/script&gt;</pre>
@@ -136,6 +145,11 @@
   <script src="/widget.js"></script>
   
   <script>
+    // Enable widget on demo page by default
+    if (window.sessionStorage) {
+      sessionStorage.setItem('kp_search_enabled', 'true');
+    }
+    
     function trySearch(query) {
       const input = document.getElementById('kp-search-input');
       if (input) {

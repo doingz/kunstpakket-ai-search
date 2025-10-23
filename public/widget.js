@@ -20,10 +20,37 @@
   let currentResults = null;
   
   /**
+   * Check if widget should be shown
+   */
+  function shouldShowWidget() {
+    // Check sessionStorage first
+    const sessionFlag = sessionStorage.getItem('kp_search_enabled');
+    if (sessionFlag === 'true') {
+      return true;
+    }
+    
+    // Check URL for f=1 parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('f') === '1') {
+      // Store in session so it persists across pages
+      sessionStorage.setItem('kp_search_enabled', 'true');
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
    * Initialize widget
    */
   function init() {
     console.log(`[Kunstpakket AI Search] Widget v${WIDGET_VERSION} loaded`);
+    
+    // Check if widget should be shown
+    if (!shouldShowWidget()) {
+      console.log('[Kunstpakket AI Search] Widget not enabled (add ?f=1 to URL)');
+      return;
+    }
     
     // Check if already initialized
     if (document.getElementById('kp-ai-search-widget')) {
@@ -397,7 +424,19 @@
   window.KunstpakketSearch = {
     version: WIDGET_VERSION,
     search: performSearch,
-    getResults: () => currentResults
+    getResults: () => currentResults,
+    enable: () => {
+      sessionStorage.setItem('kp_search_enabled', 'true');
+      if (!document.getElementById('kp-ai-search-widget')) {
+        init();
+      }
+    },
+    disable: () => {
+      sessionStorage.removeItem('kp_search_enabled');
+      const widget = document.getElementById('kp-ai-search-widget');
+      if (widget) widget.remove();
+    },
+    isEnabled: () => sessionStorage.getItem('kp_search_enabled') === 'true'
   };
   
   // Auto-initialize on DOM ready
