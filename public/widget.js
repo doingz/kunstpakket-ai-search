@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.0.2';
+  const WIDGET_VERSION = '1.1.0';  // Show all results + sort by popularity
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
