@@ -172,9 +172,29 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Categories are NOT used as filters - they're just hints for the AI
-  // We only use keywords, tags, and price as actual filters
-  // Categories help with query understanding but don't restrict results
+  // Categories - use as TYPE FILTERS to exclude wrong types
+  // If user searches for "schilderij" → only show products in "Schilderijen" category
+  if (filters.categories && filters.categories.length > 0) {
+    // Check if it's a product TYPE category (not occasion/theme)
+    const typeCategories = ['Schilderijen', 'Schalen & Vazen', 'Wandborden', 'Beelden'];
+    const matchedTypes = filters.categories.filter((cat: string) => 
+      typeCategories.some(type => cat.includes(type))
+    );
+    
+    if (matchedTypes.length > 0) {
+      // Restrict to these product types only
+      const categoryConditions = matchedTypes.map((cat: string) => {
+        params.push(`%${cat}%`);
+        const idx = paramIndex++;
+        return `title ILIKE $${idx}`;
+      }).join(' OR ');
+      
+      conditions.push(`id IN (
+        SELECT product_id FROM product_categories 
+        WHERE category_id IN (SELECT id FROM categories WHERE ${categoryConditions})
+      )`);
+    }
+  }
 
   return { conditions, params };
 }
