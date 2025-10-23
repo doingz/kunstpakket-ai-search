@@ -25,3 +25,5 @@ Thumbs.db
 # Test outputs
 coverage/
 .nyc_output/
+.vercel
+.env*.local

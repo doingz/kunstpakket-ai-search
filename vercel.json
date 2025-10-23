@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "name": "kunstpakket-ai-search",
+  "builds": [
+    {
+      "src": "api/search-endpoint.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/widget.js",
+      "dest": "/public/widget.js",
+      "headers": {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=3600"
+      }
+    },
+    {
+      "src": "/api/search",
+      "dest": "/api/search-endpoint.js",
+      "methods": ["POST", "OPTIONS"]
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
+

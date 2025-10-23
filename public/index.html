@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kunstpakket AI Search - Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: white;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      margin: 0 0 0.5rem 0;
+      color: #1e293b;
+      font-size: 2.5rem;
+    }
+    
+    .header p {
+      margin: 0;
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .info-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .info-box h2 {
+      margin-top: 0;
+      color: #1e293b;
+    }
+    
+    .info-box code {
+      background: #f1f5f9;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    
+    .info-box pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .example-badge {
+      background: #f0f9ff;
+      border: 2px solid #3b82f6;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-weight: 500;
+      color: #1e40af;
+    }
+    
+    .example-badge:hover {
+      background: #3b82f6;
+      color: white;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎨 Kunstpakket AI Search</h1>
+    <p>Intelligente productzoeker powered by OpenAI</p>
+  </div>
+  
+  <div class="container">
+    <div class="info-box">
+      <h2>📚 Hoe te gebruiken</h2>
+      <p>Voeg deze regel toe aan je website:</p>
+      <pre>&lt;script src="https://kunstpakket.bluestars.app/widget.js"&gt;&lt;/script&gt;</pre>
+      
+      <p style="margin-top: 1.5rem;">Of plaats de widget op een specifieke plek:</p>
+      <pre>&lt;div data-kp-search&gt;&lt;/div&gt;
+&lt;script src="https://kunstpakket.bluestars.app/widget.js"&gt;&lt;/script&gt;</pre>
+    </div>
+    
+    <div class="info-box">
+      <h2>✨ Probeer het uit</h2>
+      <p>Klik op een voorbeeld of typ je eigen zoekopdracht:</p>
+      <div class="examples">
+        <div class="example-badge" onclick="trySearch('beeldje met hart max 80 euro')">
+          Beeldje met hart max 80 euro
+        </div>
+        <div class="example-badge" onclick="trySearch('cadeau voor moeder')">
+          Cadeau voor moeder
+        </div>
+        <div class="example-badge" onclick="trySearch('abstract schilderij blauw')">
+          Abstract schilderij blauw
+        </div>
+        <div class="example-badge" onclick="trySearch('vaas modern design')">
+          Vaas modern design
+        </div>
+      </div>
+    </div>
+    
+    <!-- Widget wordt hier geplaatst -->
+    <div data-kp-search></div>
+  </div>
+  
+  <!-- Load widget -->
+  <script src="/widget.js"></script>
+  
+  <script>
+    function trySearch(query) {
+      const input = document.getElementById('kp-search-input');
+      if (input) {
+        input.value = query;
+        input.focus();
+        
+        // Trigger search
+        if (window.KunstpakketSearch) {
+          window.KunstpakketSearch.search(query);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
+

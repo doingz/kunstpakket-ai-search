@@ -27,7 +27,7 @@ async function readJsonFile(filename) {
 }
 
 /**
- * Import products
+ * Import products (without price - price comes from variants)
  */
 async function importProducts(products) {
   console.log(`\n📦 Importing ${products.length} products...`);
@@ -46,8 +46,8 @@ async function importProducts(products) {
           ${product.title || ''},
           ${product.fulltitle || null},
           ${product.content || null},
-          ${product.brand || null},
-          ${product.price || null},
+          ${product.brand?.resource?.id || null},
+          ${null},
           ${product.image?.src || null},
           ${product.url || null},
           ${product.isVisible !== false},
@@ -59,7 +59,6 @@ async function importProducts(products) {
           full_title = EXCLUDED.full_title,
           content = EXCLUDED.content,
           brand = EXCLUDED.brand,
-          price = EXCLUDED.price,
           image = EXCLUDED.image,
           url = EXCLUDED.url,
           is_visible = EXCLUDED.is_visible,
@@ -149,9 +148,17 @@ async function importProductTags(relations) {
 
   for (const rel of relations) {
     try {
+      const productId = rel.product?.resource?.id;
+      const tagId = rel.tag?.resource?.id;
+      
+      if (!productId || !tagId) {
+        skipped++;
+        continue;
+      }
+      
       await sql`
         INSERT INTO product_tags (product_id, tag_id)
-        VALUES (${rel.productId}, ${rel.tagId})
+        VALUES (${productId}, ${tagId})
         ON CONFLICT (product_id, tag_id) DO NOTHING
       `;
       imported++;
@@ -180,9 +187,17 @@ async function importProductCategories(relations) {
 
   for (const rel of relations) {
     try {
+      const productId = rel.product?.resource?.id;
+      const categoryId = rel.category?.resource?.id;
+      
+      if (!productId || !categoryId) {
+        skipped++;
+        continue;
+      }
+      
       await sql`
         INSERT INTO product_categories (product_id, category_id)
-        VALUES (${rel.productId}, ${rel.categoryId})
+        VALUES (${productId}, ${categoryId})
         ON CONFLICT (product_id, category_id) DO NOTHING
       `;
       imported++;
@@ -200,25 +215,27 @@ async function importProductCategories(relations) {
 }
 
 /**
- * Import variants
+ * Import variants and update product prices
  */
 async function importVariants(variants) {
   console.log(`\n🎨 Importing ${variants.length} variants...`);
   
   let imported = 0;
   let skipped = 0;
+  let pricesUpdated = 0;
 
   for (const variant of variants) {
     try {
+      // Import variant
       await sql`
         INSERT INTO variants (id, product_id, title, sku, price, stock)
         VALUES (
           ${variant.id},
-          ${variant.productId},
+          ${variant.product?.resource?.id || null},
           ${variant.title || null},
           ${variant.sku || null},
-          ${variant.price || null},
-          ${variant.stock || 0}
+          ${variant.priceIncl || null},
+          ${variant.stockLevel || 0}
         )
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
@@ -226,6 +243,18 @@ async function importVariants(variants) {
           price = EXCLUDED.price,
           stock = EXCLUDED.stock
       `;
+      
+      // Update product price with first variant price (if default variant)
+      if (variant.isDefault && variant.priceIncl && variant.product?.resource?.id) {
+        await sql`
+          UPDATE products 
+          SET price = ${variant.priceIncl}
+          WHERE id = ${variant.product.resource.id}
+          AND price IS NULL
+        `;
+        pricesUpdated++;
+      }
+      
       imported++;
       
       if (imported % 500 === 0) {
@@ -237,6 +266,7 @@ async function importVariants(variants) {
   }
 
   console.log(`✅ Variants: ${imported} imported, ${skipped} skipped`);
+  console.log(`✅ Product prices updated: ${pricesUpdated}`);
   return imported;
 }
 
