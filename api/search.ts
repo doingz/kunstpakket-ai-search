@@ -200,7 +200,7 @@ async function searchProducts(filters: any, limit: number, offset: number) {
     rankingClauses.push(`(${titleMatches.join(' + ')})`);
   }
   
-  // Priority 2: Category match boost
+  // Priority 2: Category match boost (huge bonus)
   if (filters.categories && filters.categories.length > 0) {
     const catKeywords = filters.categories.join(' ');
     rankingClauses.push(`
@@ -208,7 +208,22 @@ async function searchProducts(filters: any, limit: number, offset: number) {
         SELECT product_id FROM product_categories pc
         JOIN categories c ON pc.category_id = c.id
         WHERE c.title ILIKE '%${catKeywords}%'
-      ) THEN 50 ELSE 0 END
+      ) THEN 200 ELSE 0 END
+    `);
+  }
+  
+  // Priority 3: Penalize wrong product types
+  // If searching for schilderij, reduce score for mokken, vazen, etc
+  if (filters.keywords && filters.keywords.some((kw: string) => 
+    kw.toLowerCase().includes('schilderij') || kw.toLowerCase().includes('painting')
+  )) {
+    rankingClauses.push(`
+      CASE 
+        WHEN LOWER(title) LIKE '%mok%' OR LOWER(title) LIKE '%cup%' THEN -50
+        WHEN LOWER(title) LIKE '%vaas%' OR LOWER(title) LIKE '%vase%' THEN -50
+        WHEN LOWER(title) LIKE '%doosje%' OR LOWER(title) LIKE '%box%' THEN -50
+        ELSE 0 
+      END
     `);
   }
   
