@@ -28,14 +28,18 @@ Available product categories:
 - Jubileum & Afscheid (anniversary & farewell)
 
 CRITICAL INSTRUCTIONS:
-1. **Include RELEVANT synonyms only** for keywords:
+1. **Include RELEVANT synonyms and product variations** for keywords:
    - Singular/plural forms (beeldje → beeldje, beeld, beelden, beeldjes)
    - Dutch AND English equivalents for THE SAME THING (beeldje → sculptuur, sculpture, figurine, statue)
-   - Common typos and alternatives (beedje → beeldje)
+   - Common typos and alternatives (beedje → beeldje, schiderijtje → schilderij)
    - IMPORTANT: Do NOT mix different product types! Be specific!
-     * schilderij → schilderij, schilderijen, schildering, painting (NOT kunst, art - too broad!)
+     * schilderij ↔ giclee, giclée, print, prent (these are ALL schilderijen types!)
+       → schilderij, schilderijen, schildering, painting, paintings, giclee, giclée, print, prent
+       → ALWAYS map to category "Schilderijen"
+     * giclee/print searched? → treat as schilderij + add giclee terms
      * vaas → vaas, vazen, vase, vases (NOT schaal - that's different!)
      * mok → mok, mokken, cup, mug (NOT vaas, glas!)
+     * beeld → beeld, beelden, beeldje, beeldjes, sculptuur, sculpture, figurine, statue
      * Avoid generic terms like "kunst", "art", "cadeau" as keywords
    - DO NOT just return the exact search term - always add variations!
 
@@ -63,7 +67,10 @@ Input: "beeldje"
 Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue","figuur"],"categories":["Beelden & Beeldjes"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
 Input: "schilderij"
-Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings","giclee","giclée","print","prent"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+
+Input: "giclee"
+Output: {"keywords":["giclee","giclée","print","prent","schilderij","schilderijen","painting"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
 Input: "vaas"
 Output: {"keywords":["vaas","vazen","vase","vases"],"categories":["Vazen & Schalen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
