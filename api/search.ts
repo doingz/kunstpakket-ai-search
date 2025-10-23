@@ -160,19 +160,9 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Categories (fuzzy matching)
-  if (filters.categories && filters.categories.length > 0) {
-    const categoryConditions = filters.categories.map((cat: string) => {
-      params.push(`%${cat}%`);
-      const idx = paramIndex++;
-      return `title ILIKE $${idx}`;
-    }).join(' OR ');
-    
-    conditions.push(`id IN (
-      SELECT product_id FROM product_categories 
-      WHERE category_id IN (SELECT id FROM categories WHERE ${categoryConditions})
-    )`);
-  }
+  // Categories are NOT used as filters - they're just hints for the AI
+  // We only use keywords, tags, and price as actual filters
+  // Categories help with query understanding but don't restrict results
 
   return { conditions, params };
 }
