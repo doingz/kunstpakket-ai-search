@@ -395,7 +395,7 @@
             `}
             <div class="kp-product-info">
               <div class="kp-product-title">${escapeHtml(product.title)}</div>
-              ${product.price ? `
+              ${product.price && typeof product.price === 'number' ? `
                 <div class="kp-product-price">€${product.price.toFixed(2)}</div>
               ` : ''}
             </div>
