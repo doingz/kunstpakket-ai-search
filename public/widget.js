@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.0.1';
+  const WIDGET_VERSION = '1.0.2-debug';
   const API_BASE = 'https://kunstpakket.bluestars.app/api';
   
   // Configuration (can be overridden via data attributes)
@@ -25,18 +25,26 @@
   function shouldShowWidget() {
     // Check sessionStorage first
     const sessionFlag = sessionStorage.getItem('kp_search_enabled');
+    console.log('[Kunstpakket AI Search] Debug: sessionStorage =', sessionFlag);
+    
     if (sessionFlag === 'true') {
+      console.log('[Kunstpakket AI Search] Debug: Enabled via sessionStorage');
       return true;
     }
     
     // Check URL for f=1 parameter
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('f') === '1') {
+    const f1Param = urlParams.get('f');
+    console.log('[Kunstpakket AI Search] Debug: URL ?f parameter =', f1Param);
+    
+    if (f1Param === '1') {
       // Store in session so it persists across pages
       sessionStorage.setItem('kp_search_enabled', 'true');
+      console.log('[Kunstpakket AI Search] Debug: Enabled via ?f=1, stored in session');
       return true;
     }
     
+    console.log('[Kunstpakket AI Search] Debug: Widget should NOT show');
     return false;
   }
   
