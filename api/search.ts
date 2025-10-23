@@ -172,57 +172,13 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Categories - use as TYPE FILTERS to exclude wrong types
-  // If user searches for "schilderij" → only show products in "Schilderijen" category
-  if (filters.categories && filters.categories.length > 0) {
-    // Check if it's a product TYPE category (not occasion/theme)
-    const typeCategories = ['Schilderijen', 'Schalen & Vazen', 'Wandborden', 'Beelden'];
-    const matchedTypes = filters.categories.filter((cat: string) => 
-      typeCategories.some(type => cat.includes(type))
-    );
-    
-    if (matchedTypes.length > 0) {
-      // Restrict to these product types only
-      const categoryConditions = matchedTypes.flatMap((cat: string) => {
-        // Map AI categories to actual database categories
-        if (cat.includes('Schilderij')) {
-          // Match "Schilderijen" category
-          params.push('%Schilderij%');
-          const idx = paramIndex++;
-          return [`title ILIKE $${idx}`];
-        } else if (cat.includes('Vazen') || cat.includes('Schalen')) {
-          // Match "Schalen & Vazen" category
-          params.push('%Schalen & Vazen%');
-          const idx = paramIndex++;
-          return [`title ILIKE $${idx}`];
-        } else if (cat.includes('Wandbord')) {
-          // Match "Wandborden" category
-          params.push('%Wandbord%');
-          const idx = paramIndex++;
-          return [`title ILIKE $${idx}`];
-        } else if (cat.includes('Beeld')) {
-          // Match any category with "Beeld" in it
-          params.push('%Beeld%', '%beeld%');
-          const idx1 = paramIndex++;
-          const idx2 = paramIndex++;
-          return [`title ILIKE $${idx1}`, `title ILIKE $${idx2}`];
-        }
-        return [];
-      }).filter(c => c).join(' OR ');
-      
-      if (categoryConditions) {
-        conditions.push(`id IN (
-          SELECT product_id FROM product_categories 
-          WHERE category_id IN (SELECT id FROM categories WHERE ${categoryConditions})
-        )`);
-      }
-    }
-  }
+  // Categories are stored for ranking, not filtering
+  // We want to show ALL relevant products, just rank them better
 
   return { conditions, params };
 }
 
-// Search products
+// Search products with smart ranking
 async function searchProducts(filters: any, limit: number, offset: number) {
   const { conditions, params } = buildSearchQuery(filters);
   
@@ -233,12 +189,39 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const countResult = await sql.query(countQuery, params);
   const total = parseInt(countResult.rows[0]?.total || '0');
 
-  // Get products - use simple relevance sorting
+  // Build smart ranking ORDER BY clause
+  let rankingClauses: string[] = [];
+  
+  // Priority 1: Exact keyword match in TITLE (highest score)
+  if (filters.keywords && filters.keywords.length > 0) {
+    const titleMatches = filters.keywords.slice(0, 3).map((kw: string, i: number) => 
+      `CASE WHEN LOWER(title) LIKE LOWER('%${kw}%') THEN ${100 - i * 10} ELSE 0 END`
+    );
+    rankingClauses.push(`(${titleMatches.join(' + ')})`);
+  }
+  
+  // Priority 2: Category match boost
+  if (filters.categories && filters.categories.length > 0) {
+    const catKeywords = filters.categories.join(' ');
+    rankingClauses.push(`
+      CASE WHEN id IN (
+        SELECT product_id FROM product_categories pc
+        JOIN categories c ON pc.category_id = c.id
+        WHERE c.title ILIKE '%${catKeywords}%'
+      ) THEN 50 ELSE 0 END
+    `);
+  }
+  
+  const rankingSQL = rankingClauses.length > 0 
+    ? rankingClauses.join(' + ') + ' DESC, '
+    : '';
+
+  // Get products with smart ranking
   const searchQuery = `
     SELECT id, title, full_title, content, brand, price, image, url
     FROM products
     WHERE ${whereClause}
-    ORDER BY price ASC
+    ORDER BY ${rankingSQL}price ASC
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
   
