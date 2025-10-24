@@ -20,15 +20,20 @@ Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoos
 
 Rules:
 1. TYPE: Set ONLY if explicitly mentioned ("beeldje"→"Beeld", "schilderij"→"Schilderij")
-2. KEYWORDS: ⚠️ Generate 20-40 related terms with ALL variations:
-   - Base + singular + plural + diminutives (hond→hond/honden/hondje/hondjes)
-   - Gender variants (sporter/sportster, atleet/atlete/atleten)
-   - Compound words (voetbal→voetbal/voetballen/voetballer/voetbalster)
-   - Synonyms + related concepts
-   - English equivalents (when relevant)
-   - Subcategories (sport→voetbal/tennis/golf/darten/schaatsen/judo)
-   - Multi-word = FULL PHRASES ("romeinse goden" NOT "god")
-   ⚠️ MINIMUM 20 keywords!
+2. KEYWORDS: ⚠️ Context-aware keyword generation:
+   
+   SPECIFIC subjects (bodybuilder, voetballer, tennisser, judoka):
+   - Focus on EXACT subject + direct variants (5-15 keywords)
+   - Include: singular/plural/verb forms of the MAIN subject
+   - Avoid generic terms (NOT: atleet, sporter, kracht, fitness)
+   - Example: "bodybuilder" → ["bodybuilder","bodybuilders","bodybuilding","bodybuilden"]
+   
+   BROAD subjects (sport, dieren, kunst, cadeau):
+   - Generate 25-40 keywords with ALL variations
+   - Include: singular/plural/diminutives/gender/compounds/subcategories
+   - Example: "sport" → ["sport","sporter","voetbal","tennis","golf","darten",...]
+   
+   Multi-word = FULL PHRASES ("romeinse goden" NOT "god")
 3. PRICE: Parse ranges ("onder 50"→price_max:50, "tussen 30-50"→price_min:30,price_max:50)
 
 Special:
@@ -39,10 +44,11 @@ Special:
 Examples:
 "beeldje" → {"type":"Beeld","keywords":[]}
 "schilderij max 300" → {"type":"Schilderij","keywords":[],"price_max":300}
-"hond" → {"type":null,"keywords":["hond","honden","hondje","hondjes","dog","dogs","puppy","puppies","huisdier","huisdieren","trouwe vriend"]}
-"beeldje met hart" → {"type":"Beeld","keywords":["hart","harte","hartje","hartjes","heart","hearts","liefde","love","romance","romantisch","romantiek","valentijn","affectie","genegenheid"]}
-"romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","rome","romeinen","mythologie","mythologisch","god","goden","godin","godinnen","jupiter","mars","venus"]}
-"beeld voor sporter" → {"type":"Beeld","keywords":["sport","sporten","sporter","sportster","sportief","sportieve","atleet","atlete","atleten","voetbal","voetballen","voetballer","voetbalster","soccer","football","tennis","tennissen","tennisser","tennister","golf","golfen","golfer","golfster","hardlopen","hardloper","hardloopster","rennen","runner","marathon","marathonloper","darten","darter","darts","schaatsen","schaatser","schaatsster","judo","judoka","volleybal","volleyballen","volleyballer","volleybalster","fietsen","wielrennen","fietser","wielrenner","cyclist","biker"]}
+"bodybuilder" → {"type":null,"keywords":["bodybuilder","bodybuilders","bodybuilding","bodybuilden","bodybuilder beeld"]}
+"voetballer" → {"type":null,"keywords":["voetbal","voetballer","voetbalster","voetballen","soccer","football","voetbalspeler"]}
+"hond" → {"type":null,"keywords":["hond","honden","hondje","hondjes","dog","dogs","puppy","puppies","huisdier","huisdieren"]}
+"beeld voor sporter" → {"type":"Beeld","keywords":["sport","sporten","sporter","sportster","sportief","atleet","voetbal","voetballer","tennis","tennisser","golf","golfer","hardlopen","hardloper","marathon","darten","schaatsen","judo","volleybal","fietsen","wielrennen","biker"]}
+"romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","rome","romeinen","mythologie","god","goden","godin","godinnen","jupiter","mars","venus"]}
 
 Only return valid JSON, no explanation.`;
 
