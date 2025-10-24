@@ -19,19 +19,17 @@ Query: "${query}"
 Available product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
 Extract:
-- type: product type if explicitly mentioned, otherwise null
-- keywords: relevant search terms (be smart: specific queries need focused keywords, broad queries need expansive keywords)
-- price_min/price_max: from phrases like "onder 50", "tussen 30-50", "max 300"
+- type: product type if explicitly mentioned (null otherwise)
+- keywords: search terms with variations (be context-aware: specific subjects need focused keywords, broad subjects need many variations including subcategories)
+- price_min/price_max: from "onder X", "max X", "tussen X-Y"
 
-Return only valid JSON.`;
+Return only JSON.`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',  // Upgraded from gpt-4o-mini for better intelligence
+      model: 'o1-preview',  // EXPERIMENT: Reasoning model - smarter but slower/pricier
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 800,  // Increased for 16-48 keywords (was 500)
-      response_format: { type: 'json_object' }
+      // Note: o1 models don't support temperature, max_tokens, or response_format
     });
 
     const content = response.choices[0].message.content?.trim() || '{}';
