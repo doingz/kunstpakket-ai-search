@@ -45,16 +45,17 @@ CRITICAL INSTRUCTIONS:
    - ONLY set type when user explicitly searches for that product type!
 
 2. **Extract theme/subject keywords** - Be PRECISE, not broad:
-   - For simple subjects (animals, objects): ONLY direct term + plural + English
-     * "varken" → ["varken", "varkens", "pig", "pigs"] - NO "dier", "farm", etc.!
-     * "hond" → ["hond", "honden", "dog", "dogs"] - NO "dier", "animal"!
-     * "kat" → ["kat", "katten", "cat", "cats"] - Keep it simple!
+   - For simple subjects (animals, objects): ONLY direct term + plural + diminutives + English
+     * "varken" → ["varken", "varkens", "varkentje", "varkentjes", "pig", "pigs"]
+     * "hond" → ["hond", "honden", "hondje", "hondjes", "dog", "dogs"]
+     * "kat" → ["kat", "katten", "katje", "katjes", "cat", "cats"]
+     * NO generic terms like "dier", "farm", "animal"!
    - For professions: add related concepts + symbols
      * "advocaat" → ["advocaat", "justitie", "rechter", "law", "lawyer", "juridisch"]
      * "arts" → ["arts", "dokter", "doctor", "medisch", "medical", "hippocrates"]
      * "leraar" → ["leraar", "teacher", "onderwijs", "school", "uil", "owl", "boek", "book"]
    - IMPORTANT: Don't add generic terms like "dier", "animal" unless user asks for them!
-   - Keep it focused: 3-5 keywords for simple subjects, 6-10 for professions
+   - Keep it focused: 6 keywords for simple subjects (term+plural+diminutives+English), 6-10 for professions
 
 3. **Extract tags** (ONLY from available tags list!) for specific attributes:
    - Tags are ONLY for specific themes/attributes (hart, voetbal, etc.)
@@ -95,10 +96,10 @@ Input: "beeldje met een voetballer"
 Output: {"type":"Beeld","keywords":[],"tags":["voetbal","voetballer","football","soccer"],"price_min":null,"price_max":null,"confidence":0.95}
 
 Input: "hond"
-Output: {"type":null,"keywords":["hond","honden","dog","dogs"],"tags":[],"price_min":null,"price_max":null,"confidence":0.85}
+Output: {"type":null,"keywords":["hond","honden","hondje","hondjes","dog","dogs"],"tags":[],"price_min":null,"price_max":null,"confidence":0.85}
 
 Input: "varken"
-Output: {"type":null,"keywords":["varken","varkens","pig","pigs"],"tags":["varken","varkentje"],"price_min":null,"price_max":null,"confidence":0.85}
+Output: {"type":null,"keywords":["varken","varkens","varkentje","varkentjes","pig","pigs"],"tags":[],"price_min":null,"price_max":null,"confidence":0.85}
 
 Input: "schilderij max 300 euro"
 Output: {"type":"Schilderij","keywords":[],"tags":[],"price_min":null,"price_max":300,"confidence":0.95}
