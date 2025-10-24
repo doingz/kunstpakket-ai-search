@@ -662,7 +662,7 @@
       
       .kp-products-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 24px;
       }
       
@@ -741,7 +741,7 @@
       /* Responsive */
       @media (max-width: 1024px) {
         .kp-products-grid {
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(3, 1fr);
         }
       }
       
