@@ -12,7 +12,7 @@ const openai = new OpenAI({
 async function parseQuery(query: string) {
   const start = Date.now();
   
-  const prompt = `Parse Dutch product search query. Extract: type, keywords, price range.
+  const prompt = `Parse Dutch product search query. Extract: type, keywords, price.
 
 Query: "${query}"
 
@@ -20,22 +20,21 @@ Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoos
 
 Rules:
 1. TYPE: Set ONLY if explicitly mentioned ("beeldje"→"Beeld", "schilderij"→"Schilderij")
-2. KEYWORDS: CRITICAL - Generate AT LEAST 20-40 related terms with EVERY variation:
-   ⚠️ MUST include ALL of these:
-   - Base word + singular + plural + diminutives (hond/honden/hondje/hondjes)
-   - ALL gender variants (sporter/sportster, atleet/atlete/atleten)
-   - ALL compound words (voetbal → voetbal/voetballen/voetballer/voetbalster)
-   - Related concepts + ALL synonyms
-   - English equivalents (if relevant)
-   - Related subcategories (sport → voetbal/tennis/golf/darten/schaatsen/volleybal/judo/etc)
-   - Use FULL PHRASES for multi-word concepts ("romeinse goden" not "god")
-   ⚠️ MINIMUM 20 keywords, aim for 30-40!
-3. PRICE: Parse ranges ("onder 50"→max:50, "rond 40"→min:32,max:48)
+2. KEYWORDS: ⚠️ Generate 20-40 related terms with ALL variations:
+   - Base + singular + plural + diminutives (hond→hond/honden/hondje/hondjes)
+   - Gender variants (sporter/sportster, atleet/atlete/atleten)
+   - Compound words (voetbal→voetbal/voetballen/voetballer/voetbalster)
+   - Synonyms + related concepts
+   - English equivalents (when relevant)
+   - Subcategories (sport→voetbal/tennis/golf/darten/schaatsen/judo)
+   - Multi-word = FULL PHRASES ("romeinse goden" NOT "god")
+   ⚠️ MINIMUM 20 keywords!
+3. PRICE: Parse ranges ("onder 50"→price_max:50, "tussen 30-50"→price_min:30,price_max:50)
 
-Special cases:
-- "cadeau" is NOT a type (type:null, extract theme keywords)
-- Questions ("zijn er romeinse goden?") → extract subject keywords
-- Mythology: use phrases ("romeinse goden" not "god" to avoid false matches)
+Special:
+- "cadeau" = NOT a type (extract theme keywords instead)
+- Questions → extract subject keywords
+- Mythology/religion → use full phrases to avoid false matches
 
 Examples:
 "beeldje" → {"type":"Beeld","keywords":[]}
