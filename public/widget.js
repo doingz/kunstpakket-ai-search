@@ -572,7 +572,7 @@
           <div class="kp-product-card ${isHighlighted ? 'highlighted' : ''}">
             ${product.image ? `
               <img 
-                src="${product.image}" 
+                src="${getOptimizedImageUrl(product.image)}" 
                 alt="${escapeHtml(product.title)}"
                 class="kp-product-image"
                 loading="lazy"
@@ -708,6 +708,23 @@
         }
       });
     });
+  }
+  
+  /**
+   * Get optimized image URL (smaller size for better performance)
+   */
+  function getOptimizedImageUrl(imageUrl) {
+    if (!imageUrl) return null;
+    
+    // Convert to 350x350 thumbnail format
+    // From: https://cdn.webshopapp.com/shops/269557/files/486441724/image.jpg
+    // To:   https://cdn.webshopapp.com/shops/269557/files/486441724/350x350x2/image.jpg
+    const match = imageUrl.match(/(.+\/files\/\d+)\/(.+)$/);
+    if (match) {
+      return `${match[1]}/350x350x2/${match[2]}`;
+    }
+    
+    return imageUrl; // Return original if pattern doesn't match
   }
   
   /**
