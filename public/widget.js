@@ -129,10 +129,11 @@
           <path d="m21 21-4.35-4.35"></path>
         </svg>
         <input 
-          type="text" 
+          type="search" 
           id="kp-search-input-bar" 
           placeholder="Zoek naar een kunstcadeau"
           autocomplete="off"
+          enterkeyhint="search"
         />
         <button id="kp-search-button-bar" class="kp-search-btn">Zoeken</button>
       </div>
@@ -172,10 +173,11 @@
         <div class="kp-overlay-header">
           <div class="kp-search-box-overlay">
             <input 
-              type="text" 
+              type="search" 
               id="kp-search-input-overlay" 
               placeholder="Zoek naar kunst... bijv. \\"beeldje met hart max 80 euro\\""
               autocomplete="off"
+              enterkeyhint="search"
             />
             <button id="kp-search-button-overlay">Zoeken</button>
           </div>
@@ -731,12 +733,11 @@
         
         .kp-search-wrapper {
           flex-direction: row;
-          padding: 8px;
+          padding: 8px 16px;
         }
         
         .kp-search-btn {
-          padding: 10px 16px;
-          font-size: 14px;
+          display: none;
         }
         
         .kp-overlay-content {
@@ -747,19 +748,34 @@
         
         .kp-overlay-header {
           position: relative;
-          flex-direction: column;
-          align-items: stretch;
-          padding-right: 60px;
+          flex-direction: row;
+          align-items: center;
+          padding: 16px;
+          gap: 12px;
         }
         
         .kp-search-box-overlay {
-          flex-direction: column;
+          flex: 1;
+        }
+        
+        #kp-search-input-overlay {
+          padding: 12px 16px;
+        }
+        
+        #kp-search-button-overlay {
+          display: none;
         }
         
         .kp-close-button {
-          position: absolute;
-          top: 20px;
-          right: 20px;
+          position: static;
+          width: 40px;
+          height: 40px;
+          flex-shrink: 0;
+        }
+        
+        .kp-close-button svg {
+          width: 20px;
+          height: 20px;
         }
         
         .kp-products-grid {
