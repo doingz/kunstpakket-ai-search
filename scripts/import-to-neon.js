@@ -278,69 +278,6 @@ async function importVariants(variants) {
 
 
 /**
- * Update sport_keywords column for products with sport-related content
- * The search_vector will be automatically regenerated (it's a GENERATED column)
- */
-async function updateSportKeywords() {
-  try {
-    console.log('  🔍 Updating sport keywords...');
-    
-    // Sport keyword mapping - expand sport terms for better search
-    const sportKeywords = {
-      'golfer': 'golf golfer golfster golfsport',
-      'golfster': 'golf golfer golfster golfsport',
-      'voetbal': 'voetbal voetballer voetbalster soccer football',
-      'voetballer': 'voetbal voetballer voetbalster soccer football',
-      'voetbalster': 'voetbal voetballer voetbalster soccer football',
-      'tennis': 'tennis tennisser tennister tennissport',
-      'tennisser': 'tennis tennisser tennister tennissport',
-      'tennister': 'tennis tennisser tennister tennissport',
-      'hardloop': 'hardlopen hardloper hardloopster rennen runner marathon',
-      'hardloper': 'hardlopen hardloper hardloopster rennen runner marathon',
-      'marathon': 'marathon hardlopen hardloper marathonloper rennen',
-      'schaats': 'schaatsen schaatser schaatsster ijssport',
-      'schaatser': 'schaatsen schaatser schaatsster ijssport',
-      'volleybal': 'volleybal volleyballer volleybalster',
-      'volleyballer': 'volleybal volleyballer volleybalster',
-      'darten': 'darten darter darts dartsport',
-      'judo': 'judo judoka judosport martial arts',
-      'biker': 'biker fietsen wielrennen cycling cyclist'
-    };
-
-    // Update products that contain sport keywords
-    let updated = 0;
-    for (const [keyword, extraTerms] of Object.entries(sportKeywords)) {
-      const result = await sql`
-        UPDATE products
-        SET sport_keywords = ${extraTerms}
-        WHERE 
-          is_visible = true
-          AND (
-            LOWER(title) LIKE ${'%' + keyword + '%'}
-            OR LOWER(full_title) LIKE ${'%' + keyword + '%'}
-            OR LOWER(description) LIKE ${'%' + keyword + '%'}
-          )
-      `;
-      updated += result.rowCount || 0;
-    }
-
-    // Add generic "sporter atleet sportief" to ALL products that have sport keywords
-    const generic = await sql`
-      UPDATE products
-      SET sport_keywords = sport_keywords || ' sporter atleet sportief'
-      WHERE sport_keywords != ''
-        AND is_visible = true
-    `;
-
-    console.log(`  ✅ Updated ${updated} products with sport keywords`);
-    console.log(`  ✅ Added sporter/atleet to ${generic.rowCount} products`);
-    
-  } catch (error) {
-    console.error('  ⚠️  Failed to update sport keywords:', error.message);
-  }
-}
-
-/**
  * Detect and update product types based on title, description, tags, and categories
  */
 async function detectAndUpdateTypes() {
@@ -471,10 +408,6 @@ async function main() {
     // Detect and update product types
     console.log('\n🔍 Detecting product types...');
     await detectAndUpdateTypes();
-    
-    // Update sport keywords (search_vector will auto-regenerate)
-    console.log('\n🔍 Updating sport keywords...');
-    await updateSportKeywords();
 
     console.log('\n✅ Import complete!');
     process.exit(0);

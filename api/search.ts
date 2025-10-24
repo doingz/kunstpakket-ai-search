@@ -20,10 +20,12 @@ Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoos
 
 Rules:
 1. TYPE: Set ONLY if explicitly mentioned ("beeldje"→"Beeld", "schilderij"→"Schilderij")
-2. KEYWORDS: Generate MULTIPLE related terms (singular, plural, synonyms, related concepts)
-   - Animals: include variations ("hond"→["hond","honden","hondje","dog"])
-   - Sports: include related terms ("sporter"→["sport","sporter","sportief","atleet","voetbal","tennis","golf"])
-   - Themes: include synonyms ("liefde"→["liefde","hart","hartje","love","romance"])
+2. KEYWORDS: Generate 16-48 related terms with ALL variations:
+   - Singular, plural, diminutives (hond/honden/hondje)
+   - Gender variants (sporter/sportster, atleet/atlete)
+   - Compound words (voetbal → voetballer/voetbalster/voetbalwedstrijd)
+   - Related concepts & synonyms
+   - English equivalents when relevant
    - Use FULL PHRASES for multi-word concepts ("romeinse goden" not "god")
 3. PRICE: Parse ranges ("onder 50"→max:50, "rond 40"→min:32,max:48)
 
@@ -35,11 +37,10 @@ Special cases:
 Examples:
 "beeldje" → {"type":"Beeld","keywords":[]}
 "schilderij max 300" → {"type":"Schilderij","keywords":[],"price_max":300}
-"hond" → {"type":null,"keywords":["hond","honden","hondje","dog","dogs"]}
-"beeldje met hart" → {"type":"Beeld","keywords":["hart","hartje","heart","liefde","love"]}
-"romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","mythologie","rome"]}
-"cadeau voor arts" → {"type":null,"keywords":["arts","dokter","medisch","hippocrates","gezondheidszorg"]}
-"beeld voor sporter" → {"type":"Beeld","keywords":["sport","sporter","sportief","atleet","voetbal","tennis","golf","sporten"]}
+"hond" → {"type":null,"keywords":["hond","honden","hondje","hondjes","dog","dogs","puppy","puppies","huisdier","huisdieren","trouwe vriend"]}
+"beeldje met hart" → {"type":"Beeld","keywords":["hart","harte","hartje","hartjes","heart","hearts","liefde","love","romance","romantisch","romantiek","valentijn","affectie","genegenheid"]}
+"romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","rome","romeinen","mythologie","mythologisch","god","goden","godin","godinnen","jupiter","mars","venus"]}
+"beeld voor sporter" → {"type":"Beeld","keywords":["sport","sporten","sporter","sportster","sportief","sportieve","atleet","atlete","atleten","voetbal","voetballen","voetballer","voetbalster","soccer","football","tennis","tennissen","tennisser","tennister","golf","golfen","golfer","golfster","hardlopen","hardloper","hardloopster","rennen","runner","marathon","marathonloper","darten","darter","darts","schaatsen","schaatser","schaatsster","judo","judoka","volleybal","volleyballen","volleyballer","volleybalster","fietsen","wielrennen","fietser","wielrenner","cyclist","biker"]}
 
 Only return valid JSON, no explanation.`;
 
@@ -48,7 +49,7 @@ Only return valid JSON, no explanation.`;
       model: 'gpt-4o',  // Upgraded from gpt-4o-mini for better intelligence
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
-      max_tokens: 500,
+      max_tokens: 800,  // Increased for 16-48 keywords (was 500)
       response_format: { type: 'json_object' }
     });
 
