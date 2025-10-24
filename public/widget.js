@@ -391,12 +391,17 @@
     const style = document.createElement('style');
     style.textContent = `
       /* Search bar in .container-bar */
+      .container-bar {
+        padding-top: 0 !important;
+      }
+      
       #kp-search-bar {
         flex: 1;
         display: flex;
         justify-content: center;
         max-width: 800px;
         margin: 0 auto;
+        padding: 20px 0;
       }
       
       .kp-search-wrapper {
