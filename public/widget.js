@@ -400,6 +400,17 @@
         padding-top: 0 !important;
       }
       
+      /* Hide default search bars */
+      #header-search,
+      #subheader-search {
+        display: none !important;
+      }
+      
+      /* Fix sidebar z-index */
+      #wwkSidebarMobile {
+        z-index: 800 !important;
+      }
+      
       #kp-search-bar {
         flex: 1;
         display: flex;
@@ -735,8 +746,10 @@
         }
         
         .kp-overlay-header {
+          position: relative;
           flex-direction: column;
           align-items: stretch;
+          padding-right: 60px;
         }
         
         .kp-search-box-overlay {
@@ -744,7 +757,9 @@
         }
         
         .kp-close-button {
-          align-self: flex-end;
+          position: absolute;
+          top: 20px;
+          right: 20px;
         }
         
         .kp-products-grid {
