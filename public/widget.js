@@ -114,6 +114,13 @@
    * Inject search bar after #header
    */
   function injectSearchBar() {
+    // Don't show search bar on cart or checkout pages
+    const url = window.location.href.toLowerCase();
+    if (url.includes('cart') || url.includes('checkout')) {
+      console.log('[KP Search] Skipping search bar on cart/checkout page');
+      return;
+    }
+    
     const header = document.querySelector('#header');
     if (!header) {
       console.warn('[KP Search] #header not found');
