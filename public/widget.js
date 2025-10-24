@@ -358,11 +358,18 @@
     html += '</div>';
     container.innerHTML = html;
     
-    // Attach event listeners
-    document.getElementById('kp-sort-select')?.addEventListener('change', (e) => {
-      currentSort = e.target.value;
-      renderResults(currentResults);
-    });
+    // Restore current sort selection
+    const sortSelect = document.getElementById('kp-sort-select');
+    if (sortSelect) {
+      sortSelect.value = currentSort;
+      
+      // Attach event listener
+      sortSelect.addEventListener('change', (e) => {
+        const target = e.target as HTMLSelectElement;
+        currentSort = target.value;
+        renderResults(currentResults);
+      });
+    }
     
     document.querySelectorAll('.kp-product-card').forEach(card => {
       card.addEventListener('click', (e) => {
