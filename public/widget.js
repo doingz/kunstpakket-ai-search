@@ -864,7 +864,17 @@
     // Check purchase page
     checkPurchasePage();
     
-    // Widget is now live for all users!
+    // Check if widget should be enabled (f=1 flag required)
+    const enabled = localStorage.getItem('kp_search_enabled');
+    if (enabled !== 'true') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('f') === '1') {
+        localStorage.setItem('kp_search_enabled', 'true');
+      } else {
+        console.log('[KP Search] Widget disabled (add ?f=1 to enable)');
+        return;
+      }
+    }
     
     // Inject styles
     injectStyles();
