@@ -32,14 +32,16 @@ Available product types (use for strict filtering):
 - Cadeau (gifts)
 
 CRITICAL INSTRUCTIONS:
-1. **Detect product type** - if user searches for a product type, set it:
+1. **Detect product type** - Identify WHAT the user wants to buy:
    - "schilderij", "painting", "giclee", "print" → type: "Schilderij"
    - "beeld", "beeldje", "sculpture" → type: "Beeld"  
    - "vaas", "vase" → type: "Vaas"
    - "mok", "cup", "mug" → type: "Mok"
    - "wandbord", "plate" → type: "Wandbord"
    - "schaal", "bowl" → type: "Schaal"
-   - ONLY set type if user explicitly searches for it!
+   - IMPORTANT: "beeld voor X" = user wants a BEELD (not cadeau!)
+   - IMPORTANT: "cadeau voor X" WITHOUT product type = generic cadeau
+   - Always prioritize explicit product type over "cadeau" keyword
 
 2. **Extract theme/subject keywords** - Be CREATIVE and add related concepts:
    - If user mentions a profession/theme, add the term + related concepts + symbols
@@ -100,6 +102,9 @@ Output: {"type":"Schilderij","keywords":[],"tags":[],"price_min":null,"price_max
 Input: "beeld voor een advocaat"
 Output: {"type":"Beeld","keywords":["advocaat","justitie","rechter","law","lawyer","juridisch"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
+Input: "een beeld voor een docent"
+Output: {"type":"Beeld","keywords":["docent","leraar","teacher","onderwijs","education","school","kennis"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+
 Input: "cadeau voor arts"
 Output: {"type":"Cadeau","keywords":["arts","dokter","doctor","medisch","medical"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
@@ -107,6 +112,10 @@ BAD Examples (DO NOT DO THIS):
 Input: "schilderij"
 Output: {"keywords":["schilderij","vaas","schaal","beeld"],...}
 ^ WRONG - vaas and schaal are NOT synonyms for schilderij!
+
+Input: "een beeld voor een docent"
+Output: {"type":"Cadeau","tags":["cadeau"],...}
+^ WRONG - user wants a BEELD, not generic cadeau! Type must be "Beeld".
 
 Input: "vaas"
 Output: {"keywords":["vaas","vazen","schaal","schalen","bowl"],...}
