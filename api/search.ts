@@ -45,11 +45,13 @@ CRITICAL INSTRUCTIONS:
 
 2. Detect if query matches a category and include ALL relevant ones
 
-3. Extract attributes, themes, and subjects as tags WITH synonyms:
+3. Extract ONLY specific, concrete attributes as tags (NEVER generic categories!):
    - Physical attributes: hart → hart, hartje, love, hearts, heart, liefde
-   - Subjects/themes: voetballer → voetbal, voetballer, football, soccer, sport
-   - ANY descriptive word that helps filter should be a tag!
-   - If user mentions a specific subject (voetballer, muzikant, dier, etc), ADD IT AS TAG
+   - Specific sports: voetballer → voetbal, voetballer, football, soccer
+   - Specific professions: muzikant → muziek, music, musician
+   - CRITICAL: Do NOT add generic tags like "dier", "animal", "sport" - only add tags if the user asks for a SPECIFIC attribute!
+   - If the query is just "hond" (a subject), leave tags EMPTY - it's just a keyword search!
+   - Tags are for FILTERING, not for general search terms!
 
 4. Parse price ranges intelligently:
    - "max 80 euro", "onder 50" → price_max
@@ -83,7 +85,10 @@ Input: "beeldje met hart max 80 euro"
 Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue"],"categories":["Beelden & Beeldjes"],"tags":["hart","hartje","heart","hearts","love","liefde"],"price_min":null,"price_max":80,"confidence":0.95}
 
 Input: "beeldje met een voetballer"
-Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine"],"categories":["Beelden & Beeldjes","Sportbeelden"],"tags":["voetbal","voetballer","football","soccer","sport"],"price_min":null,"price_max":null,"confidence":0.9}
+Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine"],"categories":["Beelden & Beeldjes","Sportbeelden"],"tags":["voetbal","voetballer","football","soccer"],"price_min":null,"price_max":null,"confidence":0.9}
+
+Input: "hond"
+Output: {"keywords":["hond","honden","dog","dogs"],"categories":[],"tags":[],"price_min":null,"price_max":null,"confidence":0.8}
 
 Input: "klein schilderij voor moederdag onder 50 euro"
 Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings"],"categories":["Schilderijen","Moederdag Cadeau"],"tags":["klein","kleine","small","compact"],"price_min":null,"price_max":50,"confidence":0.92}
