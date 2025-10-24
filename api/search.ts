@@ -100,17 +100,21 @@ function buildSearchQuery(filters: any) {
   // Keywords - ONLY full-text search (whole words only, no substrings)
   // This prevents false matches like "god" matching "goddelijke" or "godfather"
   // CRITICAL: For type-only queries, we must NOT add keyword filters!
-  // Problem: AI generates type synonyms (painting, canvas, artwork, sculpture, etc.)
+  // Problem: AI generates type synonyms (painting, canvas, artwork, schilderijen, etc.)
   //          but products often don't have these words in their description
-  // Solution: If query is JUST type + price (no real context), use ONLY type filter
+  // Solution: If type exists AND NO meaningful context keywords, use ONLY type filter
   if (filters.keywords && filters.keywords.length > 0 && filters.type) {
-    // Check if ALL keywords are generic/short (≤ 10 chars) = likely just type synonyms
-    const allKeywordsAreGeneric = filters.keywords.every((kw: string) => kw.length <= 10);
+    // Check if we have MEANINGFUL context keywords (> 12 chars or multi-word)
+    // Short single words (≤ 12) = type synonyms: mok, painting, schilderijen, canvas, artwork
+    // Long or multi-word = real context: "van gogh", "bodybuilder", "romeinse goden"
+    const hasMeaningfulContext = filters.keywords.some((kw: string) => 
+      kw.length > 12 || kw.includes(' ')
+    );
     
-    // If type exists AND all keywords are short/generic, skip keywords entirely
-    // This handles ANY type synonym the AI might generate (painting, artwork, canvas, sculpture, etc.)
-    if (!allKeywordsAreGeneric) {
-      // We have meaningful context keywords (artist names, themes, etc.) - use them!
+    // If type exists AND no meaningful context, skip keywords entirely
+    // This handles ANY type synonym the AI might generate
+    if (hasMeaningfulContext) {
+      // We have real context keywords (artist names, themes, etc.) - use them!
       const keywordConditions = filters.keywords.map((keyword: string) => {
         params.push(keyword);
         const idx = paramIndex++;
