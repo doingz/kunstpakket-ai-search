@@ -131,7 +131,7 @@
         <input 
           type="text" 
           id="kp-search-input-bar" 
-          placeholder="Zoek naar kunst..."
+          placeholder="Zoek naar een kunstcadeau"
           autocomplete="off"
         />
         <button id="kp-search-button-bar" class="kp-search-btn">Zoeken</button>
