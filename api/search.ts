@@ -28,6 +28,7 @@ Task:
 2. Extract ALL relevant search words with synonyms (Dutch + English)
 3. Extract price if mentioned
 4. For questions, extract subject words (e.g., "zijn er romeinse goden?" → romeins, rome, roman, god, goden)
+5. IMPORTANT: Use single words only! "tea light" → ["theelicht", "tealight", "candle", "kaars"]
 
 Return JSON:
 {
@@ -46,6 +47,9 @@ Output: {"type":"Beeld","words":["hart","heart","liefde","love"],"price_min":nul
 
 Input: "hond"
 Output: {"type":null,"words":["hond","honden","hondje","dog","dogs","puppy"],"price_min":null,"price_max":null}
+
+Input: "theelicht"
+Output: {"type":null,"words":["theelicht","theelichtje","tealight","candle","kaars"],"price_min":null,"price_max":null}
 
 Input: "zijn er romeinse goden?"
 Output: {"type":null,"words":["romeins","romeinse","rome","roman","god","goden","gods","mythology"],"price_min":null,"price_max":null}
@@ -112,7 +116,15 @@ function buildSearchQuery(filters: any) {
 
   // Words filter (OR across all words) - single full-text search
   if (filters.words && filters.words.length > 0) {
-    const searchQuery = filters.words.join(' | '); // "hond | dog | puppy"
+    // Handle multi-word terms: "tea light" → "tea & light"
+    const searchTerms = filters.words.map((word: string) => {
+      if (word.includes(' ')) {
+        // Multi-word: "tea light" → "tea & light"
+        return word.split(' ').join(' & ');
+      }
+      return word;
+    });
+    const searchQuery = searchTerms.join(' | '); // "hond | dog | puppy | tea & light"
     params.push(searchQuery);
     conditions.push(`search_vector @@ to_tsquery('dutch', $${paramIndex})`);
     paramIndex++;
