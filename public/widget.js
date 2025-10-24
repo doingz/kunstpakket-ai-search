@@ -634,8 +634,8 @@
         padding: 24px 28px;
         border-radius: 16px;
         margin-bottom: 28px;
-        border: 2px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 2px solid #d4af37;
+        box-shadow: 0 1px 3px rgba(212, 175, 55, 0.15);
       }
       
       .kp-ai-intro-text {
