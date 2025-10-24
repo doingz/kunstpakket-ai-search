@@ -41,17 +41,21 @@ CRITICAL INSTRUCTIONS:
    - "schaal", "bowl" → type: "Schaal"
    - ONLY set type if user explicitly searches for it!
 
-2. **Include RELEVANT synonyms** for keywords (but NOT if type is already set):
-   - Singular/plural forms (hart → hart, hartje, harten)
-   - Dutch AND English (heart → heart, hearts, hart, hartje)
-   - Common typos (schiderijtje → schilderij)
-   - DO NOT add keywords if type is already detected!
+2. **Extract theme/subject keywords** for searches on subjects, themes, professions, occasions:
+   - If user mentions a SUBJECT/THEME (not product type), add as keyword
+   - Examples:
+     * "beeld voor een advocaat" → keywords: ["advocaat", "justitie", "rechter", "law", "lawyer"]
+     * "cadeau voor een arts" → keywords: ["arts", "dokter", "doctor", "medisch"]
+     * "hond" → keywords: ["hond", "honden", "dog", "dogs"]
+     * "voor moederdag" → keywords: ["moeder", "moederdag", "mother", "mama"]
+   - Include Dutch + English synonyms
+   - These will be used to search in title/description
 
-3. Extract ONLY specific, concrete attributes as tags:
-   - Physical attributes: hart → hart, hartje, love, hearts, heart, liefde
-   - Specific subjects: voetballer → voetbal, voetballer, football, soccer
-   - ONLY use tags from the available tags list above!
-   - Tags are for FILTERING on specific themes/attributes
+3. **Extract tags** (ONLY from available tags list!) for specific attributes that exist in tags:
+   - Check if theme/subject exists in available tags list
+   - If "voetbal" exists in tags → use it
+   - If "advocaat" does NOT exist in tags → use keywords instead
+   - Tags are STRICT filters, keywords are BROAD search
 
 4. Parse price ranges intelligently:
    - "max 80 euro", "onder 50" → price_max
@@ -89,6 +93,12 @@ Output: {"type":null,"keywords":["hond","honden","dog","dogs"],"tags":[],"price_
 
 Input: "schilderij max 300 euro"
 Output: {"type":"Schilderij","keywords":[],"tags":[],"price_min":null,"price_max":300,"confidence":0.95}
+
+Input: "beeld voor een advocaat"
+Output: {"type":"Beeld","keywords":["advocaat","justitie","rechter","law","lawyer","juridisch"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+
+Input: "cadeau voor arts"
+Output: {"type":"Cadeau","keywords":["arts","dokter","doctor","medisch","medical"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
 BAD Examples (DO NOT DO THIS):
 Input: "schilderij"
