@@ -26,6 +26,9 @@ Available product types (use for strict filtering):
 - Schilderij (paintings, prints, giclees, art on canvas)
 - Vaas (vases)
 - Mok (mugs, cups)
+- Onderzetter (coasters)
+- Theelicht (tea lights, candle holders)
+- Spiegeldoosje (compact mirrors)
 - Wandbord (decorative plates)
 - Schaal (bowls)
 - Glasobject (glass art, crystal)
@@ -79,7 +82,7 @@ CRITICAL INSTRUCTIONS:
    - "rond 50", "ongeveer 40", "om en nabij 60" → price_min = X * 0.8, price_max = X * 1.2
 
 Return JSON with:
-- type: ONE product type from the list above (Beeld, Schilderij, Vaas, Mok, Wandbord, Schaal, Glasobject) or null
+- type: ONE product type from the list above (Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject) or null
 - keywords: array of search terms for SUBJECTS/THEMES (not product types!)
 - tags: array of specific attributes with synonyms (ONLY from available tags list!)
 - price_min: number or null
