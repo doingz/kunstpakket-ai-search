@@ -565,9 +565,8 @@
     products.forEach((product, index) => {
       const isHighlighted = currentResults?.results?.highlighted?.includes(index);
       html += `
-        <a href="https://www.kunstpakket.nl/${product.url}" 
+        <a href="https://www.kunstpakket.nl/${product.url}.html" 
            class="kp-product-link" 
-           target="_blank"
            data-product-id="${product.id}"
            data-product-url="${product.url}">
           <div class="kp-product-card ${isHighlighted ? 'highlighted' : ''}">
