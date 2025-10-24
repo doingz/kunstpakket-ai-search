@@ -411,14 +411,15 @@ Showing: ${results.showing} products
 
 Requirements:
 - Use first person ("Ik heb...") or neutral ("Er zijn..."), NEVER use second person ("Je hebt...")
-- Keep it short (1-2 sentences)
-- Be natural and encouraging
-- No emojis
+- Make it friendly, warm and inviting (2-3 sentences)
+- Be natural, encouraging and conversational
+- ALWAYS include ONE relevant emoji at the start of the message
+- Make it feel personal and helpful
 
 Examples:
-- "Ik heb 15 mokken voor je gevonden!"
-- "Er zijn 8 kunstwerken die passen bij je zoekopdracht."
-- "Ik vond 12 cadeaus onder €50 voor je."`;
+- "🎨 Ik heb 15 prachtige mokken voor je gevonden! Van klassiek tot modern, er zit vast iets moois tussen voor jou."
+- "✨ Er zijn 8 kunstwerken die perfect passen bij je zoekopdracht. Neem gerust de tijd om rond te kijken!"
+- "🎁 Ik vond 12 mooie cadeaus onder €50 voor je. Hopelijk zit er iets tussen dat je zoekt!"`;
 
   try {
     const response = await openai.chat.completions.create({

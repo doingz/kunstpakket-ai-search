@@ -311,7 +311,6 @@
     if (data.results.advice) {
       html += `
         <div class="kp-ai-intro">
-          <div class="kp-ai-intro-icon">✨</div>
           <div class="kp-ai-intro-text">${escapeHtml(data.results.advice)}</div>
         </div>
       `;
@@ -631,27 +630,18 @@
       }
       
       .kp-ai-intro {
-        background: linear-gradient(135deg, #f5876e 0%, #ff9a82 100%);
-        color: white;
-        padding: 20px 24px;
-        border-radius: 12px;
-        margin-bottom: 24px;
-        display: flex;
-        gap: 16px;
-        align-items: flex-start;
-        box-shadow: 0 4px 12px rgba(245, 135, 110, 0.2);
-      }
-      
-      .kp-ai-intro-icon {
-        font-size: 24px;
-        flex-shrink: 0;
-        line-height: 1;
+        background: white;
+        padding: 24px 28px;
+        border-radius: 16px;
+        margin-bottom: 28px;
+        border: 2px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
       
       .kp-ai-intro-text {
         font-size: 16px;
-        line-height: 1.6;
-        flex: 1;
+        line-height: 1.8;
+        color: #475569;
       }
       
       .kp-results-header {
