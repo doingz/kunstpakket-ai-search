@@ -483,33 +483,41 @@ export default async function handler(req: Request) {
       );
     }
 
-    // Step 1: Try exact title match first (fast, no AI needed)
-    console.log('[Search] Step 1: Checking for exact title match...');
-    let results = await searchByExactTitle(query, limit, offset);
+    // Step 1: Try exact title match ONLY for longer, specific queries (likely product names)
+    // Short queries like "beeldje", "mok" should use AI parsing to understand intent
+    let results: any;
     let queryData: any = null;
-
-    // Step 2: If no title match found, use AI parsing
-    if (results.total === 0) {
-      console.log('[Search] No title match, using AI to parse query...');
+    const isLongSpecificQuery = query.length > 20;
+    
+    if (isLongSpecificQuery) {
+      console.log('[Search] Long query - checking for exact title match first...');
+      results = await searchByExactTitle(query, limit, offset);
+      
+      if (results.total > 0) {
+        console.log(`[Search] Found ${results.total} products by title match!`);
+        // Create minimal queryData for response (without expensive AI call)
+        queryData = {
+          original: query,
+          parsed: {
+            type: null,
+            keywords: [query],
+            tags: [],
+            price_min: null,
+            price_max: null,
+            confidence: 1.0,
+            categories: []
+          },
+          confidence: 1.0,
+          took_ms: 0
+        };
+      }
+    }
+    
+    // Step 2: Use AI parsing for short queries or if no title match found
+    if (!queryData) {
+      console.log('[Search] Using AI to parse query...');
       queryData = await parseQuery(query);
       results = await searchProducts(queryData.parsed, limit, offset);
-    } else {
-      console.log(`[Search] Found ${results.total} products by title match!`);
-      // Create minimal queryData for response (without expensive AI call)
-      queryData = {
-        original: query,
-        parsed: {
-          type: null,
-          keywords: [query],
-          tags: [],
-          price_min: null,
-          price_max: null,
-          confidence: 1.0,
-          categories: []
-        },
-        confidence: 1.0,
-        took_ms: 0
-      };
     }
 
     // Step 3: Generate advice
