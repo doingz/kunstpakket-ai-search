@@ -40,12 +40,13 @@ async function importProducts(products) {
     try {
       await sql`
         INSERT INTO products (
-          id, title, full_title, content, brand, price, image, url, 
+          id, title, full_title, description, content, brand, price, image, url, 
           is_visible, created_at, updated_at
         ) VALUES (
           ${product.id},
           ${product.title || ''},
           ${product.fulltitle || null},
+          ${product.description || null},
           ${product.content || null},
           ${product.brand?.resource?.id || null},
           ${null},
@@ -58,6 +59,7 @@ async function importProducts(products) {
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
           full_title = EXCLUDED.full_title,
+          description = EXCLUDED.description,
           content = EXCLUDED.content,
           brand = EXCLUDED.brand,
           image = EXCLUDED.image,
@@ -323,7 +325,7 @@ async function detectAndUpdateTypes() {
       SELECT 
         p.id,
         p.title,
-        p.content,
+        p.description,
         ARRAY_AGG(DISTINCT t.title) FILTER (WHERE t.title IS NOT NULL) as tags,
         ARRAY_AGG(DISTINCT c.title) FILTER (WHERE c.title IS NOT NULL) as categories
       FROM products p
@@ -332,7 +334,7 @@ async function detectAndUpdateTypes() {
       LEFT JOIN product_categories pc ON p.id = pc.product_id
       LEFT JOIN categories c ON pc.category_id = c.id
       WHERE p.is_visible = true
-      GROUP BY p.id, p.title, p.content
+      GROUP BY p.id, p.title, p.description
     `;
     
     let updated = 0;
