@@ -29,7 +29,8 @@ Available product types (use for strict filtering):
 - Wandbord (decorative plates)
 - Schaal (bowls)
 - Glasobject (glass art, crystal)
-- Cadeau (gifts)
+
+IMPORTANT: "Cadeau" is NOT a product type! If user searches for "cadeau", set type: null and search broadly.
 
 CRITICAL INSTRUCTIONS:
 1. **Detect product type** - ONLY if user explicitly mentions the product type:
@@ -71,12 +72,14 @@ CRITICAL INSTRUCTIONS:
    - "rond 50", "ongeveer 40", "om en nabij 60" → price_min = X * 0.8, price_max = X * 1.2
 
 Return JSON with:
-- type: ONE product type from the list above (Beeld, Schilderij, Vaas, Mok, Wandbord, Schaal, Glasobject, Cadeau) or null
+- type: ONE product type from the list above (Beeld, Schilderij, Vaas, Mok, Wandbord, Schaal, Glasobject) or null
 - keywords: array of search terms for SUBJECTS/THEMES (not product types!)
 - tags: array of specific attributes with synonyms (ONLY from available tags list!)
 - price_min: number or null
 - price_max: number or null
 - confidence: 0.0-1.0
+
+REMEMBER: "Cadeau" is NOT a type! For "cadeau voor X", set type: null and add theme keywords.
 
 GOOD Examples:
 
@@ -111,7 +114,10 @@ Input: "een beeld voor een docent"
 Output: {"type":"Beeld","keywords":["docent","leraar","teacher","onderwijs","education","school","kennis"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
 Input: "cadeau voor arts"
-Output: {"type":"Cadeau","keywords":["arts","dokter","doctor","medisch","medical"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+Output: {"type":null,"keywords":["arts","dokter","doctor","medisch","medical"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+
+Input: "een cadeau voor een verjaardag"
+Output: {"type":null,"keywords":["verjaardag","birthday","feest","celebration","party"],"tags":[],"price_min":null,"price_max":null,"confidence":0.85}
 
 BAD Examples (DO NOT DO THIS):
 Input: "schilderij"
@@ -129,6 +135,10 @@ Output: {"type":"Cadeau","tags":["cadeau"],...}
 Input: "vaas"
 Output: {"keywords":["vaas","vazen","schaal","schalen","bowl"],...}
 ^ WRONG - schaal is different from vaas, don't mix them!
+
+Input: "cadeau voor verjaardag"
+Output: {"type":"Cadeau","tags":["cadeau"],...}
+^ WRONG - "Cadeau" is NOT a type! Set type: null and search broadly with theme keywords.
 
 Only return valid JSON, no explanation.`;
 
