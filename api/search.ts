@@ -3,7 +3,6 @@
  */
 import { sql } from '@vercel/postgres';
 import OpenAI from 'openai';
-import { getTagsPromptSection } from '../lib/available-tags.js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -13,32 +12,28 @@ const openai = new OpenAI({
 async function parseQuery(query: string) {
   const start = Date.now();
   
-  const tagsSection = await getTagsPromptSection();
-  
-  const prompt = `Parse Dutch product search query. Extract: type, keywords, tags, price range.
+  const prompt = `Parse Dutch product search query. Extract: type, keywords, price range.
 
 Query: "${query}"
-
-${tagsSection}
 
 Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
 Rules:
 1. TYPE: Set ONLY if explicitly mentioned ("beeldje"→"Beeld", "schilderij"→"Schilderij")
-2. KEYWORDS: For subjects/themes. Use FULL PHRASES for multi-word concepts ("romeinse goden" not "god")
-3. TAGS: Match from available tags list only
-4. PRICE: Parse ranges ("onder 50"→max:50, "rond 40"→min:32,max:48)
+2. KEYWORDS: For subjects/themes/attributes. Use FULL PHRASES for multi-word concepts ("romeinse goden" not "god")
+3. PRICE: Parse ranges ("onder 50"→max:50, "rond 40"→min:32,max:48)
 
 Special cases:
 - "cadeau" is NOT a type (type:null, extract theme keywords)
 - Questions ("zijn er romeinse goden?") → extract subject keywords
 - Mythology: use phrases ("romeinse goden" not "god" to avoid false matches)
+- Attributes like "hart", "voetbal" go in keywords
 
 Examples:
-"beeldje" → {"type":"Beeld","keywords":[],"tags":[],"price_min":null,"price_max":null}
-"schilderij max 300" → {"type":"Schilderij","keywords":[],"tags":[],"price_max":300}
+"beeldje" → {"type":"Beeld","keywords":[]}
+"schilderij max 300" → {"type":"Schilderij","keywords":[],"price_max":300}
 "hond" → {"type":null,"keywords":["hond","honden","hondje","dog","dogs"]}
-"beeldje met hart" → {"type":"Beeld","tags":["hart","hartje","heart"]}
+"beeldje met hart" → {"type":"Beeld","keywords":["hart","hartje","heart","liefde"]}
 "romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","mythologie"]}
 "cadeau voor arts" → {"type":null,"keywords":["arts","dokter","medisch","hippocrates"]}
 
@@ -56,12 +51,10 @@ Only return valid JSON, no explanation.`;
     const content = response.choices[0].message.content?.trim() || '{}';
     const parsed = JSON.parse(content);
     
-    // Ensure we always have arrays
+    // Ensure we always have keywords array
     if (!parsed.keywords || !Array.isArray(parsed.keywords)) {
       parsed.keywords = [query];
     }
-    if (!parsed.categories) parsed.categories = [];
-    if (!parsed.tags) parsed.tags = [];
     
     return {
       original: query,
@@ -76,7 +69,6 @@ Only return valid JSON, no explanation.`;
       parsed: { 
         type: null,
         keywords: [query],
-        tags: [],
         price_min: null,
         price_max: null,
         confidence: 0.5
@@ -130,16 +122,6 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Tags - for specific attributes/themes
-  if (filters.tags && filters.tags.length > 0) {
-    params.push(filters.tags);
-    conditions.push(`id IN (
-      SELECT product_id FROM product_tags 
-      WHERE tag_id IN (SELECT id FROM tags WHERE title = ANY($${paramIndex}))
-    )`);
-    paramIndex++;
-  }
-
   return { conditions, params };
 }
 
@@ -172,39 +154,8 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const countResult = await sql.query(countQuery, params);
   const total = parseInt(countResult.rows[0]?.total || '0');
 
-  // Sort by relevance (best match first)
-  // Priority: exact match > partial match > similarity > popularity
-  let orderBy = 'stock_sold DESC NULLS LAST, price ASC';  // Default: popularity + price
-  
-  // Build relevance scoring
-  const scoreParts: string[] = [];
-  
-  // Highest priority: tag matches in title
-  if (filters.tags && filters.tags.length > 0) {
-    const tagChecks = filters.tags.slice(0, 3).map((tag: string) => 
-      `LOWER(title) LIKE LOWER('%${tag}%')`
-    ).join(' OR ');
-    scoreParts.push(`CASE WHEN ${tagChecks} THEN 1 ELSE 10 END`);
-  }
-  
-  // Secondary: keyword relevance with similarity scoring
-  if (filters.keywords && filters.keywords.length > 0) {
-    const firstKeyword = filters.keywords[0];
-    scoreParts.push(`
-      CASE 
-        WHEN LOWER(title) = LOWER('${firstKeyword}') THEN 1
-        WHEN title ILIKE '${firstKeyword}%' THEN 2
-        WHEN title ILIKE '%${firstKeyword}%' THEN 3
-        WHEN similarity(LOWER(title), LOWER('${firstKeyword}')) > 0.5 THEN 4
-        WHEN similarity(LOWER(title), LOWER('${firstKeyword}')) > 0.3 THEN 5
-        ELSE 6
-      END
-    `);
-  }
-  
-  if (scoreParts.length > 0) {
-    orderBy = `${scoreParts.join(' + ')} ASC, stock_sold DESC NULLS LAST, price ASC`;
-  }
+  // Sort by popularity (stock_sold) and then price
+  let orderBy = 'stock_sold DESC NULLS LAST, price ASC';
   
   const searchQuery = `
     SELECT id, title, full_title, content, brand, price, old_price, stock_sold, image, url
