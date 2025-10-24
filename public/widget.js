@@ -124,12 +124,19 @@
     const searchBar = document.createElement('div');
     searchBar.id = 'kp-search-bar';
     searchBar.innerHTML = `
-      <input 
-        type="text" 
-        id="kp-search-input-bar" 
-        placeholder="🔍 Zoek kunst..."
-        autocomplete="off"
-      />
+      <div class="kp-search-wrapper">
+        <svg class="kp-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input 
+          type="text" 
+          id="kp-search-input-bar" 
+          placeholder="Zoek naar kunst..."
+          autocomplete="off"
+        />
+        <button id="kp-search-button-bar" class="kp-search-btn">Zoeken</button>
+      </div>
     `;
     
     // Insert as first child
@@ -137,14 +144,19 @@
     
     // Add event listeners
     const input = document.getElementById('kp-search-input-bar');
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        openOverlay(input.value.trim());
+    const button = document.getElementById('kp-search-button-bar');
+    
+    const handleSearch = () => {
+      const query = input.value.trim();
+      if (query) {
+        openOverlay(query);
       }
-    });
-    input.addEventListener('focus', () => {
-      if (input.value.trim()) {
-        openOverlay(input.value.trim());
+    };
+    
+    button.addEventListener('click', handleSearch);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSearch();
       }
     });
   }
@@ -395,23 +407,72 @@
       /* Search bar in .container-bar */
       #kp-search-bar {
         flex: 1;
-        max-width: 500px;
-        margin-right: 20px;
+        display: flex;
+        justify-content: center;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      
+      .kp-search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+        max-width: 600px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 4px 4px 4px 16px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+      
+      .kp-search-wrapper:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+      }
+      
+      .kp-search-icon {
+        color: #94a3b8;
+        flex-shrink: 0;
+        margin-right: 12px;
       }
       
       #kp-search-input-bar {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 12px 0;
         font-size: 15px;
-        transition: all 0.2s;
+        color: #1e293b;
+        background: transparent;
       }
       
-      #kp-search-input-bar:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      #kp-search-input-bar::placeholder {
+        color: #94a3b8;
+      }
+      
+      .kp-search-btn {
+        padding: 12px 24px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      
+      .kp-search-btn:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+      
+      .kp-search-btn:active {
+        transform: translateY(0);
       }
       
       /* Fullscreen overlay */
@@ -653,8 +714,17 @@
       @media (max-width: 640px) {
         #kp-search-bar {
           max-width: 100%;
-          margin-right: 0;
-          margin-bottom: 12px;
+          padding: 0 12px;
+        }
+        
+        .kp-search-wrapper {
+          flex-direction: row;
+          padding: 8px;
+        }
+        
+        .kp-search-btn {
+          padding: 10px 16px;
+          font-size: 14px;
         }
         
         .kp-overlay-content {
