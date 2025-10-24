@@ -13,11 +13,13 @@ const openai = new OpenAI({
 async function parseQuery(query: string) {
   const start = Date.now();
   
+  const tagsSection = await getTagsPromptSection();
+  
   const prompt = `Parse this Dutch e-commerce search query for an art & gift webshop and extract structured filters.
 
 Search query: "${query}"
 
-${getTagsPromptSection()}
+${tagsSection}
 
 Available product categories:
 - Beelden & Beeldjes (sculptures, figurines)
