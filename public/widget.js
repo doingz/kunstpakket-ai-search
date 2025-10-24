@@ -33,16 +33,20 @@
       sessionStorage.setItem('kp_search_id', searchId);
       sessionStorage.setItem('kp_last_query', query);
       
+      const payload = {
+        event: 'search',
+        client_id: 'kunstpakket.nl',
+        search_id: searchId,
+        query: query,
+        result_count: resultCount
+      };
+      
+      console.log('[Analytics] Tracking search:', payload);
+      
       fetch(ANALYTICS_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event: 'search',
-          client_id: 'kunstpakket.nl',
-          search_id: searchId,
-          query: query,
-          result_count: resultCount
-        })
+        body: JSON.stringify(payload)
       }).catch(err => console.warn('[Analytics] Search tracking failed:', err));
       
       console.log('[Analytics] Search tracked:', query, resultCount, 'results');
@@ -507,6 +511,11 @@
       
       // Track search with correct result count
       const resultCount = data.results?.total || data.results?.items?.length || 0;
+      console.log('[Widget] Search response:', { 
+        total: data.results?.total, 
+        itemsLength: data.results?.items?.length,
+        resultCount 
+      });
       trackSearch(query, resultCount);
       
       // Render results
