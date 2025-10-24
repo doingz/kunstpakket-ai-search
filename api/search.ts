@@ -25,6 +25,9 @@ Product types (only if explicitly mentioned):
 
 Task:
 1. If query mentions a product type → extract it
+   - "sportbeelden" = "sport" + "beelden" → type: "Beeld", words: ["sport", ...]
+   - "vazen" → type: "Vaas", words: []
+   - "mokken" → type: "Mok", words: []
 2. Extract ALL relevant search words with synonyms (Dutch + English)
 3. Extract price if mentioned
 4. For questions, extract subject words (e.g., "zijn er romeinse goden?" → romeins, rome, roman, god, goden)
@@ -41,6 +44,9 @@ Return JSON:
 Examples:
 Input: "beeldje"
 Output: {"type":"Beeld","words":[],"price_min":null,"price_max":null}
+
+Input: "sportbeelden"
+Output: {"type":"Beeld","words":["sport","sports","atletiek","athletics","wedstrijd","competition","voetbal","football","tennis","golf","basketbal","hockey"],"price_min":null,"price_max":null}
 
 Input: "beeldje met hart"
 Output: {"type":"Beeld","words":["hart","heart","liefde","love"],"price_min":null,"price_max":null}
