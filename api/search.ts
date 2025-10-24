@@ -336,7 +336,16 @@ Query: "${query}"
 Found: ${results.total} products
 Showing: ${results.showing} products
 
-Keep it short (1-2 sentences), natural, and encouraging. No emojis.`;
+Requirements:
+- Use first person ("Ik heb...") or neutral ("Er zijn..."), NEVER use second person ("Je hebt...")
+- Keep it short (1-2 sentences)
+- Be natural and encouraging
+- No emojis
+
+Examples:
+- "Ik heb 15 mokken voor je gevonden!"
+- "Er zijn 8 kunstwerken die passen bij je zoekopdracht."
+- "Ik vond 12 cadeaus onder €50 voor je."`;
 
   try {
     const response = await openai.chat.completions.create({
