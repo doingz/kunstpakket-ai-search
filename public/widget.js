@@ -365,8 +365,7 @@
       
       // Attach event listener
       sortSelect.addEventListener('change', (e) => {
-        const target = e.target as HTMLSelectElement;
-        currentSort = target.value;
+        currentSort = e.target.value;
         renderResults(currentResults);
       });
     }
