@@ -401,7 +401,7 @@
         justify-content: center;
         max-width: 800px;
         margin: 0 auto;
-        padding: 20px 0;
+        padding: 40px 0;
       }
       
       .kp-search-wrapper {
@@ -419,8 +419,8 @@
       }
       
       .kp-search-wrapper:focus-within {
-        border-color: #3b82f6;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        border-color: #f5876e;
+        box-shadow: 0 4px 12px rgba(245, 135, 110, 0.15);
       }
       
       .kp-search-icon {
@@ -445,7 +445,7 @@
       
       .kp-search-btn {
         padding: 12px 24px;
-        background: #3b82f6;
+        background: #f5876e;
         color: white;
         border: none;
         border-radius: 8px;
@@ -457,9 +457,9 @@
       }
       
       .kp-search-btn:hover {
-        background: #2563eb;
+        background: #f26d52;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(245, 135, 110, 0.4);
       }
       
       .kp-search-btn:active {
@@ -524,13 +524,13 @@
       
       #kp-search-input-overlay:focus {
         outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: #f5876e;
+        box-shadow: 0 0 0 3px rgba(245, 135, 110, 0.1);
       }
       
       #kp-search-button-overlay {
         padding: 14px 28px;
-        background: #3b82f6;
+        background: #f5876e;
         color: white;
         border: none;
         border-radius: 8px;
@@ -541,7 +541,7 @@
       }
       
       #kp-search-button-overlay:hover {
-        background: #2563eb;
+        background: #f26d52;
       }
       
       #kp-search-button-overlay:disabled {
