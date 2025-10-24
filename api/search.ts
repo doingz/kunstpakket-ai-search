@@ -19,13 +19,15 @@ Query: "${query}"
 Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
 KEYWORDS - Context-aware:
-• SPECIFIC (bodybuilder, tennisser): 3-8 focused keywords
-  - Only direct variants: singular/plural/verb forms
+• SPECIFIC (bodybuilder, tennisser, hond, kat): 5-10 focused keywords
+  - Only direct variants: singular/plural/verb forms + close synonyms
   - Ex: "bodybuilder" → ["bodybuilder","bodybuilders","bodybuilding"]
+  - Ex: "hond" → ["hond","honden","dog","dogs","puppy"] (NOT: dieren, huisdier)
   
-• BROAD (sport, dieren, cadeau): 15-30 expansive keywords
+• BROAD (sport, dieren, kunst, cadeau): 20-35 expansive keywords
   - All variations + subcategories
   - Ex: "sport" → ["sport","sporter","voetbal","tennis","golf",...]
+  - Ex: "kunst" → ["kunst","kunstwerk","schilderij","beeld","kunstenaar",...]
 
 • ARTIST NAMES: 3-5 keywords with name variations
   - Ex: "van gogh" → ["van gogh","vincent","gogh","vincent van gogh"]
@@ -46,9 +48,13 @@ CRITICAL: use_keywords field
 • use_keywords: true if keywords add meaningful context beyond the type
   - Ex: "beeldje met hart" → use_keywords: true (hart is context!)
   - Ex: "beeld van van gogh" → use_keywords: true (artist is context!)
+  - Ex: "kunst" → use_keywords: true (too broad without keywords!)
+  - Ex: "hond" → use_keywords: true (specific subject needs keywords!)
 • use_keywords: false if keywords are ONLY type synonyms
   - Ex: "schilderij onder 300" → use_keywords: false (only type synonyms)
   - Ex: "mok" → use_keywords: false (only type synonyms)
+
+IMPORTANT: Broad queries (kunst, cadeau) MUST have use_keywords: true + many keywords!
 
 Return: {"type":null|"Type","keywords":[...],"use_keywords":true|false,"price_min":null,"price_max":null}`;
 
