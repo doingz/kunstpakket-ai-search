@@ -305,7 +305,19 @@
     const products = filterAndSortProducts(data.results.items);
     const saleCount = products.filter(p => p.onSale).length;
     
-    let html = `
+    let html = '';
+    
+    // Add AI intro if available
+    if (data.results.intro) {
+      html += `
+        <div class="kp-ai-intro">
+          <div class="kp-ai-intro-icon">✨</div>
+          <div class="kp-ai-intro-text">${escapeHtml(data.results.intro)}</div>
+        </div>
+      `;
+    }
+    
+    html += `
       <div class="kp-results-header">
         <div class="kp-results-count">
           ${products.length} ${products.length === 1 ? 'product' : 'producten'} gevonden
@@ -616,6 +628,30 @@
       
       .kp-error {
         color: #ef4444;
+      }
+      
+      .kp-ai-intro {
+        background: linear-gradient(135deg, #f5876e 0%, #ff9a82 100%);
+        color: white;
+        padding: 20px 24px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        box-shadow: 0 4px 12px rgba(245, 135, 110, 0.2);
+      }
+      
+      .kp-ai-intro-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+        line-height: 1;
+      }
+      
+      .kp-ai-intro-text {
+        font-size: 16px;
+        line-height: 1.6;
+        flex: 1;
       }
       
       .kp-results-header {
