@@ -19,15 +19,28 @@ Query: "${query}"
 Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
 KEYWORDS - Context-aware:
-• SPECIFIC (bodybuilder, tennisser, judoka): 3-8 focused keywords
+• SPECIFIC (bodybuilder, tennisser): 3-8 focused keywords
   - Only direct variants: singular/plural/verb forms
   - Ex: "bodybuilder" → ["bodybuilder","bodybuilders","bodybuilding"]
   
 • BROAD (sport, dieren, cadeau): 15-30 expansive keywords
   - All variations + subcategories
-  - Ex: "sport" → ["sport","sporter","voetbal","tennis","golf","darten",...]
+  - Ex: "sport" → ["sport","sporter","voetbal","tennis","golf",...]
 
-• Multi-word: keep as phrase ("romeinse goden" NOT separate)
+• ARTIST NAMES: 3-5 keywords with name variations
+  - Ex: "van gogh" → ["van gogh","vincent","gogh","vincent van gogh"]
+  - Ex: "klimt" → ["klimt","gustav klimt","gustav"]
+
+• PRODUCT TYPES ONLY: 3-5 keywords with synonyms
+  - Ex: "mok" → ["mok","mokken","cup","mug","beker"]
+  - Ex: "vaas" → ["vaas","vazen","vase"]
+
+• WITH ATTRIBUTES (beeldje met hart): extract the attribute separately
+  - Ex: "beeldje met hart" → ["hart","hartje","heart","liefde"]
+  - Ex: "beeld voor arts" → ["arts","dokter","medisch"]
+
+• Multi-word phrases without attributes: keep together
+  - Ex: "romeinse goden" → ["romeinse goden","romeins","rome"]
 
 Return: {"type":null|"Type","keywords":[...],"price_min":null,"price_max":null}`;
 
