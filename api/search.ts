@@ -219,27 +219,19 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Keywords - only for subject/theme search (NOT for product types!)
-  // Uses multiple matching strategies:
-  // 1. Exact phrase match in title (highest priority)
-  // 2. Full-text search (handles word variations)
-  // 3. Partial match with LIKE (handles substrings)
-  // 4. Trigram similarity (handles typos/misspellings)
+  // Keywords - ONLY full-text search (whole words only, no substrings)
+  // This prevents false matches like "god" matching "goddelijke" or "godfather"
   if (filters.keywords && filters.keywords.length > 0) {
     const keywordConditions = filters.keywords.map((keyword: string) => {
-      const likePattern = `%${keyword}%`;
-      params.push(keyword, likePattern, keyword);
-      const tsIdx = paramIndex;
-      const likeIdx = paramIndex + 1;
-      const trigramIdx = paramIndex + 2;
-      paramIndex += 3;
+      params.push(keyword);
+      const idx = paramIndex++;
       
-      return `(
-        search_vector @@ plainto_tsquery('dutch', $${tsIdx})
-        OR LOWER(title) LIKE LOWER($${likeIdx})
-        OR LOWER(content) LIKE LOWER($${likeIdx})
-        OR similarity(LOWER(title), LOWER($${trigramIdx})) > 0.3
-      )`;
+      // Use phrase search for multi-word keywords, plain search for single words
+      if (keyword.includes(' ')) {
+        return `search_vector @@ phraseto_tsquery('dutch', $${idx})`;
+      } else {
+        return `search_vector @@ plainto_tsquery('dutch', $${idx})`;
+      }
     }).join(' OR ');
     
     conditions.push(`(${keywordConditions})`);
