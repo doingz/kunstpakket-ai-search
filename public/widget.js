@@ -13,7 +13,6 @@
   
   let isSearching = false;
   let currentResults = null;
-  let currentFilter = 'all';
   let currentSort = 'popular';
   
   /**
@@ -298,10 +297,6 @@
           ${products.length} ${products.length === 1 ? 'product' : 'producten'} gevonden
         </div>
         <div class="kp-controls">
-          <select id="kp-filter-select" class="kp-select">
-            <option value="all">Alle producten</option>
-            <option value="sale">Alleen aanbiedingen (${saleCount})</option>
-          </select>
           <select id="kp-sort-select" class="kp-select">
             <option value="popular">Populair</option>
             <option value="price-asc">Prijs (laag → hoog)</option>
@@ -339,11 +334,6 @@
     container.innerHTML = html;
     
     // Attach event listeners
-    document.getElementById('kp-filter-select')?.addEventListener('change', (e) => {
-      currentFilter = e.target.value;
-      renderResults(currentResults);
-    });
-    
     document.getElementById('kp-sort-select')?.addEventListener('change', (e) => {
       currentSort = e.target.value;
       renderResults(currentResults);
@@ -361,29 +351,25 @@
   }
   
   function filterAndSortProducts(products) {
-    let filtered = [...products];
-    
-    if (currentFilter === 'sale') {
-      filtered = filtered.filter(p => p.onSale === true);
-    }
+    let sorted = [...products];
     
     switch (currentSort) {
       case 'price-asc':
-        filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+        sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
         break;
       case 'price-desc':
-        filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+        sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
         break;
       case 'discount':
-        filtered.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+        sorted.sort((a, b) => (b.discount || 0) - (a.discount || 0));
         break;
       case 'popular':
       default:
-        filtered.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
+        sorted.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
         break;
     }
     
-    return filtered;
+    return sorted;
   }
   
   function getOptimizedImageUrl(imageUrl) {
