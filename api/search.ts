@@ -57,10 +57,11 @@ CRITICAL INSTRUCTIONS:
    - Always include Dutch + English
    - Add 8-12 keywords including symbols
 
-3. **Extract tags** (ONLY from available tags list!) for specific attributes that exist in tags:
-   - Check if theme/subject exists in available tags list
-   - If "voetbal" exists in tags → use it
-   - If "advocaat" does NOT exist in tags → use keywords instead
+3. **Extract tags** (ONLY from available tags list!) for specific attributes:
+   - Tags are ONLY for specific themes/attributes (hart, voetbal, etc.)
+   - NEVER add the product type as a tag (e.g. "beeld", "schilderij")
+   - If user searches "beeld" → set type: "Beeld", tags: [] (EMPTY!)
+   - If user searches "beeldje met hart" → type: "Beeld", tags: ["hart", "hartje", ...]
    - Tags are STRICT filters, keywords are BROAD search
 
 4. Parse price ranges intelligently:
@@ -113,6 +114,10 @@ BAD Examples (DO NOT DO THIS):
 Input: "schilderij"
 Output: {"keywords":["schilderij","vaas","schaal","beeld"],...}
 ^ WRONG - vaas and schaal are NOT synonyms for schilderij!
+
+Input: "beeld"
+Output: {"type":"Beeld","tags":["beeld","beeldje"],...}
+^ WRONG - NEVER add product type to tags! Tags should be EMPTY for simple type searches.
 
 Input: "een beeld voor een docent"
 Output: {"type":"Cadeau","tags":["cadeau"],...}
