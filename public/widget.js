@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.3.1';  // Fixed: Use localStorage instead of sessionStorage for widget persistence
+  const WIDGET_VERSION = '1.3.2';  // Added debug logging + confirmed .html links
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
