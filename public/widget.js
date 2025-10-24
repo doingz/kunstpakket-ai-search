@@ -111,12 +111,12 @@
   }
   
   /**
-   * Inject search bar into .container-bar
+   * Inject search bar after #header
    */
   function injectSearchBar() {
-    const containerBar = document.querySelector('.container-bar');
-    if (!containerBar) {
-      console.warn('[KP Search] .container-bar not found');
+    const header = document.querySelector('#header');
+    if (!header) {
+      console.warn('[KP Search] #header not found');
       return;
     }
     
@@ -139,8 +139,8 @@
       </div>
     `;
     
-    // Insert as first child
-    containerBar.insertBefore(searchBar, containerBar.firstChild);
+    // Insert after #header
+    header.parentNode.insertBefore(searchBar, header.nextSibling);
     
     // Add event listeners
     const input = document.getElementById('kp-search-input-bar');
@@ -397,10 +397,7 @@
   function injectStyles() {
     const style = document.createElement('style');
     style.textContent = `
-      /* Search bar in .container-bar */
-      .container-bar {
-        padding-top: 0 !important;
-      }
+      /* Search bar after #header */
       
       /* Hide default search bars */
       #header-search,
