@@ -459,20 +459,33 @@ export default async function handler(req: Request) {
       );
     }
 
-    // Step 1: Parse query with AI
-    const queryData = await parseQuery(query);
+    // Step 1: Try exact title match first (fast, no AI needed)
+    console.log('[Search] Step 1: Checking for exact title match...');
+    let results = await searchByExactTitle(query, limit, offset);
+    let queryData: any = null;
 
-    // Step 2: Search database
-    let results = await searchProducts(queryData.parsed, limit, offset);
-
-    // Step 2b: Fallback - if no results or very few, try exact title match
-    if (results.total < 3) {
-      console.log('[Search] Few results, trying exact title fallback...');
-      const fallbackResults = await searchByExactTitle(query, limit, offset);
-      if (fallbackResults.total > results.total) {
-        console.log(`[Search] Fallback found ${fallbackResults.total} results, using those instead`);
-        results = fallbackResults;
-      }
+    // Step 2: If no title match found, use AI parsing
+    if (results.total === 0) {
+      console.log('[Search] No title match, using AI to parse query...');
+      queryData = await parseQuery(query);
+      results = await searchProducts(queryData.parsed, limit, offset);
+    } else {
+      console.log(`[Search] Found ${results.total} products by title match!`);
+      // Create minimal queryData for response (without expensive AI call)
+      queryData = {
+        original: query,
+        parsed: {
+          type: null,
+          keywords: [query],
+          tags: [],
+          price_min: null,
+          price_max: null,
+          confidence: 1.0,
+          categories: []
+        },
+        confidence: 1.0,
+        took_ms: 0
+      };
     }
 
     // Step 3: Generate advice
