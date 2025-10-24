@@ -20,22 +20,26 @@ Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoos
 
 Rules:
 1. TYPE: Set ONLY if explicitly mentioned ("beeldje"→"Beeld", "schilderij"→"Schilderij")
-2. KEYWORDS: For subjects/themes/attributes. Use FULL PHRASES for multi-word concepts ("romeinse goden" not "god")
+2. KEYWORDS: Generate MULTIPLE related terms (singular, plural, synonyms, related concepts)
+   - Animals: include variations ("hond"→["hond","honden","hondje","dog"])
+   - Sports: include related terms ("sporter"→["sport","sporter","sportief","atleet","voetbal","tennis","golf"])
+   - Themes: include synonyms ("liefde"→["liefde","hart","hartje","love","romance"])
+   - Use FULL PHRASES for multi-word concepts ("romeinse goden" not "god")
 3. PRICE: Parse ranges ("onder 50"→max:50, "rond 40"→min:32,max:48)
 
 Special cases:
 - "cadeau" is NOT a type (type:null, extract theme keywords)
 - Questions ("zijn er romeinse goden?") → extract subject keywords
 - Mythology: use phrases ("romeinse goden" not "god" to avoid false matches)
-- Attributes like "hart", "voetbal" go in keywords
 
 Examples:
 "beeldje" → {"type":"Beeld","keywords":[]}
 "schilderij max 300" → {"type":"Schilderij","keywords":[],"price_max":300}
 "hond" → {"type":null,"keywords":["hond","honden","hondje","dog","dogs"]}
-"beeldje met hart" → {"type":"Beeld","keywords":["hart","hartje","heart","liefde"]}
-"romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","mythologie"]}
-"cadeau voor arts" → {"type":null,"keywords":["arts","dokter","medisch","hippocrates"]}
+"beeldje met hart" → {"type":"Beeld","keywords":["hart","hartje","heart","liefde","love"]}
+"romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","mythologie","rome"]}
+"cadeau voor arts" → {"type":null,"keywords":["arts","dokter","medisch","hippocrates","gezondheidszorg"]}
+"beeld voor sporter" → {"type":"Beeld","keywords":["sport","sporter","sportief","atleet","voetbal","tennis","golf","sporten"]}
 
 Only return valid JSON, no explanation.`;
 
