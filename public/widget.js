@@ -726,7 +726,7 @@
       @media (max-width: 640px) {
         #kp-search-bar {
           max-width: 100%;
-          padding: 0 12px;
+          padding: 40px 12px;
         }
         
         .kp-search-wrapper {
