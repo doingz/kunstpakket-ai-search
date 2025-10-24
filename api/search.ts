@@ -19,11 +19,16 @@ Query: "${query}"
 Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
 KEYWORDS - Context-aware:
-• SPECIFIC (bodybuilder, tennisser, hond, kat): 5-10 focused keywords, type: null
+• SPECIFIC SUBJECT ONLY (bodybuilder, tennisser, hond, kat): 5-10 focused keywords, type: null
   - Only direct variants: singular/plural/verb forms + close synonyms
   - Ex: "bodybuilder" → type: null, keywords: ["bodybuilder","bodybuilders","bodybuilding"]
   - Ex: "hond" → type: null, keywords: ["hond","honden","dog","dogs","puppy"] (NOT: dieren, huisdier)
   - Ex: "kat" → type: null, keywords: ["kat","katten","cat","cats"] (NOT type: Schilderij!)
+  
+• SPECIFIC SUBJECT + TYPE (beeldje met voetballer): 5-10 focused keywords ONLY for subject
+  - Ex: "beeldje met voetballer" → type: "Beeld", keywords: ["voetballer","voetballers","voetbal","football","soccer"]
+  - Ex: "schilderij van een hond" → type: "Schilderij", keywords: ["hond","honden","dog","dogs"]
+  - CRITICAL: NEVER add broad category terms (NOT: sport, sporter, dieren, huisdier)!
   
 • BROAD (sport, dieren, kunst, cadeau): 20-35 expansive keywords
   - All variations + subcategories
@@ -40,11 +45,11 @@ KEYWORDS - Context-aware:
   - Ex: "vaas" → ["vaas","vazen","vase"]
 
 • WITH ATTRIBUTES (beeldje met hart): extract the attribute separately
-  - Ex: "beeldje met hart" → ["hart","hartje","heart","liefde"]
-  - Ex: "beeld voor arts" → ["arts","dokter","medisch"]
+  - Ex: "beeldje met hart" → type: "Beeld", keywords: ["hart","hartje","heart","liefde"]
+  - Ex: "beeld voor arts" → type: "Beeld", keywords: ["arts","dokter","medisch","doktor","doctor"]
 
 • Multi-word phrases without attributes: keep together
-  - Ex: "romeinse goden" → ["romeinse goden","romeins","rome"]
+  - Ex: "romeinse goden" → ["romeinse goden","romeins","rome","mythologie"]
 
 CRITICAL: use_keywords field
 • use_keywords: true if keywords add meaningful context beyond the type
