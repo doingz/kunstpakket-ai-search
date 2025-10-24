@@ -179,7 +179,12 @@
             />
             <button id="kp-search-button-overlay">Zoeken</button>
           </div>
-          <button class="kp-close-button" id="kp-close-overlay">&times;</button>
+          <button class="kp-close-button" id="kp-close-overlay">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <div id="kp-search-results-overlay"></div>
       </div>
@@ -555,20 +560,25 @@
         border: none;
         background: #f1f5f9;
         border-radius: 50%;
-        font-size: 32px;
         color: #64748b;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
-        line-height: 1;
         flex-shrink: 0;
+        padding: 0;
+      }
+      
+      .kp-close-button svg {
+        width: 24px;
+        height: 24px;
       }
       
       .kp-close-button:hover {
         background: #e2e8f0;
         color: #334155;
+        transform: rotate(90deg);
       }
       
       #kp-search-results-overlay {
