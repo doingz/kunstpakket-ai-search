@@ -454,6 +454,12 @@
         background: transparent;
       }
       
+      /* Remove browser default clear button */
+      #kp-search-input-bar::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      
       #kp-search-input-bar::placeholder {
         color: #94a3b8;
       }
@@ -527,6 +533,12 @@
         border-radius: 8px;
         font-size: 16px;
         transition: all 0.2s;
+      }
+      
+      /* Remove browser default clear button */
+      #kp-search-input-overlay::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+        appearance: none;
       }
       
       #kp-search-input-overlay:focus {
