@@ -245,12 +245,13 @@ async function importVariants(variants) {
           stock = EXCLUDED.stock
       `;
       
-      // Update product price and stock_sold from default variant
+      // Update product price, old_price, and stock_sold from default variant
       if (variant.isDefault && variant.product?.resource?.id) {
         await sql`
           UPDATE products 
           SET 
             price = COALESCE(price, ${variant.priceIncl || null}),
+            old_price = ${variant.oldPriceIncl || null},
             stock_sold = ${variant.stockSold || 0}
           WHERE id = ${variant.product.resource.id}
         `;

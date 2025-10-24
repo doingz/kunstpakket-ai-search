@@ -267,7 +267,7 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   }
   
   const searchQuery = `
-    SELECT id, title, full_title, content, brand, price, image, url
+    SELECT id, title, full_title, content, brand, price, old_price, stock_sold, image, url
     FROM products
     WHERE ${whereClause}
     ORDER BY ${orderBy}
@@ -286,6 +286,10 @@ async function searchProducts(filters: any, limit: number, offset: number) {
       description: row.content,
       brand: row.brand,
       price: parseFloat(row.price),
+      oldPrice: row.old_price ? parseFloat(row.old_price) : null,
+      onSale: row.old_price && parseFloat(row.old_price) > parseFloat(row.price),
+      discount: row.old_price ? Math.round((1 - parseFloat(row.price) / parseFloat(row.old_price)) * 100) : 0,
+      salesCount: row.stock_sold || 0,
       image: row.image,
       url: row.url
     }))
