@@ -1,5 +1,6 @@
 /**
  * Vercel Edge Function for AI Search - SIMPLIFIED
+ * Updated: Product types now correctly filtered
  */
 import { sql } from '@vercel/postgres';
 import OpenAI from 'openai';
