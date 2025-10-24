@@ -118,12 +118,15 @@
     const title = document.title.toLowerCase();
     
     if (url.includes('/thankyou') || 
+        url.includes('?thankyou') ||
         url.includes('/bedankt') ||
+        url.includes('?bedankt') ||
         url.includes('/thank-you') ||
         url.includes('/success') ||
         url.includes('?order=success') ||
         title.includes('bedankt') ||
         title.includes('thank you')) {
+      console.log('[Analytics] Thank you page detected, tracking purchase...');
       trackPurchase();
     }
   }
