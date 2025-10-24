@@ -728,6 +728,10 @@
           padding: 8px 16px;
         }
         
+        #kp-search-input-bar {
+          font-size: 16px;
+        }
+        
         .kp-search-btn {
           display: none;
         }
@@ -742,7 +746,8 @@
         }
         
         #kp-search-input-overlay {
-          padding: 12px 16px;
+          padding: 14px 16px;
+          font-size: 16px;
         }
         
         #kp-search-button-overlay {
