@@ -249,6 +249,56 @@ function buildSearchQuery(filters: any) {
   return { conditions, params };
 }
 
+// Fallback: Search by exact title match (for when query is a product title)
+async function searchByExactTitle(query: string, limit: number, offset: number) {
+  const searchPattern = `%${query}%`;
+  
+  // Count total
+  const countQuery = `
+    SELECT COUNT(*) as total 
+    FROM products 
+    WHERE is_visible = true 
+      AND (
+        LOWER(title) LIKE LOWER($1)
+        OR LOWER(full_title) LIKE LOWER($1)
+        OR similarity(LOWER(title), LOWER($2)) > 0.5
+      )
+  `;
+  const countResult = await sql.query(countQuery, [searchPattern, query]);
+  const total = parseInt(countResult.rows[0]?.total || '0');
+
+  // Get products with exact title matching, best matches first
+  const searchQuery = `
+    SELECT id, title, full_title, content, brand, price, old_price, stock_sold, image, url
+    FROM products
+    WHERE is_visible = true 
+      AND (
+        LOWER(title) LIKE LOWER($1)
+        OR LOWER(full_title) LIKE LOWER($1)
+        OR similarity(LOWER(title), LOWER($2)) > 0.5
+      )
+    ORDER BY 
+      CASE 
+        WHEN LOWER(title) = LOWER($2) THEN 1
+        WHEN LOWER(full_title) = LOWER($2) THEN 2
+        WHEN LOWER(title) LIKE LOWER($1) THEN 3
+        WHEN LOWER(full_title) LIKE LOWER($1) THEN 4
+        ELSE 5
+      END ASC,
+      similarity(LOWER(title), LOWER($2)) DESC,
+      stock_sold DESC NULLS LAST
+    LIMIT $3 OFFSET $4
+  `;
+
+  const result = await sql.query(searchQuery, [searchPattern, query, limit, offset]);
+
+  return {
+    total,
+    showing: result.rows.length,
+    items: result.rows.map(formatProduct)
+  };
+}
+
 // Search products with smart ranking
 async function searchProducts(filters: any, limit: number, offset: number) {
   const { conditions, params } = buildSearchQuery(filters);
@@ -413,7 +463,17 @@ export default async function handler(req: Request) {
     const queryData = await parseQuery(query);
 
     // Step 2: Search database
-    const results = await searchProducts(queryData.parsed, limit, offset);
+    let results = await searchProducts(queryData.parsed, limit, offset);
+
+    // Step 2b: Fallback - if no results or very few, try exact title match
+    if (results.total < 3) {
+      console.log('[Search] Few results, trying exact title fallback...');
+      const fallbackResults = await searchByExactTitle(query, limit, offset);
+      if (fallbackResults.total > results.total) {
+        console.log(`[Search] Fallback found ${fallbackResults.total} results, using those instead`);
+        results = fallbackResults;
+      }
+    }
 
     // Step 3: Generate advice
     const advice = await generateAdvice(query, results);
