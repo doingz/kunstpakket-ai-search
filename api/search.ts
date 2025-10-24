@@ -99,33 +99,18 @@ function buildSearchQuery(filters: any) {
 
   // Keywords - ONLY full-text search (whole words only, no substrings)
   // This prevents false matches like "god" matching "goddelijke" or "godfather"
-  // IMPORTANT: Skip keywords if we ONLY have a type filter (no other search context)
-  // For type-only queries (e.g. "schilderij", "mok", "vaas"), the type filter is enough
-  // Adding keyword filters causes 0 results when products don't have the type name in description
-  if (filters.keywords && filters.keywords.length > 0) {
-    // If we have ONLY type + price (no other context), skip keywords entirely
-    // They're just synonyms of the type and will cause false negatives
-    const hasOnlyTypeAndPrice = filters.type && 
-                                !filters.keywords.some((kw: string) => {
-                                  // Check if keyword adds meaningful context beyond the type
-                                  const kwLower = kw.toLowerCase();
-                                  const typeLower = filters.type.toLowerCase();
-                                  
-                                  // Generic type synonyms (skip these)
-                                  const typeWords = [
-                                    typeLower,
-                                    typeLower + 'en', typeLower + 's', typeLower + 'jes',
-                                    'painting', 'paintings', 'canvas', 'doek', // Schilderij synonyms
-                                    'sculpture', 'sculptuur', 'statue', 'figuur', // Beeld synonyms
-                                    'vase', 'vazen', // Vaas synonyms
-                                    'cup', 'mug', 'beker', 'mokken', // Mok synonyms
-                                  ];
-                                  
-                                  // If keyword is NOT in generic type words, it adds context
-                                  return !typeWords.includes(kwLower);
-                                });
+  // CRITICAL: For type-only queries, we must NOT add keyword filters!
+  // Problem: AI generates type synonyms (painting, canvas, artwork, sculpture, etc.)
+  //          but products often don't have these words in their description
+  // Solution: If query is JUST type + price (no real context), use ONLY type filter
+  if (filters.keywords && filters.keywords.length > 0 && filters.type) {
+    // Check if ALL keywords are generic/short (≤ 10 chars) = likely just type synonyms
+    const allKeywordsAreGeneric = filters.keywords.every((kw: string) => kw.length <= 10);
     
-    if (!hasOnlyTypeAndPrice) {
+    // If type exists AND all keywords are short/generic, skip keywords entirely
+    // This handles ANY type synonym the AI might generate (painting, artwork, canvas, sculpture, etc.)
+    if (!allKeywordsAreGeneric) {
+      // We have meaningful context keywords (artist names, themes, etc.) - use them!
       const keywordConditions = filters.keywords.map((keyword: string) => {
         params.push(keyword);
         const idx = paramIndex++;
@@ -140,6 +125,21 @@ function buildSearchQuery(filters: any) {
       
       conditions.push(`(${keywordConditions})`);
     }
+    // else: skip keywords - type filter is enough
+  } else if (filters.keywords && filters.keywords.length > 0) {
+    // No type filter - use keywords normally
+    const keywordConditions = filters.keywords.map((keyword: string) => {
+      params.push(keyword);
+      const idx = paramIndex++;
+      
+      if (keyword.includes(' ')) {
+        return `search_vector @@ phraseto_tsquery('dutch', $${idx})`;
+      } else {
+        return `search_vector @@ plainto_tsquery('dutch', $${idx})`;
+      }
+    }).join(' OR ');
+    
+    conditions.push(`(${keywordConditions})`);
   }
 
   // Price filters
