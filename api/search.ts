@@ -12,24 +12,32 @@ const openai = new OpenAI({
 async function parseQuery(query: string) {
   const start = Date.now();
   
-  const prompt = `Parse this Dutch search query intelligently into JSON.
+  const prompt = `Parse Dutch search query to JSON.
 
 Query: "${query}"
 
-Available product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
+Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
-Extract:
-- type: product type if explicitly mentioned (null otherwise)
-- keywords: search terms with variations (be context-aware: specific subjects need focused keywords, broad subjects need many variations including subcategories)
-- price_min/price_max: from "onder X", "max X", "tussen X-Y"
+KEYWORDS - Context-aware:
+• SPECIFIC (bodybuilder, tennisser, judoka): 3-8 focused keywords
+  - Only direct variants: singular/plural/verb forms
+  - Ex: "bodybuilder" → ["bodybuilder","bodybuilders","bodybuilding"]
+  
+• BROAD (sport, dieren, cadeau): 15-30 expansive keywords
+  - All variations + subcategories
+  - Ex: "sport" → ["sport","sporter","voetbal","tennis","golf","darten",...]
 
-Return only JSON.`;
+• Multi-word: keep as phrase ("romeinse goden" NOT separate)
+
+Return: {"type":null|"Type","keywords":[...],"price_min":null,"price_max":null}`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'o1-preview',  // EXPERIMENT: Reasoning model - smarter but slower/pricier
+      model: 'gpt-4o',  // Best balance of speed/cost/quality
       messages: [{ role: 'user', content: prompt }],
-      // Note: o1 models don't support temperature, max_tokens, or response_format
+      temperature: 0.3,
+      max_tokens: 600,
+      response_format: { type: 'json_object' }
     });
 
     const content = response.choices[0].message.content?.trim() || '{}';
