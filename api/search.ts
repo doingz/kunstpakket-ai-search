@@ -32,16 +32,17 @@ Available product types (use for strict filtering):
 - Cadeau (gifts)
 
 CRITICAL INSTRUCTIONS:
-1. **Detect product type** - Identify WHAT the user wants to buy:
+1. **Detect product type** - ONLY if user explicitly mentions the product type:
    - "schilderij", "painting", "giclee", "print" → type: "Schilderij"
    - "beeld", "beeldje", "sculpture" → type: "Beeld"  
    - "vaas", "vase" → type: "Vaas"
    - "mok", "cup", "mug" → type: "Mok"
    - "wandbord", "plate" → type: "Wandbord"
    - "schaal", "bowl" → type: "Schaal"
+   - IMPORTANT: "een varken" = NO TYPE! Just search for varken (could be beeld, mok, etc.)
+   - IMPORTANT: "een beeld" = type: "Beeld" (explicit product type)
    - IMPORTANT: "beeld voor X" = user wants a BEELD (not cadeau!)
-   - IMPORTANT: "cadeau voor X" WITHOUT product type = generic cadeau
-   - Always prioritize explicit product type over "cadeau" keyword
+   - ONLY set type when user explicitly searches for that product type!
 
 2. **Extract theme/subject keywords** - Be CREATIVE and include SYMBOLS:
    - Think broadly: profession + related concepts + SYMBOLIC objects/animals
@@ -97,6 +98,9 @@ Output: {"type":"Beeld","keywords":[],"tags":["voetbal","voetballer","football",
 
 Input: "hond"
 Output: {"type":null,"keywords":["hond","honden","dog","dogs"],"tags":[],"price_min":null,"price_max":null,"confidence":0.85}
+
+Input: "varken"
+Output: {"type":null,"keywords":["varken","varkens","pig","pigs"],"tags":["varken","varkentje"],"price_min":null,"price_max":null,"confidence":0.85}
 
 Input: "schilderij max 300 euro"
 Output: {"type":"Schilderij","keywords":[],"tags":[],"price_min":null,"price_max":300,"confidence":0.95}
