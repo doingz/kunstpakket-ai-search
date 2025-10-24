@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.1.0';  // Show all results + sort by popularity
+  const WIDGET_VERSION = '1.2.0';  // Added client-side filtering and sorting
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -20,6 +20,8 @@
   // Widget state
   let isSearching = false;
   let currentResults = null;
+  let currentFilter = 'all';  // 'all' or 'sale'
+  let currentSort = 'popular';  // 'popular', 'price-asc', 'price-desc', 'discount'
   
   /**
    * Check if widget should be shown
@@ -156,10 +158,57 @@
         line-height: 1.6;
       }
       
+      .kp-results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      
       .kp-results-count {
         color: #64748b;
-        margin-bottom: 1rem;
         font-size: 0.9rem;
+      }
+      
+      .kp-controls {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      
+      .kp-control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      
+      .kp-control-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+      }
+      
+      .kp-select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        background: white;
+        color: #1e293b;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      
+      .kp-select:hover {
+        border-color: #3b82f6;
+      }
+      
+      .kp-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
       }
       
       .kp-results-grid {
@@ -190,6 +239,19 @@
       
       .kp-product-info {
         padding: 1rem;
+        position: relative;
+      }
+      
+      .kp-sale-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #ef4444;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
       }
       
       .kp-product-title {
@@ -200,10 +262,23 @@
         line-height: 1.4;
       }
       
+      .kp-product-pricing {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      
       .kp-product-price {
         font-size: 1.25rem;
         font-weight: 700;
         color: #3b82f6;
+      }
+      
+      .kp-product-old-price {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        text-decoration: line-through;
       }
       
       .kp-product-link {
@@ -332,6 +407,79 @@
   }
   
   /**
+   * Filter and sort products
+   */
+  function filterAndSortProducts(products) {
+    let filtered = [...products];
+    
+    // Apply filter
+    if (currentFilter === 'sale') {
+      filtered = filtered.filter(p => p.onSale === true);
+    }
+    
+    // Apply sort
+    switch (currentSort) {
+      case 'price-asc':
+        filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case 'price-desc':
+        filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case 'discount':
+        filtered.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+        break;
+      case 'popular':
+      default:
+        filtered.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
+        break;
+    }
+    
+    return filtered;
+  }
+  
+  /**
+   * Render products grid
+   */
+  function renderProductsGrid(products) {
+    let html = '<div class="kp-results-grid">';
+    
+    products.forEach((product, index) => {
+      const isHighlighted = currentResults?.results?.highlighted?.includes(index);
+      html += `
+        <a href="https://www.kunstpakket.nl/${product.url}" class="kp-product-link" target="_blank">
+          <div class="kp-product-card ${isHighlighted ? 'highlighted' : ''}">
+            ${product.image ? `
+              <img 
+                src="${product.image}" 
+                alt="${escapeHtml(product.title)}"
+                class="kp-product-image"
+                loading="lazy"
+              />
+            ` : `
+              <div class="kp-product-image"></div>
+            `}
+            <div class="kp-product-info">
+              ${product.onSale ? `<div class="kp-sale-badge">-${product.discount}%</div>` : ''}
+              <div class="kp-product-title">${escapeHtml(product.title)}</div>
+              ${product.price && typeof product.price === 'number' ? `
+                <div class="kp-product-pricing">
+                  <div class="kp-product-price">€${product.price.toFixed(2)}</div>
+                  ${product.oldPrice ? `
+                    <div class="kp-product-old-price">€${product.oldPrice.toFixed(2)}</div>
+                  ` : ''}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </a>
+      `;
+    });
+    
+    html += '</div>';
+    return html;
+  }
+  
+  /**
    * Render search results
    */
   function renderResults(data) {
@@ -346,6 +494,8 @@
       return;
     }
     
+    // Store results for filtering/sorting
+    currentResults = data;
     const { results } = data;
     
     // No results
@@ -370,45 +520,60 @@
       `;
     }
     
-    // Results count
+    // Apply filter and sort
+    const products = filterAndSortProducts(results.items);
+    const saleCount = results.items.filter(p => p.onSale).length;
+    
+    // Results header with count and controls
     html += `
-      <div class="kp-results-count">
-        ${results.total} ${results.total === 1 ? 'product' : 'producten'} gevonden
+      <div class="kp-results-header">
+        <div class="kp-results-count">
+          ${products.length} ${products.length === 1 ? 'product' : 'producten'} gevonden
+          ${saleCount > 0 && currentFilter === 'all' ? ` (${saleCount} in de aanbieding)` : ''}
+        </div>
+        <div class="kp-controls">
+          <div class="kp-control-group">
+            <label class="kp-control-label">Filter</label>
+            <select id="kp-filter-select" class="kp-select">
+              <option value="all" ${currentFilter === 'all' ? 'selected' : ''}>Alle producten</option>
+              <option value="sale" ${currentFilter === 'sale' ? 'selected' : ''}>Alleen aanbiedingen${saleCount > 0 ? ` (${saleCount})` : ''}</option>
+            </select>
+          </div>
+          <div class="kp-control-group">
+            <label class="kp-control-label">Sorteer op</label>
+            <select id="kp-sort-select" class="kp-select">
+              <option value="popular" ${currentSort === 'popular' ? 'selected' : ''}>Populair</option>
+              <option value="price-asc" ${currentSort === 'price-asc' ? 'selected' : ''}>Prijs (laag → hoog)</option>
+              <option value="price-desc" ${currentSort === 'price-desc' ? 'selected' : ''}>Prijs (hoog → laag)</option>
+              ${saleCount > 0 ? `<option value="discount" ${currentSort === 'discount' ? 'selected' : ''}>Hoogste korting</option>` : ''}
+            </select>
+          </div>
+        </div>
       </div>
     `;
     
     // Products grid
-    html += '<div class="kp-results-grid">';
-    
-    results.items.forEach((product, index) => {
-      const isHighlighted = results.highlighted?.includes(index);
-      html += `
-        <a href="https://www.kunstpakket.nl/${product.url}" class="kp-product-link" target="_blank">
-          <div class="kp-product-card ${isHighlighted ? 'highlighted' : ''}">
-            ${product.image ? `
-              <img 
-                src="${product.image}" 
-                alt="${escapeHtml(product.title)}"
-                class="kp-product-image"
-                loading="lazy"
-              />
-            ` : `
-              <div class="kp-product-image"></div>
-            `}
-            <div class="kp-product-info">
-              <div class="kp-product-title">${escapeHtml(product.title)}</div>
-              ${product.price && typeof product.price === 'number' ? `
-                <div class="kp-product-price">€${product.price.toFixed(2)}</div>
-              ` : ''}
-            </div>
-          </div>
-        </a>
-      `;
-    });
-    
-    html += '</div>';
+    html += renderProductsGrid(products);
     
     resultsContainer.innerHTML = html;
+    
+    // Attach event listeners
+    const filterSelect = document.getElementById('kp-filter-select');
+    const sortSelect = document.getElementById('kp-sort-select');
+    
+    if (filterSelect) {
+      filterSelect.addEventListener('change', (e) => {
+        currentFilter = e.target.value;
+        renderResults(currentResults);
+      });
+    }
+    
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        renderResults(currentResults);
+      });
+    }
   }
   
   /**
