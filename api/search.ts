@@ -32,6 +32,13 @@ Available product types (use for strict filtering):
 
 IMPORTANT: "Cadeau" is NOT a product type! If user searches for "cadeau", set type: null and search broadly.
 
+⚠️ CRITICAL: DETECT NON-SHOPPING QUERIES!
+If user asks an INFORMATIONAL QUESTION (not looking for products), extract the SUBJECT keywords anyway:
+- "zijn er romeinse goden?" → keywords: ["romeinse", "romeins", "rome", "roman", "god", "goden", "mythology"]
+- "wat is een boeddha?" → keywords: ["boeddha", "buddha", "buddhism"]  
+- "wie is picasso?" → keywords: ["picasso", "pablo picasso"]
+Even for questions, extract subject keywords so we can find RELATED products (if any exist).
+
 CRITICAL INSTRUCTIONS:
 1. **Detect product type** - ONLY if user explicitly mentions the product type:
    - "schilderij", "painting", "giclee", "print" → type: "Schilderij"
