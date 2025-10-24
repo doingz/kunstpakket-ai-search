@@ -38,8 +38,12 @@ async function importProducts(products) {
 
   for (const product of products) {
     try {
-      // Detect product type from title
-      const productType = detectProductType(product.title || '', product.fulltitle || '');
+      // Detect product type from title, content, and categories
+      const productType = detectProductType({
+        title: product.title || '',
+        content: product.content || '',
+        categories: [] // Categories will be linked separately
+      });
       
       await sql`
         INSERT INTO products (
