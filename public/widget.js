@@ -428,7 +428,7 @@
         background: white;
         border: 2px solid #e2e8f0;
         border-radius: 12px;
-        padding: 4px 16px;
+        padding: 8px 16px;
         transition: all 0.2s;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       }
