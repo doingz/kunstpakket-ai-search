@@ -137,7 +137,10 @@
   function shouldShowWidget() {
     // Check sessionStorage first
     const sessionFlag = sessionStorage.getItem('kp_search_enabled');
+    console.log('[Widget] SessionStorage kp_search_enabled:', sessionFlag);
+    
     if (sessionFlag === 'true') {
+      console.log('[Widget] Widget enabled via sessionStorage');
       return true;
     }
     
@@ -146,9 +149,11 @@
     if (urlParams.get('f') === '1') {
       // Store in session so it persists across pages
       sessionStorage.setItem('kp_search_enabled', 'true');
+      console.log('[Widget] Widget enabled via ?f=1, stored in sessionStorage');
       return true;
     }
     
+    console.log('[Widget] Widget not enabled');
     return false;
   }
   
