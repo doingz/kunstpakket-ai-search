@@ -742,7 +742,8 @@
         }
         
         .kp-search-btn {
-          display: none;
+          padding: 10px 16px;
+          font-size: 14px;
         }
         
         .kp-overlay-header {
