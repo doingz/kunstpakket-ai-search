@@ -859,20 +859,8 @@
    * Check feature flags from server
    */
   async function checkFeatureFlags() {
-    try {
-      const response = await fetch(`${API_BASE}/feature-flags`);
-      const data = await response.json();
-      
-      if (!data.success) {
-        console.warn('[KP Search] Feature flags check failed');
-        return { widget_enabled: true, require_f1: false }; // Fail open
-      }
-      
-      return data.flags;
-    } catch (error) {
-      console.warn('[KP Search] Feature flags error:', error);
-      return { widget_enabled: true, require_f1: false }; // Fail open
-    }
+    // HARDCODED: Require f=1 to enable widget
+    return { widget_enabled: true, require_f1: true };
   }
   
   /**
