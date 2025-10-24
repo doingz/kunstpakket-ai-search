@@ -5,10 +5,10 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.2.1';
+  const VERSION = '2.3.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
-    : 'https://kunstpakket.bluestars.app/api';
+    : 'https://kunstpakket-ai-search.vercel.app/api';
   const ANALYTICS_API = 'https://analytics.bluestars.app/api/track';
   
   let isSearching = false;
@@ -856,13 +856,43 @@
   }
   
   /**
+   * Check feature flags from server
+   */
+  async function checkFeatureFlags() {
+    try {
+      const response = await fetch(`${API_BASE}/feature-flags`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        console.warn('[KP Search] Feature flags check failed');
+        return { widget_enabled: true, require_f1: false }; // Fail open
+      }
+      
+      return data.flags;
+    } catch (error) {
+      console.warn('[KP Search] Feature flags error:', error);
+      return { widget_enabled: true, require_f1: false }; // Fail open
+    }
+  }
+  
+  /**
    * Initialize
    */
-  function init() {
+  async function init() {
     console.log(`[KP Search Overlay] v${VERSION} loaded`);
     
     // Check purchase page
     checkPurchasePage();
+    
+    // Check feature flags from server
+    const flags = await checkFeatureFlags();
+    
+    if (!flags.widget_enabled) {
+      console.log('[KP Search] Widget disabled globally (KILL-SWITCH ACTIVE 🔴)');
+      // Clear any stored enabled state
+      localStorage.removeItem('kp_search_enabled');
+      return;
+    }
     
     // Check if widget should be enabled (f=1 flag required)
     // Clear old localStorage from when widget was public
@@ -877,13 +907,19 @@
     const hasF1 = urlParams.get('f') === '1';
     const enabled = localStorage.getItem('kp_search_enabled');
     
-    if (hasF1) {
-      // Enable widget
+    // Check if f=1 is required
+    if (flags.require_f1) {
+      if (hasF1) {
+        // Enable widget
+        localStorage.setItem('kp_search_enabled', 'true');
+      } else if (enabled !== 'true') {
+        // Not enabled and no f=1 parameter
+        console.log('[KP Search] Widget disabled (add ?f=1 to enable)');
+        return;
+      }
+    } else {
+      // Widget is enabled globally, no f=1 required
       localStorage.setItem('kp_search_enabled', 'true');
-    } else if (enabled !== 'true') {
-      // Not enabled and no f=1 parameter
-      console.log('[KP Search] Widget disabled (add ?f=1 to enable)');
-      return;
     }
     
     // Inject styles
@@ -895,7 +931,7 @@
     // Inject search bar
     injectSearchBar();
     
-    console.log('[KP Search Overlay] Initialized');
+    console.log('[KP Search Overlay] Initialized ✅');
   }
   
   // Public API
