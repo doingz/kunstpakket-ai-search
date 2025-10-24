@@ -238,12 +238,30 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const countResult = await sql.query(countQuery, params);
   const total = parseInt(countResult.rows[0]?.total || '0');
 
-  // Sort by popularity (bestsellers first)
+  // Sort by relevance (best match first)
+  // Priority: exact title match > partial title match > content match
+  let orderBy = 'price ASC';  // Default fallback
+  
+  if (filters.keywords && filters.keywords.length > 0) {
+    // Build relevance scoring based on keyword matches in title
+    const firstKeyword = filters.keywords[0];
+    orderBy = `
+      CASE 
+        WHEN LOWER(title) = LOWER('${firstKeyword}') THEN 1
+        WHEN LOWER(title) LIKE LOWER('%${firstKeyword}%') THEN 2
+        WHEN LOWER(content) LIKE LOWER('%${firstKeyword}%') THEN 3
+        ELSE 4
+      END ASC,
+      stock_sold DESC NULLS LAST,
+      price ASC
+    `;
+  }
+  
   const searchQuery = `
     SELECT id, title, full_title, content, brand, price, image, url
     FROM products
     WHERE ${whereClause}
-    ORDER BY stock_sold DESC NULLS LAST, price ASC
+    ORDER BY ${orderBy}
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
   
