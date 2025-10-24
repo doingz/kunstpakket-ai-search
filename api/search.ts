@@ -181,18 +181,25 @@ function buildSearchQuery(filters: any) {
   }
 
   // Keywords - only for subject/theme search (NOT for product types!)
+  // Uses multiple matching strategies:
+  // 1. Exact phrase match in title (highest priority)
+  // 2. Full-text search (handles word variations)
+  // 3. Partial match with LIKE (handles substrings)
+  // 4. Trigram similarity (handles typos/misspellings)
   if (filters.keywords && filters.keywords.length > 0) {
     const keywordConditions = filters.keywords.map((keyword: string) => {
       const likePattern = `%${keyword}%`;
-      params.push(keyword, likePattern);
+      params.push(keyword, likePattern, keyword);
       const tsIdx = paramIndex;
       const likeIdx = paramIndex + 1;
-      paramIndex += 2;
+      const trigramIdx = paramIndex + 2;
+      paramIndex += 3;
       
       return `(
         search_vector @@ plainto_tsquery('dutch', $${tsIdx})
         OR LOWER(title) LIKE LOWER($${likeIdx})
         OR LOWER(content) LIKE LOWER($${likeIdx})
+        OR similarity(LOWER(title), LOWER($${trigramIdx})) > 0.3
       )`;
     }).join(' OR ');
     
@@ -236,8 +243,8 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const total = parseInt(countResult.rows[0]?.total || '0');
 
   // Sort by relevance (best match first)
-  // Priority: tag matches > keyword matches, title > content
-  let orderBy = 'price ASC';  // Default fallback
+  // Priority: exact match > partial match > similarity > popularity
+  let orderBy = 'stock_sold DESC NULLS LAST, price ASC';  // Default: popularity + price
   
   // Build relevance scoring
   const scoreParts: string[] = [];
@@ -250,14 +257,17 @@ async function searchProducts(filters: any, limit: number, offset: number) {
     scoreParts.push(`CASE WHEN ${tagChecks} THEN 1 ELSE 10 END`);
   }
   
-  // Secondary: keyword matches in title
+  // Secondary: keyword relevance with similarity scoring
   if (filters.keywords && filters.keywords.length > 0) {
     const firstKeyword = filters.keywords[0];
     scoreParts.push(`
       CASE 
         WHEN LOWER(title) = LOWER('${firstKeyword}') THEN 1
-        WHEN LOWER(title) LIKE LOWER('%${firstKeyword}%') THEN 2
-        ELSE 3
+        WHEN title ILIKE '${firstKeyword}%' THEN 2
+        WHEN title ILIKE '%${firstKeyword}%' THEN 3
+        WHEN similarity(LOWER(title), LOWER('${firstKeyword}')) > 0.5 THEN 4
+        WHEN similarity(LOWER(title), LOWER('${firstKeyword}')) > 0.3 THEN 5
+        ELSE 6
       END
     `);
   }
