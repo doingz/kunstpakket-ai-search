@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.3.0';  // Added analytics tracking
+  const WIDGET_VERSION = '1.3.1';  // Fixed: Use localStorage instead of sessionStorage for widget persistence
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -135,25 +135,25 @@
    * Check if widget should be shown
    */
   function shouldShowWidget() {
-    // Check sessionStorage first
-    const sessionFlag = sessionStorage.getItem('kp_search_enabled');
-    console.log('[Widget] SessionStorage kp_search_enabled:', sessionFlag);
+    // Check localStorage first (persists across page loads in same domain)
+    const enabledFlag = localStorage.getItem('kp_search_enabled');
+    console.log('[Widget] localStorage kp_search_enabled:', enabledFlag);
     
-    if (sessionFlag === 'true') {
-      console.log('[Widget] Widget enabled via sessionStorage');
+    if (enabledFlag === 'true') {
+      console.log('[Widget] Widget enabled via localStorage');
       return true;
     }
     
     // Check URL for f=1 parameter
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('f') === '1') {
-      // Store in session so it persists across pages
-      sessionStorage.setItem('kp_search_enabled', 'true');
-      console.log('[Widget] Widget enabled via ?f=1, stored in sessionStorage');
+      // Store in localStorage so it persists across pages and sessions
+      localStorage.setItem('kp_search_enabled', 'true');
+      console.log('[Widget] Widget enabled via ?f=1, stored in localStorage');
       return true;
     }
     
-    console.log('[Widget] Widget not enabled');
+    console.log('[Widget] Widget not enabled (add ?f=1 to URL)');
     return false;
   }
   
@@ -728,17 +728,17 @@
     search: performSearch,
     getResults: () => currentResults,
     enable: () => {
-      sessionStorage.setItem('kp_search_enabled', 'true');
+      localStorage.setItem('kp_search_enabled', 'true');
       if (!document.getElementById('kp-ai-search-widget')) {
         init();
       }
     },
     disable: () => {
-      sessionStorage.removeItem('kp_search_enabled');
+      localStorage.removeItem('kp_search_enabled');
       const widget = document.getElementById('kp-ai-search-widget');
       if (widget) widget.remove();
     },
-    isEnabled: () => sessionStorage.getItem('kp_search_enabled') === 'true'
+    isEnabled: () => localStorage.getItem('kp_search_enabled') === 'true'
   };
   
   // Auto-initialize on DOM ready
