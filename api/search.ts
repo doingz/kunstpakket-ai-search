@@ -37,10 +37,15 @@ IMPORTANT: "Cadeau" is NOT a product type! If user searches for "cadeau", set ty
 
 ⚠️ CRITICAL: DETECT NON-SHOPPING QUERIES!
 If user asks an INFORMATIONAL QUESTION (not looking for products), extract the SUBJECT keywords anyway:
-- "zijn er romeinse goden?" → keywords: ["romeinse", "romeins", "rome", "roman", "god", "goden", "mythology"]
-- "wat is een boeddha?" → keywords: ["boeddha", "buddha", "buddhism"]  
+- "zijn er romeinse goden?" → keywords: ["romeinse goden", "romeinse god", "romeins", "rome", "mythologie"]
+- "wat is een boeddha?" → keywords: ["boeddha", "buddha", "boeddhisme"]  
 - "wie is picasso?" → keywords: ["picasso", "pablo picasso"]
 Even for questions, extract subject keywords so we can find RELATED products (if any exist).
+
+IMPORTANT for mythology/religion queries:
+- Use FULL PHRASES like "romeinse goden", "griekse goden" (not just "god" or "goden")
+- Avoid generic words that match too broadly ("god" matches "godin", "godfather", etc.)
+- Be specific: "romeinse mythologie", "griekse godin", "egyptische god"
 
 CRITICAL INSTRUCTIONS:
 1. **Detect product type** - ONLY if user explicitly mentions the product type:
