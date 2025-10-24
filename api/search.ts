@@ -239,22 +239,34 @@ async function searchProducts(filters: any, limit: number, offset: number) {
   const total = parseInt(countResult.rows[0]?.total || '0');
 
   // Sort by relevance (best match first)
-  // Priority: exact title match > partial title match > content match
+  // Priority: tag matches > keyword matches, title > content
   let orderBy = 'price ASC';  // Default fallback
   
+  // Build relevance scoring
+  const scoreParts: string[] = [];
+  
+  // Highest priority: tag matches in title
+  if (filters.tags && filters.tags.length > 0) {
+    const tagChecks = filters.tags.slice(0, 3).map((tag: string) => 
+      `LOWER(title) LIKE LOWER('%${tag}%')`
+    ).join(' OR ');
+    scoreParts.push(`CASE WHEN ${tagChecks} THEN 1 ELSE 10 END`);
+  }
+  
+  // Secondary: keyword matches in title
   if (filters.keywords && filters.keywords.length > 0) {
-    // Build relevance scoring based on keyword matches in title
     const firstKeyword = filters.keywords[0];
-    orderBy = `
+    scoreParts.push(`
       CASE 
         WHEN LOWER(title) = LOWER('${firstKeyword}') THEN 1
         WHEN LOWER(title) LIKE LOWER('%${firstKeyword}%') THEN 2
-        WHEN LOWER(content) LIKE LOWER('%${firstKeyword}%') THEN 3
-        ELSE 4
-      END ASC,
-      stock_sold DESC NULLS LAST,
-      price ASC
-    `;
+        ELSE 3
+      END
+    `);
+  }
+  
+  if (scoreParts.length > 0) {
+    orderBy = `${scoreParts.join(' + ')} ASC, stock_sold DESC NULLS LAST, price ASC`;
   }
   
   const searchQuery = `
