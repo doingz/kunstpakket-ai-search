@@ -175,7 +175,7 @@
             <input 
               type="search" 
               id="kp-search-input-overlay" 
-              placeholder="Zoek naar kunst... bijv. \\"beeldje met hart max 80 euro\\""
+              placeholder="Zoek naar een kunstcadeau"
               autocomplete="off"
               enterkeyhint="search"
             />
@@ -492,22 +492,15 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.8);
+        background: white;
         z-index: 999999;
-        align-items: flex-start;
-        justify-content: center;
         overflow-y: auto;
-        padding: 20px;
       }
       
       .kp-overlay-content {
         background: white;
         width: 100%;
-        max-width: 1400px;
-        border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        margin: 40px auto;
-        max-height: calc(100vh - 80px);
+        height: 100%;
         display: flex;
         flex-direction: column;
       }
@@ -522,7 +515,6 @@
         align-items: center;
         gap: 16px;
         z-index: 10;
-        border-radius: 12px 12px 0 0;
       }
       
       .kp-search-box-overlay {
@@ -740,16 +732,7 @@
           display: none;
         }
         
-        .kp-overlay-content {
-          margin: 0;
-          border-radius: 0;
-          max-height: 100vh;
-        }
-        
         .kp-overlay-header {
-          position: relative;
-          flex-direction: row;
-          align-items: center;
           padding: 16px;
           gap: 12px;
         }
