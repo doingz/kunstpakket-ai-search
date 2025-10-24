@@ -42,7 +42,15 @@ KEYWORDS - Context-aware:
 • Multi-word phrases without attributes: keep together
   - Ex: "romeinse goden" → ["romeinse goden","romeins","rome"]
 
-Return: {"type":null|"Type","keywords":[...],"price_min":null,"price_max":null}`;
+CRITICAL: use_keywords field
+• use_keywords: true if keywords add meaningful context beyond the type
+  - Ex: "beeldje met hart" → use_keywords: true (hart is context!)
+  - Ex: "beeld van van gogh" → use_keywords: true (artist is context!)
+• use_keywords: false if keywords are ONLY type synonyms
+  - Ex: "schilderij onder 300" → use_keywords: false (only type synonyms)
+  - Ex: "mok" → use_keywords: false (only type synonyms)
+
+Return: {"type":null|"Type","keywords":[...],"use_keywords":true|false,"price_min":null,"price_max":null}`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -61,6 +69,11 @@ Return: {"type":null|"Type","keywords":[...],"price_min":null,"price_max":null}`
       parsed.keywords = [query];
     }
     
+    // Default use_keywords to true if not specified (backwards compat)
+    if (parsed.use_keywords === undefined) {
+      parsed.use_keywords = true;
+    }
+    
     return {
       original: query,
       parsed,
@@ -74,6 +87,7 @@ Return: {"type":null|"Type","keywords":[...],"price_min":null,"price_max":null}`
       parsed: { 
         type: null,
         keywords: [query],
+        use_keywords: true,
         price_min: null,
         price_max: null,
         confidence: 0.5
@@ -99,43 +113,13 @@ function buildSearchQuery(filters: any) {
 
   // Keywords - ONLY full-text search (whole words only, no substrings)
   // This prevents false matches like "god" matching "goddelijke" or "godfather"
-  // CRITICAL: For type-only queries, we must NOT add keyword filters!
-  // Problem: AI generates type synonyms (painting, canvas, artwork, schilderijen, etc.)
-  //          but products often don't have these words in their description
-  // Solution: If type exists AND NO meaningful context keywords, use ONLY type filter
-  if (filters.keywords && filters.keywords.length > 0 && filters.type) {
-    // Check if we have MEANINGFUL context keywords (> 12 chars or multi-word)
-    // Short single words (≤ 12) = type synonyms: mok, painting, schilderijen, canvas, artwork
-    // Long or multi-word = real context: "van gogh", "bodybuilder", "romeinse goden"
-    const hasMeaningfulContext = filters.keywords.some((kw: string) => 
-      kw.length > 12 || kw.includes(' ')
-    );
-    
-    // If type exists AND no meaningful context, skip keywords entirely
-    // This handles ANY type synonym the AI might generate
-    if (hasMeaningfulContext) {
-      // We have real context keywords (artist names, themes, etc.) - use them!
-      const keywordConditions = filters.keywords.map((keyword: string) => {
-        params.push(keyword);
-        const idx = paramIndex++;
-        
-        // Use phrase search for multi-word keywords, plain search for single words
-        if (keyword.includes(' ')) {
-          return `search_vector @@ phraseto_tsquery('dutch', $${idx})`;
-        } else {
-          return `search_vector @@ plainto_tsquery('dutch', $${idx})`;
-        }
-      }).join(' OR ');
-      
-      conditions.push(`(${keywordConditions})`);
-    }
-    // else: skip keywords - type filter is enough
-  } else if (filters.keywords && filters.keywords.length > 0) {
-    // No type filter - use keywords normally
+  // AI-controlled: use_keywords flag tells us if keywords add meaningful context
+  if (filters.keywords && filters.keywords.length > 0 && filters.use_keywords !== false) {
     const keywordConditions = filters.keywords.map((keyword: string) => {
       params.push(keyword);
       const idx = paramIndex++;
       
+      // Use phrase search for multi-word keywords, plain search for single words
       if (keyword.includes(' ')) {
         return `search_vector @@ phraseto_tsquery('dutch', $${idx})`;
       } else {
@@ -145,6 +129,7 @@ function buildSearchQuery(filters: any) {
     
     conditions.push(`(${keywordConditions})`);
   }
+  // If use_keywords === false, skip keywords entirely (AI says they're just type synonyms)
 
   // Price filters
   if (filters.price_min) {
