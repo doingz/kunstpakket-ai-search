@@ -307,12 +307,12 @@
     
     let html = '';
     
-    // Add AI intro if available
-    if (data.results.intro) {
+    // Add AI advice if available
+    if (data.results.advice) {
       html += `
         <div class="kp-ai-intro">
           <div class="kp-ai-intro-icon">✨</div>
-          <div class="kp-ai-intro-text">${escapeHtml(data.results.intro)}</div>
+          <div class="kp-ai-intro-text">${escapeHtml(data.results.advice)}</div>
         </div>
       `;
     }
