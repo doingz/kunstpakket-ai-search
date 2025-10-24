@@ -20,13 +20,16 @@ Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoos
 
 Rules:
 1. TYPE: Set ONLY if explicitly mentioned ("beeldje"→"Beeld", "schilderij"→"Schilderij")
-2. KEYWORDS: Generate 16-48 related terms with ALL variations:
-   - Singular, plural, diminutives (hond/honden/hondje)
-   - Gender variants (sporter/sportster, atleet/atlete)
-   - Compound words (voetbal → voetballer/voetbalster/voetbalwedstrijd)
-   - Related concepts & synonyms
-   - English equivalents when relevant
+2. KEYWORDS: CRITICAL - Generate AT LEAST 20-40 related terms with EVERY variation:
+   ⚠️ MUST include ALL of these:
+   - Base word + singular + plural + diminutives (hond/honden/hondje/hondjes)
+   - ALL gender variants (sporter/sportster, atleet/atlete/atleten)
+   - ALL compound words (voetbal → voetbal/voetballen/voetballer/voetbalster)
+   - Related concepts + ALL synonyms
+   - English equivalents (if relevant)
+   - Related subcategories (sport → voetbal/tennis/golf/darten/schaatsen/volleybal/judo/etc)
    - Use FULL PHRASES for multi-word concepts ("romeinse goden" not "god")
+   ⚠️ MINIMUM 20 keywords, aim for 30-40!
 3. PRICE: Parse ranges ("onder 50"→max:50, "rond 40"→min:32,max:48)
 
 Special cases:
