@@ -99,20 +99,35 @@ function buildSearchQuery(filters: any) {
 
   // Keywords - ONLY full-text search (whole words only, no substrings)
   // This prevents false matches like "god" matching "goddelijke" or "godfather"
+  // IMPORTANT: Skip keywords if we have a type filter and keywords are only type synonyms
+  // (e.g. type="Schilderij" + keywords=["schilderij","painting"] → don't add keyword filter)
   if (filters.keywords && filters.keywords.length > 0) {
-    const keywordConditions = filters.keywords.map((keyword: string) => {
-      params.push(keyword);
-      const idx = paramIndex++;
-      
-      // Use phrase search for multi-word keywords, plain search for single words
-      if (keyword.includes(' ')) {
-        return `search_vector @@ phraseto_tsquery('dutch', $${idx})`;
-      } else {
-        return `search_vector @@ plainto_tsquery('dutch', $${idx})`;
-      }
-    }).join(' OR ');
+    // Check if we should skip keywords (type-only query with just type synonyms)
+    const shouldSkipKeywords = filters.type && filters.keywords.every((kw: string) => {
+      const kwLower = kw.toLowerCase();
+      const typeLower = filters.type.toLowerCase();
+      // Skip if keyword is the type itself or very close synonym
+      return kwLower === typeLower || 
+             kwLower === typeLower + 'en' || // plural
+             kwLower === typeLower + 's' ||  // plural
+             kwLower.startsWith(typeLower.slice(0, -1)); // partial match
+    });
     
-    conditions.push(`(${keywordConditions})`);
+    if (!shouldSkipKeywords) {
+      const keywordConditions = filters.keywords.map((keyword: string) => {
+        params.push(keyword);
+        const idx = paramIndex++;
+        
+        // Use phrase search for multi-word keywords, plain search for single words
+        if (keyword.includes(' ')) {
+          return `search_vector @@ phraseto_tsquery('dutch', $${idx})`;
+        } else {
+          return `search_vector @@ plainto_tsquery('dutch', $${idx})`;
+        }
+      }).join(' OR ');
+      
+      conditions.push(`(${keywordConditions})`);
+    }
   }
 
   // Price filters
