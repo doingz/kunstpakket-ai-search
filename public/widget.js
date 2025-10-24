@@ -640,7 +640,7 @@
         padding: 24px 28px;
         border-radius: 16px;
         margin-bottom: 28px;
-        border: 2px solid #e2e8f0;
+        border: 1px solid #d4af37;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
       
