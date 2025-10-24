@@ -253,7 +253,7 @@ function buildSearchQuery(filters: any) {
 async function searchByExactTitle(query: string, limit: number, offset: number) {
   const searchPattern = `%${query}%`;
   
-  // Count total
+  // Count total (fuzzy matching with 30% similarity threshold for typos)
   const countQuery = `
     SELECT COUNT(*) as total 
     FROM products 
@@ -261,13 +261,15 @@ async function searchByExactTitle(query: string, limit: number, offset: number) 
       AND (
         LOWER(title) LIKE LOWER($1)
         OR LOWER(full_title) LIKE LOWER($1)
-        OR similarity(LOWER(title), LOWER($2)) > 0.5
+        OR similarity(LOWER(title), LOWER($2)) > 0.3
+        OR similarity(LOWER(full_title), LOWER($2)) > 0.3
       )
   `;
   const countResult = await sql.query(countQuery, [searchPattern, query]);
   const total = parseInt(countResult.rows[0]?.total || '0');
 
   // Get products with exact title matching, best matches first
+  // Uses fuzzy matching (trigram similarity) to catch typos/misspellings
   const searchQuery = `
     SELECT id, title, full_title, content, brand, price, old_price, stock_sold, image, url
     FROM products
@@ -275,7 +277,8 @@ async function searchByExactTitle(query: string, limit: number, offset: number) 
       AND (
         LOWER(title) LIKE LOWER($1)
         OR LOWER(full_title) LIKE LOWER($1)
-        OR similarity(LOWER(title), LOWER($2)) > 0.5
+        OR similarity(LOWER(title), LOWER($2)) > 0.3
+        OR similarity(LOWER(full_title), LOWER($2)) > 0.3
       )
     ORDER BY 
       CASE 
@@ -283,7 +286,9 @@ async function searchByExactTitle(query: string, limit: number, offset: number) 
         WHEN LOWER(full_title) = LOWER($2) THEN 2
         WHEN LOWER(title) LIKE LOWER($1) THEN 3
         WHEN LOWER(full_title) LIKE LOWER($1) THEN 4
-        ELSE 5
+        WHEN similarity(LOWER(title), LOWER($2)) > 0.6 THEN 5
+        WHEN similarity(LOWER(full_title), LOWER($2)) > 0.6 THEN 6
+        ELSE 7
       END ASC,
       similarity(LOWER(title), LOWER($2)) DESC,
       stock_sold DESC NULLS LAST
