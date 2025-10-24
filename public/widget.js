@@ -5,10 +5,11 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.2.0';  // Added client-side filtering and sorting
+  const WIDGET_VERSION = '1.3.0';  // Added analytics tracking
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
+  const ANALYTICS_API = 'https://analytics.bluestars.app/api/track';
   
   // Configuration (can be overridden via data attributes)
   const config = {
@@ -22,6 +23,110 @@
   let currentResults = null;
   let currentFilter = 'all';  // 'all' or 'sale'
   let currentSort = 'popular';  // 'popular', 'price-asc', 'price-desc', 'discount'
+  
+  /**
+   * Analytics tracking functions
+   */
+  function trackSearch(query, resultCount) {
+    try {
+      const searchId = crypto.randomUUID();
+      sessionStorage.setItem('kp_search_id', searchId);
+      sessionStorage.setItem('kp_last_query', query);
+      
+      fetch(ANALYTICS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'search',
+          client_id: 'kunstpakket.nl',
+          search_id: searchId,
+          query: query,
+          result_count: resultCount
+        })
+      }).catch(err => console.warn('[Analytics] Search tracking failed:', err));
+      
+      console.log('[Analytics] Search tracked:', query, resultCount, 'results');
+    } catch (err) {
+      console.warn('[Analytics] Error:', err);
+    }
+  }
+  
+  function trackProductClick(productId, productUrl) {
+    try {
+      const searchId = sessionStorage.getItem('kp_search_id');
+      if (!searchId) return;
+      
+      // Store clicked product for purchase attribution
+      sessionStorage.setItem('kp_last_product_id', productId);
+      sessionStorage.setItem('kp_last_product_url', productUrl);
+      
+      fetch(ANALYTICS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'click',
+          client_id: 'kunstpakket.nl',
+          search_id: searchId,
+          product_id: productId,
+          product_url: productUrl
+        })
+      }).catch(err => console.warn('[Analytics] Click tracking failed:', err));
+      
+      console.log('[Analytics] Click tracked:', productId);
+    } catch (err) {
+      console.warn('[Analytics] Error:', err);
+    }
+  }
+  
+  function trackPurchase() {
+    try {
+      const searchId = sessionStorage.getItem('kp_search_id');
+      if (!searchId) return;
+      
+      const productId = sessionStorage.getItem('kp_last_product_id');
+      const productUrl = sessionStorage.getItem('kp_last_product_url');
+      
+      fetch(ANALYTICS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'purchase',
+          client_id: 'kunstpakket.nl',
+          search_id: searchId,
+          product_id: productId || null,
+          product_url: productUrl || null
+        })
+      }).catch(err => console.warn('[Analytics] Purchase tracking failed:', err));
+      
+      console.log('[Analytics] Purchase tracked');
+      
+      // Clear session data
+      sessionStorage.removeItem('kp_search_id');
+      sessionStorage.removeItem('kp_last_product_id');
+      sessionStorage.removeItem('kp_last_product_url');
+      sessionStorage.removeItem('kp_last_query');
+    } catch (err) {
+      console.warn('[Analytics] Error:', err);
+    }
+  }
+  
+  /**
+   * Check if we're on a thank you page and track purchase
+   */
+  function checkPurchasePage() {
+    const url = window.location.href.toLowerCase();
+    const title = document.title.toLowerCase();
+    
+    if (url.includes('/thankyou') || 
+        url.includes('/bedankt') ||
+        url.includes('/thank-you') ||
+        url.includes('/success') ||
+        url.includes('?order=success') ||
+        title.includes('bedankt') ||
+        title.includes('thank you')) {
+      trackPurchase();
+    }
+  }
   
   /**
    * Check if widget should be shown
@@ -49,6 +154,9 @@
    */
   function init() {
     console.log(`[Kunstpakket AI Search] Widget v${WIDGET_VERSION} loaded`);
+    
+    // Check if we're on a thank you page (always check, even if widget is not shown)
+    checkPurchasePage();
     
     // Check if widget should be shown
     if (!shouldShowWidget()) {
@@ -389,6 +497,9 @@
       const data = await response.json();
       currentResults = data;
       
+      // Track search
+      trackSearch(query, data.products?.length || 0);
+      
       // Render results
       renderResults(data);
       
@@ -446,7 +557,11 @@
     products.forEach((product, index) => {
       const isHighlighted = currentResults?.results?.highlighted?.includes(index);
       html += `
-        <a href="https://www.kunstpakket.nl/${product.url}" class="kp-product-link" target="_blank">
+        <a href="https://www.kunstpakket.nl/${product.url}" 
+           class="kp-product-link" 
+           target="_blank"
+           data-product-id="${product.id}"
+           data-product-url="${product.url}">
           <div class="kp-product-card ${isHighlighted ? 'highlighted' : ''}">
             ${product.image ? `
               <img 
@@ -557,7 +672,7 @@
     
     resultsContainer.innerHTML = html;
     
-    // Attach event listeners
+    // Attach event listeners for filter/sort
     const filterSelect = document.getElementById('kp-filter-select');
     const sortSelect = document.getElementById('kp-sort-select');
     
@@ -574,6 +689,18 @@
         renderResults(currentResults);
       });
     }
+    
+    // Attach click tracking to product links
+    const productLinks = resultsContainer.querySelectorAll('.kp-product-link');
+    productLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const productId = link.getAttribute('data-product-id');
+        const productUrl = link.getAttribute('data-product-url');
+        if (productId && productUrl) {
+          trackProductClick(productId, productUrl);
+        }
+      });
+    });
   }
   
   /**
