@@ -8,7 +8,8 @@
     "db:schema": "node scripts/setup-schema.js",
     "import": "node scripts/import-to-neon.js",
     "search": "node scripts/test-search.js",
-    "setup": "node scripts/full-setup.js"
+    "setup": "node scripts/full-setup.js",
+    "update-tags": "node scripts/extract-keywords.js && npm run import"
   },
   "keywords": [
     "search",

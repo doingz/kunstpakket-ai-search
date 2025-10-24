@@ -272,6 +272,45 @@ async function importVariants(variants) {
 }
 
 /**
+ * Regenerate database-tags.js with latest tags
+ */
+async function regenerateTagList() {
+  try {
+    const tags = await sql`
+      SELECT t.title
+      FROM tags t
+      LEFT JOIN product_tags pt ON t.id = pt.tag_id
+      GROUP BY t.id, t.title
+      HAVING COUNT(pt.product_id) > 0
+      ORDER BY COUNT(pt.product_id) DESC
+    `;
+    
+    const tagList = tags.rows.map(r => r.title);
+    
+    const content = `/**
+ * All available tags from database
+ * Auto-generated during sync - do not edit manually!
+ * Last updated: ${new Date().toISOString()}
+ */
+export const ALL_DATABASE_TAGS = [
+${tagList.map(tag => `  '${tag.replace(/'/g, "\\'")}',`).join('\n')}
+];
+
+// Total: ${tagList.length} tags
+`;
+    
+    const tagFilePath = path.join(__dirname, '..', 'lib', 'database-tags.js');
+    
+    await fs.writeFile(tagFilePath, content, 'utf-8');
+    
+    console.log(`  ✅ Generated ${tagList.length} tags in lib/database-tags.js`);
+    
+  } catch (error) {
+    console.error('  ⚠️  Failed to regenerate tag list:', error.message);
+  }
+}
+
+/**
  * Show import statistics
  */
 async function showStats() {
@@ -343,6 +382,10 @@ async function main() {
     if (categoriesProducts) await importProductCategories(categoriesProducts);
 
     await showStats();
+    
+    // Regenerate tag list for AI
+    console.log('\n🔄 Regenerating tag list for AI...');
+    await regenerateTagList();
 
     console.log('\n✅ Import complete!');
     process.exit(0);
