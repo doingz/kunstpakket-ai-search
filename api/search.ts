@@ -249,6 +249,24 @@ function buildSearchQuery(filters: any) {
   return { conditions, params };
 }
 
+// Format product row to consistent output format
+function formatProduct(row: any) {
+  return {
+    id: row.id,
+    title: row.title,
+    fullTitle: row.full_title,
+    description: row.content,
+    brand: row.brand,
+    price: parseFloat(row.price),
+    oldPrice: row.old_price ? parseFloat(row.old_price) : null,
+    onSale: row.old_price && parseFloat(row.old_price) > parseFloat(row.price),
+    discount: row.old_price ? Math.round((1 - parseFloat(row.price) / parseFloat(row.old_price)) * 100) : 0,
+    salesCount: row.stock_sold || 0,
+    image: row.image,
+    url: row.url
+  };
+}
+
 // Fallback: Search by exact title match (for when query is a product title)
 async function searchByExactTitle(query: string, limit: number, offset: number) {
   const searchPattern = `%${query}%`;
