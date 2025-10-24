@@ -38,10 +38,13 @@ async function importProducts(products) {
 
   for (const product of products) {
     try {
+      // Detect product type from title
+      const productType = detectProductType(product.title || '', product.fulltitle || '');
+      
       await sql`
         INSERT INTO products (
           id, title, full_title, content, brand, price, image, url, 
-          is_visible, created_at, updated_at
+          type, is_visible, created_at, updated_at
         ) VALUES (
           ${product.id},
           ${product.title || ''},
@@ -51,6 +54,7 @@ async function importProducts(products) {
           ${null},
           ${product.image?.src || null},
           ${product.url || null},
+          ${productType},
           ${product.isVisible !== false},
           ${product.createdAt || null},
           ${product.updatedAt || null}
@@ -62,6 +66,7 @@ async function importProducts(products) {
           brand = EXCLUDED.brand,
           image = EXCLUDED.image,
           url = EXCLUDED.url,
+          type = EXCLUDED.type,
           is_visible = EXCLUDED.is_visible,
           updated_at = EXCLUDED.updated_at
       `;
