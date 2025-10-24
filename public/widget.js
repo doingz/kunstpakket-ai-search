@@ -624,12 +624,24 @@
       }
       
       .kp-select {
-        padding: 10px 14px;
+        padding: 10px 32px 10px 14px;
         border: 1px solid #e2e8f0;
         border-radius: 6px;
         font-size: 14px;
         background: white;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
         cursor: pointer;
+      }
+      
+      .kp-select:focus {
+        outline: none;
+        border-color: #f5876e;
+        box-shadow: 0 0 0 3px rgba(245, 135, 110, 0.1);
       }
       
       .kp-products-grid {
