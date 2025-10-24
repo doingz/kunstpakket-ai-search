@@ -120,6 +120,12 @@ Output: {"type":"Beeld","keywords":["advocaat","justitie","rechter","law","lawye
 Input: "een beeld voor een docent"
 Output: {"type":"Beeld","keywords":["docent","leraar","teacher","onderwijs","education","school","kennis"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
+Input: "zijn er romeinse goden?"
+Output: {"type":null,"keywords":["romeinse","romeins","rome","roman","god","goden","gods","mythology","mythologie"],"tags":[],"price_min":null,"price_max":null,"confidence":0.7}
+
+Input: "wat is boeddha?"
+Output: {"type":null,"keywords":["boeddha","buddha","buddhism","boeddhisme","zen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.7}
+
 Input: "cadeau voor arts"
 Output: {"type":null,"keywords":["arts","dokter","doctor","medisch","medical"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
 
