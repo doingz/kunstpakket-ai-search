@@ -505,8 +505,9 @@
       const data = await response.json();
       currentResults = data;
       
-      // Track search
-      trackSearch(query, data.products?.length || 0);
+      // Track search with correct result count
+      const resultCount = data.results?.total || data.results?.items?.length || 0;
+      trackSearch(query, resultCount);
       
       // Render results
       renderResults(data);
