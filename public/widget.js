@@ -746,7 +746,7 @@
         
         .kp-search-wrapper {
           flex-direction: row;
-          padding: 8px 16px;
+          padding: 4px 16px;
         }
         
         #kp-search-input-bar {
