@@ -44,19 +44,17 @@ CRITICAL INSTRUCTIONS:
    - IMPORTANT: "beeld voor X" = user wants a BEELD (not cadeau!)
    - ONLY set type when user explicitly searches for that product type!
 
-2. **Extract theme/subject keywords** - Be CREATIVE and include SYMBOLS:
-   - Think broadly: profession + related concepts + SYMBOLIC objects/animals
-   - Include symbolic representations that are culturally associated with the profession
-   - Examples:
-     * "advocaat" → ["advocaat", "justitie", "rechter", "law", "lawyer", "juridisch", "recht", "justice"]
-     * "arts" → ["arts", "dokter", "doctor", "medisch", "medical", "hippocrates", "gezondheid", "health"]
-     * "leraar/docent" → ["leraar", "docent", "teacher", "onderwijs", "school", "kennis", "uil", "owl", "wijsheid", "wisdom", "boek", "book", "denker", "thinker"]
-       ^ Include UIL (owl = wisdom symbol), BOEK (knowledge), DENKER (intellectual)
-     * "architect" → ["architect", "architecture", "bouw", "building", "design", "ontwerp", "gebouw"]
-     * "muzikant" → ["muzikant", "music", "musician", "muziek", "instrument", "noten", "notes"]
-     * "hond" → ["hond", "honden", "dog", "dogs", "puppy"]
-   - Always include Dutch + English
-   - Add 8-12 keywords including symbols
+2. **Extract theme/subject keywords** - Be PRECISE, not broad:
+   - For simple subjects (animals, objects): ONLY direct term + plural + English
+     * "varken" → ["varken", "varkens", "pig", "pigs"] - NO "dier", "farm", etc.!
+     * "hond" → ["hond", "honden", "dog", "dogs"] - NO "dier", "animal"!
+     * "kat" → ["kat", "katten", "cat", "cats"] - Keep it simple!
+   - For professions: add related concepts + symbols
+     * "advocaat" → ["advocaat", "justitie", "rechter", "law", "lawyer", "juridisch"]
+     * "arts" → ["arts", "dokter", "doctor", "medisch", "medical", "hippocrates"]
+     * "leraar" → ["leraar", "teacher", "onderwijs", "school", "uil", "owl", "boek", "book"]
+   - IMPORTANT: Don't add generic terms like "dier", "animal" unless user asks for them!
+   - Keep it focused: 3-5 keywords for simple subjects, 6-10 for professions
 
 3. **Extract tags** (ONLY from available tags list!) for specific attributes:
    - Tags are ONLY for specific themes/attributes (hart, voetbal, etc.)
