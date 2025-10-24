@@ -19,19 +19,21 @@ Query: "${query}"
 Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
 KEYWORDS - Context-aware:
-• SPECIFIC (bodybuilder, tennisser, hond, kat): 5-10 focused keywords
+• SPECIFIC (bodybuilder, tennisser, hond, kat): 5-10 focused keywords, type: null
   - Only direct variants: singular/plural/verb forms + close synonyms
-  - Ex: "bodybuilder" → ["bodybuilder","bodybuilders","bodybuilding"]
-  - Ex: "hond" → ["hond","honden","dog","dogs","puppy"] (NOT: dieren, huisdier)
+  - Ex: "bodybuilder" → type: null, keywords: ["bodybuilder","bodybuilders","bodybuilding"]
+  - Ex: "hond" → type: null, keywords: ["hond","honden","dog","dogs","puppy"] (NOT: dieren, huisdier)
+  - Ex: "kat" → type: null, keywords: ["kat","katten","cat","cats"] (NOT type: Schilderij!)
   
 • BROAD (sport, dieren, kunst, cadeau): 20-35 expansive keywords
   - All variations + subcategories
   - Ex: "sport" → ["sport","sporter","voetbal","tennis","golf",...]
   - Ex: "kunst" → ["kunst","kunstwerk","schilderij","beeld","kunstenaar",...]
 
-• ARTIST NAMES: 3-5 keywords with name variations
-  - Ex: "van gogh" → ["van gogh","vincent","gogh","vincent van gogh"]
-  - Ex: "klimt" → ["klimt","gustav klimt","gustav"]
+• ARTIST NAMES: 3-5 keywords with name variations, type: null
+  - Ex: "van gogh" → type: null, keywords: ["van gogh","vincent","gogh","vincent van gogh"]
+  - Ex: "klimt" → type: null, keywords: ["klimt","gustav klimt","gustav"]
+  - NEVER set type for artist-only queries!
 
 • PRODUCT TYPES ONLY: 3-5 keywords with synonyms
   - Ex: "mok" → ["mok","mokken","cup","mug","beker"]
