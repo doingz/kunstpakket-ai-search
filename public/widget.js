@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '1.3.2';  // Added debug logging + confirmed .html links
+  const WIDGET_VERSION = '2.0.0';  // Major update: Fullscreen overlay mode
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -15,7 +15,8 @@
   const config = {
     placeholder: 'Zoek naar kunst... bijv. "beeldje met hart max 80 euro"',
     buttonText: 'Zoeken',
-    maxResults: 1000  // Show ALL results
+    maxResults: 1000,  // Show ALL results
+    mode: 'overlay'  // 'inline' (old) or 'overlay' (new fullscreen)
   };
   
   // Widget state
