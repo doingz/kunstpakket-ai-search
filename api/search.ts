@@ -25,9 +25,10 @@ KEYWORDS - Context-aware:
   - Ex: "hond" → type: null, keywords: ["hond","honden","dog","dogs","puppy"] (NOT: dieren, huisdier)
   - Ex: "kat" → type: null, keywords: ["kat","katten","cat","cats"] (NOT type: Schilderij!)
   
-• SPECIFIC SUBJECT + TYPE (beeldje met voetballer): 5-10 focused keywords ONLY for subject
-  - Ex: "beeldje met voetballer" → type: "Beeld", keywords: ["voetballer","voetballers","voetbal","football","soccer"]
-  - Ex: "schilderij van een hond" → type: "Schilderij", keywords: ["hond","honden","dog","dogs"]
+• SPECIFIC SUBJECT + TYPE (beeldje met voetballer): 8-15 focused keywords ONLY for subject
+  - Ex: "beeldje met voetballer" → type: "Beeld", keywords: ["voetballer","voetballers","voetbalster","voetbal","voetbalheld","football","soccer"]
+  - Ex: "schilderij van een hond" → type: "Schilderij", keywords: ["hond","honden","hondje","hondjes","dog","dogs","puppy"]
+  - Include: gender variants (voetballer/voetbalster), compound words (voetbalheld), diminutives
   - CRITICAL: NEVER add broad category terms (NOT: sport, sporter, dieren, huisdier)!
   
 • BROAD (sport, dieren, kunst, cadeau): 20-35 expansive keywords
