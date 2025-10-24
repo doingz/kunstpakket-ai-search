@@ -3,6 +3,7 @@
  */
 import { sql } from '@vercel/postgres';
 import OpenAI from 'openai';
+import { getTagsPromptSection } from '../lib/available-tags.js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -15,6 +16,8 @@ async function parseQuery(query: string) {
   const prompt = `Parse this Dutch e-commerce search query for an art & gift webshop and extract structured filters.
 
 Search query: "${query}"
+
+${getTagsPromptSection()}
 
 Available product categories:
 - Beelden & Beeldjes (sculptures, figurines)
