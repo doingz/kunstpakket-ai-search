@@ -41,15 +41,18 @@ CRITICAL INSTRUCTIONS:
    - "schaal", "bowl" → type: "Schaal"
    - ONLY set type if user explicitly searches for it!
 
-2. **Extract theme/subject keywords** for searches on subjects, themes, professions, occasions:
-   - If user mentions a SUBJECT/THEME (not product type), add as keyword
+2. **Extract theme/subject keywords** - Be CREATIVE and add related concepts:
+   - If user mentions a profession/theme, add the term + related concepts + symbols
+   - Think broadly: what objects, symbols, concepts relate to this profession/theme?
    - Examples:
-     * "beeld voor een advocaat" → keywords: ["advocaat", "justitie", "rechter", "law", "lawyer"]
-     * "cadeau voor een arts" → keywords: ["arts", "dokter", "doctor", "medisch"]
-     * "hond" → keywords: ["hond", "honden", "dog", "dogs"]
-     * "voor moederdag" → keywords: ["moeder", "moederdag", "mother", "mama"]
-   - Include Dutch + English synonyms
-   - These will be used to search in title/description
+     * "advocaat" → ["advocaat", "justitie", "rechter", "law", "lawyer", "juridisch", "recht", "justice"]
+     * "arts" → ["arts", "dokter", "doctor", "medisch", "medical", "gezondheid", "health", "hippocrates"]
+     * "leraar" → ["leraar", "teacher", "onderwijs", "education", "school", "kennis", "knowledge"]
+     * "architect" → ["architect", "architecture", "bouw", "building", "design", "ontwerp", "gebouw"]
+     * "muzikant" → ["muzikant", "music", "musician", "muziek", "instrument", "noten", "notes"]
+     * "hond" → ["hond", "honden", "dog", "dogs", "puppy"]
+   - Always include Dutch + English
+   - Add 5-8 related keywords per theme
 
 3. **Extract tags** (ONLY from available tags list!) for specific attributes that exist in tags:
    - Check if theme/subject exists in available tags list
