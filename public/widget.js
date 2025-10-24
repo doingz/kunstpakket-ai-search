@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.0.0';
+  const VERSION = '2.1.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -802,16 +802,7 @@
     // Check purchase page
     checkPurchasePage();
     
-    // Check if enabled
-    const enabled = localStorage.getItem('kp_search_enabled');
-    if (enabled !== 'true') {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('f') === '1') {
-        localStorage.setItem('kp_search_enabled', 'true');
-      } else {
-        return;
-      }
-    }
+    // Widget is now live for all users!
     
     // Inject styles
     injectStyles();
