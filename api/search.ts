@@ -99,21 +99,33 @@ function buildSearchQuery(filters: any) {
 
   // Keywords - ONLY full-text search (whole words only, no substrings)
   // This prevents false matches like "god" matching "goddelijke" or "godfather"
-  // IMPORTANT: Skip keywords if we have a type filter and keywords are only type synonyms
-  // (e.g. type="Schilderij" + keywords=["schilderij","painting"] → don't add keyword filter)
+  // IMPORTANT: Skip keywords if we ONLY have a type filter (no other search context)
+  // For type-only queries (e.g. "schilderij", "mok", "vaas"), the type filter is enough
+  // Adding keyword filters causes 0 results when products don't have the type name in description
   if (filters.keywords && filters.keywords.length > 0) {
-    // Check if we should skip keywords (type-only query with just type synonyms)
-    const shouldSkipKeywords = filters.type && filters.keywords.every((kw: string) => {
-      const kwLower = kw.toLowerCase();
-      const typeLower = filters.type.toLowerCase();
-      // Skip if keyword is the type itself or very close synonym
-      return kwLower === typeLower || 
-             kwLower === typeLower + 'en' || // plural
-             kwLower === typeLower + 's' ||  // plural
-             kwLower.startsWith(typeLower.slice(0, -1)); // partial match
-    });
+    // If we have ONLY type + price (no other context), skip keywords entirely
+    // They're just synonyms of the type and will cause false negatives
+    const hasOnlyTypeAndPrice = filters.type && 
+                                !filters.keywords.some((kw: string) => {
+                                  // Check if keyword adds meaningful context beyond the type
+                                  const kwLower = kw.toLowerCase();
+                                  const typeLower = filters.type.toLowerCase();
+                                  
+                                  // Generic type synonyms (skip these)
+                                  const typeWords = [
+                                    typeLower,
+                                    typeLower + 'en', typeLower + 's', typeLower + 'jes',
+                                    'painting', 'paintings', 'canvas', 'doek', // Schilderij synonyms
+                                    'sculpture', 'sculptuur', 'statue', 'figuur', // Beeld synonyms
+                                    'vase', 'vazen', // Vaas synonyms
+                                    'cup', 'mug', 'beker', 'mokken', // Mok synonyms
+                                  ];
+                                  
+                                  // If keyword is NOT in generic type words, it adds context
+                                  return !typeWords.includes(kwLower);
+                                });
     
-    if (!shouldSkipKeywords) {
+    if (!hasOnlyTypeAndPrice) {
       const keywordConditions = filters.keywords.map((keyword: string) => {
         params.push(keyword);
         const idx = paramIndex++;
