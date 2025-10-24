@@ -1,32 +1,23 @@
 /**
- * Kunstpakket AI Search Widget
- * Embed this on any page: <script src="https://kunstpakket.bluestars.app/widget.js"></script>
+ * Kunstpakket AI Search - Fullscreen Overlay Version
+ * Usage: Add search bar to .container-bar, opens fullscreen overlay with results
  */
 (function() {
   'use strict';
   
-  const WIDGET_VERSION = '2.0.0';  // Major update: Fullscreen overlay mode
+  const VERSION = '2.0.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
   const ANALYTICS_API = 'https://analytics.bluestars.app/api/track';
   
-  // Configuration (can be overridden via data attributes)
-  const config = {
-    placeholder: 'Zoek naar kunst... bijv. "beeldje met hart max 80 euro"',
-    buttonText: 'Zoeken',
-    maxResults: 1000,  // Show ALL results
-    mode: 'overlay'  // 'inline' (old) or 'overlay' (new fullscreen)
-  };
-  
-  // Widget state
   let isSearching = false;
   let currentResults = null;
-  let currentFilter = 'all';  // 'all' or 'sale'
-  let currentSort = 'popular';  // 'popular', 'price-asc', 'price-desc', 'discount'
+  let currentFilter = 'all';
+  let currentSort = 'popular';
   
   /**
-   * Analytics tracking functions
+   * Analytics tracking
    */
   function trackSearch(query, resultCount) {
     try {
@@ -34,23 +25,17 @@
       sessionStorage.setItem('kp_search_id', searchId);
       sessionStorage.setItem('kp_last_query', query);
       
-      const payload = {
-        event: 'search',
-        client_id: 'kunstpakket.nl',
-        search_id: searchId,
-        query: query,
-        result_count: resultCount
-      };
-      
-      console.log('[Analytics] Tracking search:', payload);
-      
       fetch(ANALYTICS_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          event: 'search',
+          client_id: 'kunstpakket.nl',
+          search_id: searchId,
+          query: query,
+          result_count: resultCount
+        })
       }).catch(err => console.warn('[Analytics] Search tracking failed:', err));
-      
-      console.log('[Analytics] Search tracked:', query, resultCount, 'results');
     } catch (err) {
       console.warn('[Analytics] Error:', err);
     }
@@ -61,7 +46,6 @@
       const searchId = sessionStorage.getItem('kp_search_id');
       if (!searchId) return;
       
-      // Store clicked product for purchase attribution
       sessionStorage.setItem('kp_last_product_id', productId);
       sessionStorage.setItem('kp_last_product_url', productUrl);
       
@@ -76,8 +60,6 @@
           product_url: productUrl
         })
       }).catch(err => console.warn('[Analytics] Click tracking failed:', err));
-      
-      console.log('[Analytics] Click tracked:', productId);
     } catch (err) {
       console.warn('[Analytics] Error:', err);
     }
@@ -103,9 +85,6 @@
         })
       }).catch(err => console.warn('[Analytics] Purchase tracking failed:', err));
       
-      console.log('[Analytics] Purchase tracked');
-      
-      // Clear session data
       sessionStorage.removeItem('kp_search_id');
       sessionStorage.removeItem('kp_last_product_id');
       sessionStorage.removeItem('kp_last_product_url');
@@ -115,9 +94,6 @@
     }
   }
   
-  /**
-   * Check if we're on a thank you page and track purchase
-   */
   function checkPurchasePage() {
     const url = window.location.href.toLowerCase();
     const title = document.title.toLowerCase();
@@ -131,423 +107,254 @@
         url.includes('?order=success') ||
         title.includes('bedankt') ||
         title.includes('thank you')) {
-      console.log('[Analytics] Thank you page detected, tracking purchase...');
       trackPurchase();
     }
   }
   
   /**
-   * Check if widget should be shown
+   * Inject search bar into .container-bar
    */
-  function shouldShowWidget() {
-    // Check localStorage first (persists across page loads in same domain)
-    const enabledFlag = localStorage.getItem('kp_search_enabled');
-    console.log('[Widget] localStorage kp_search_enabled:', enabledFlag);
-    
-    if (enabledFlag === 'true') {
-      console.log('[Widget] Widget enabled via localStorage');
-      return true;
-    }
-    
-    // Check URL for f=1 parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('f') === '1') {
-      // Store in localStorage so it persists across pages and sessions
-      localStorage.setItem('kp_search_enabled', 'true');
-      console.log('[Widget] Widget enabled via ?f=1, stored in localStorage');
-      return true;
-    }
-    
-    console.log('[Widget] Widget not enabled (add ?f=1 to URL)');
-    return false;
-  }
-  
-  /**
-   * Initialize widget
-   */
-  function init() {
-    console.log(`[Kunstpakket AI Search] Widget v${WIDGET_VERSION} loaded`);
-    
-    // Check if we're on a thank you page (always check, even if widget is not shown)
-    checkPurchasePage();
-    
-    // Check if widget should be shown
-    if (!shouldShowWidget()) {
-      console.log('[Kunstpakket AI Search] Widget not enabled (add ?f=1 to URL)');
+  function injectSearchBar() {
+    const containerBar = document.querySelector('.container-bar');
+    if (!containerBar) {
+      console.warn('[KP Search] .container-bar not found');
       return;
     }
     
-    // Check if already initialized
-    if (document.getElementById('kp-ai-search-widget')) {
-      console.warn('[Kunstpakket AI Search] Widget already initialized');
-      return;
-    }
-    
-    // Inject CSS
-    injectStyles();
-    
-    // Create widget container
-    const container = createWidgetHTML();
-    
-    // Find mount point (data-kp-search attribute or default)
-    const mountPoint = document.querySelector('[data-kp-search]') || document.body;
-    mountPoint.appendChild(container);
-    
-    // Attach event listeners
-    attachEventListeners();
-    
-    console.log('[Kunstpakket AI Search] Widget initialized');
-  }
-  
-  /**
-   * Inject widget styles
-   */
-  function injectStyles() {
-    const styles = `
-      #kp-ai-search-widget {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 1rem;
-      }
-      
-      .kp-search-box {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-      }
-      
-      .kp-search-input {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-      
-      .kp-search-input:focus {
-        border-color: #3b82f6;
-      }
-      
-      .kp-search-button {
-        padding: 0.75rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-        color: white;
-        background: #3b82f6;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      
-      .kp-search-button:hover {
-        background: #2563eb;
-      }
-      
-      .kp-search-button:disabled {
-        background: #94a3b8;
-        cursor: not-allowed;
-      }
-      
-      .kp-loading {
-        text-align: center;
-        padding: 2rem;
-        color: #64748b;
-      }
-      
-      .kp-ai-advice {
-        background: #f0f9ff;
-        border-left: 4px solid #3b82f6;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        border-radius: 4px;
-      }
-      
-      .kp-ai-advice-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        color: #3b82f6;
-        margin-bottom: 0.5rem;
-      }
-      
-      .kp-ai-advice-text {
-        color: #1e40af;
-        line-height: 1.6;
-      }
-      
-      .kp-results-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-      }
-      
-      .kp-results-count {
-        color: #64748b;
-        font-size: 0.9rem;
-      }
-      
-      .kp-controls {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-      }
-      
-      .kp-control-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-      
-      .kp-control-label {
-        font-size: 0.75rem;
-        color: #64748b;
-        font-weight: 500;
-      }
-      
-      .kp-select {
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 4px;
-        background: white;
-        color: #1e293b;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: border-color 0.2s;
-      }
-      
-      .kp-select:hover {
-        border-color: #3b82f6;
-      }
-      
-      .kp-select:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-      }
-      
-      .kp-results-grid {
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      }
-      
-      .kp-product-card {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        overflow: hidden;
-        transition: transform 0.2s, box-shadow 0.2s;
-        background: white;
-      }
-      
-      .kp-product-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      }
-      
-      .kp-product-image {
-        width: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-        background: #f1f5f9;
-      }
-      
-      .kp-product-info {
-        padding: 1rem;
-        position: relative;
-      }
-      
-      .kp-sale-badge {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        background: #ef4444;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 700;
-      }
-      
-      .kp-product-title {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #1e293b;
-        font-size: 0.95rem;
-        line-height: 1.4;
-      }
-      
-      .kp-product-pricing {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-      
-      .kp-product-price {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #3b82f6;
-      }
-      
-      .kp-product-old-price {
-        font-size: 0.95rem;
-        color: #94a3b8;
-        text-decoration: line-through;
-      }
-      
-      .kp-product-link {
-        text-decoration: none;
-        color: inherit;
-      }
-      
-      .kp-error {
-        background: #fef2f2;
-        border-left: 4px solid #ef4444;
-        padding: 1rem;
-        border-radius: 4px;
-        color: #991b1b;
-      }
-      
-      @media (max-width: 640px) {
-        .kp-search-box {
-          flex-direction: column;
-        }
-        
-        .kp-results-grid {
-          grid-template-columns: 1fr;
-        }
-      }
+    const searchBar = document.createElement('div');
+    searchBar.id = 'kp-search-bar';
+    searchBar.innerHTML = `
+      <input 
+        type="text" 
+        id="kp-search-input-bar" 
+        placeholder="🔍 Zoek kunst..."
+        autocomplete="off"
+      />
     `;
     
-    const styleEl = document.createElement('style');
-    styleEl.textContent = styles;
-    document.head.appendChild(styleEl);
+    // Insert as first child
+    containerBar.insertBefore(searchBar, containerBar.firstChild);
+    
+    // Add event listeners
+    const input = document.getElementById('kp-search-input-bar');
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && input.value.trim()) {
+        openOverlay(input.value.trim());
+      }
+    });
+    input.addEventListener('focus', () => {
+      if (input.value.trim()) {
+        openOverlay(input.value.trim());
+      }
+    });
   }
   
   /**
-   * Create widget HTML structure
+   * Create fullscreen overlay
    */
-  function createWidgetHTML() {
-    const widget = document.createElement('div');
-    widget.id = 'kp-ai-search-widget';
-    widget.innerHTML = `
-      <div class="kp-search-box">
-        <input 
-          type="text" 
-          class="kp-search-input" 
-          placeholder="${config.placeholder}"
-          id="kp-search-input"
-        />
-        <button class="kp-search-button" id="kp-search-button">
-          ${config.buttonText}
-        </button>
+  function createOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'kp-search-overlay';
+    overlay.style.display = 'none';
+    overlay.innerHTML = `
+      <div class="kp-overlay-content">
+        <div class="kp-overlay-header">
+          <div class="kp-search-box-overlay">
+            <input 
+              type="text" 
+              id="kp-search-input-overlay" 
+              placeholder="Zoek naar kunst... bijv. \\"beeldje met hart max 80 euro\\""
+              autocomplete="off"
+            />
+            <button id="kp-search-button-overlay">Zoeken</button>
+          </div>
+          <button class="kp-close-button" id="kp-close-overlay">&times;</button>
+        </div>
+        <div id="kp-search-results-overlay"></div>
       </div>
-      <div id="kp-search-results"></div>
     `;
-    return widget;
-  }
-  
-  /**
-   * Attach event listeners
-   */
-  function attachEventListeners() {
-    const input = document.getElementById('kp-search-input');
-    const button = document.getElementById('kp-search-button');
     
-    // Search on button click
-    button.addEventListener('click', () => {
-      const query = input.value.trim();
+    document.body.appendChild(overlay);
+    
+    // Event listeners
+    document.getElementById('kp-close-overlay').addEventListener('click', closeOverlay);
+    document.getElementById('kp-search-button-overlay').addEventListener('click', () => {
+      const query = document.getElementById('kp-search-input-overlay').value.trim();
       if (query) performSearch(query);
     });
-    
-    // Search on Enter key
-    input.addEventListener('keypress', (e) => {
+    document.getElementById('kp-search-input-overlay').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        const query = input.value.trim();
+        const query = e.target.value.trim();
         if (query) performSearch(query);
       }
     });
+    
+    // Close on background click
+    overlay.addEventListener('click', (e) => {
+      if (e.target.id === 'kp-search-overlay') {
+        closeOverlay();
+      }
+    });
+    
+    // Close on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.style.display === 'flex') {
+        closeOverlay();
+      }
+    });
+  }
+  
+  function openOverlay(query = '') {
+    const overlay = document.getElementById('kp-search-overlay');
+    const input = document.getElementById('kp-search-input-overlay');
+    
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    if (query) {
+      input.value = query;
+      performSearch(query);
+    }
+    
+    input.focus();
+  }
+  
+  function closeOverlay() {
+    const overlay = document.getElementById('kp-search-overlay');
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
   }
   
   /**
-   * Perform search via API
+   * Perform search
    */
   async function performSearch(query) {
     if (isSearching) return;
     
     isSearching = true;
-    const resultsContainer = document.getElementById('kp-search-results');
-    const button = document.getElementById('kp-search-button');
+    const resultsContainer = document.getElementById('kp-search-results-overlay');
+    const button = document.getElementById('kp-search-button-overlay');
     
-    // Show loading state
     button.disabled = true;
     button.textContent = 'Zoeken...';
-    resultsContainer.innerHTML = '<div class="kp-loading">🔍 Zoeken naar de perfecte producten...</div>';
+    resultsContainer.innerHTML = '<div class="kp-loading">🔍 Zoeken...</div>';
     
     try {
       const response = await fetch(`${API_BASE}/search`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query,
-          limit: config.maxResults
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, limit: 1000 })
       });
       
-      if (!response.ok) {
-        throw new Error(`Search failed: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error('Search failed');
       
       const data = await response.json();
       currentResults = data;
       
-      // Track search with correct result count
       const resultCount = data.results?.total || data.results?.items?.length || 0;
-      console.log('[Widget] Search response:', { 
-        total: data.results?.total, 
-        itemsLength: data.results?.items?.length,
-        resultCount 
-      });
       trackSearch(query, resultCount);
       
-      // Render results
       renderResults(data);
       
     } catch (error) {
-      console.error('[Kunstpakket AI Search] Error:', error);
-      resultsContainer.innerHTML = `
-        <div class="kp-error">
-          ⚠️ Er ging iets mis bij het zoeken. Probeer het opnieuw.
-        </div>
-      `;
+      console.error('[KP Search] Error:', error);
+      resultsContainer.innerHTML = '<div class="kp-error">⚠️ Er ging iets mis. Probeer opnieuw.</div>';
     } finally {
       isSearching = false;
       button.disabled = false;
-      button.textContent = config.buttonText;
+      button.textContent = 'Zoeken';
     }
   }
   
   /**
-   * Filter and sort products
+   * Render results
    */
+  function renderResults(data) {
+    const container = document.getElementById('kp-search-results-overlay');
+    
+    if (!data.success || !data.results?.items || data.results.items.length === 0) {
+      container.innerHTML = '<div class="kp-no-results">Geen producten gevonden</div>';
+      return;
+    }
+    
+    const products = filterAndSortProducts(data.results.items);
+    const saleCount = products.filter(p => p.onSale).length;
+    
+    let html = `
+      <div class="kp-results-header">
+        <div class="kp-results-count">
+          ${products.length} ${products.length === 1 ? 'product' : 'producten'} gevonden
+        </div>
+        <div class="kp-controls">
+          <select id="kp-filter-select" class="kp-select">
+            <option value="all">Alle producten</option>
+            <option value="sale">Alleen aanbiedingen (${saleCount})</option>
+          </select>
+          <select id="kp-sort-select" class="kp-select">
+            <option value="popular">Populair</option>
+            <option value="price-asc">Prijs (laag → hoog)</option>
+            <option value="price-desc">Prijs (hoog → laag)</option>
+            ${saleCount > 0 ? '<option value="discount">Hoogste korting</option>' : ''}
+          </select>
+        </div>
+      </div>
+      <div class="kp-products-grid">
+    `;
+    
+    products.forEach(product => {
+      const imageUrl = getOptimizedImageUrl(product.image);
+      html += `
+        <a href="https://www.kunstpakket.nl/${product.url}.html" 
+           class="kp-product-card" 
+           data-product-id="${product.id}"
+           data-product-url="${product.url}">
+          ${product.image ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" loading="lazy" />` : '<div class="kp-no-image"></div>'}
+          <div class="kp-product-info">
+            ${product.onSale ? `<div class="kp-sale-badge">-${product.discount}%</div>` : ''}
+            <div class="kp-product-title">${escapeHtml(product.title)}</div>
+            ${product.price ? `
+              <div class="kp-product-pricing">
+                <div class="kp-product-price">€${product.price.toFixed(2)}</div>
+                ${product.oldPrice ? `<div class="kp-product-old-price">€${product.oldPrice.toFixed(2)}</div>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        </a>
+      `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+    
+    // Attach event listeners
+    document.getElementById('kp-filter-select')?.addEventListener('change', (e) => {
+      currentFilter = e.target.value;
+      renderResults(currentResults);
+    });
+    
+    document.getElementById('kp-sort-select')?.addEventListener('change', (e) => {
+      currentSort = e.target.value;
+      renderResults(currentResults);
+    });
+    
+    document.querySelectorAll('.kp-product-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const productId = card.getAttribute('data-product-id');
+        const productUrl = card.getAttribute('data-product-url');
+        if (productId && productUrl) {
+          trackProductClick(productId, productUrl);
+        }
+      });
+    });
+  }
+  
   function filterAndSortProducts(products) {
     let filtered = [...products];
     
-    // Apply filter
     if (currentFilter === 'sale') {
       filtered = filtered.filter(p => p.onSale === true);
     }
     
-    // Apply sort
     switch (currentSort) {
       case 'price-asc':
         filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -567,180 +374,12 @@
     return filtered;
   }
   
-  /**
-   * Render products grid
-   */
-  function renderProductsGrid(products) {
-    let html = '<div class="kp-results-grid">';
-    
-    products.forEach((product, index) => {
-      const isHighlighted = currentResults?.results?.highlighted?.includes(index);
-      html += `
-        <a href="https://www.kunstpakket.nl/${product.url}.html" 
-           class="kp-product-link" 
-           data-product-id="${product.id}"
-           data-product-url="${product.url}">
-          <div class="kp-product-card ${isHighlighted ? 'highlighted' : ''}">
-            ${product.image ? `
-              <img 
-                src="${getOptimizedImageUrl(product.image)}" 
-                alt="${escapeHtml(product.title)}"
-                class="kp-product-image"
-                loading="lazy"
-              />
-            ` : `
-              <div class="kp-product-image"></div>
-            `}
-            <div class="kp-product-info">
-              ${product.onSale ? `<div class="kp-sale-badge">-${product.discount}%</div>` : ''}
-              <div class="kp-product-title">${escapeHtml(product.title)}</div>
-              ${product.price && typeof product.price === 'number' ? `
-                <div class="kp-product-pricing">
-                  <div class="kp-product-price">€${product.price.toFixed(2)}</div>
-                  ${product.oldPrice ? `
-                    <div class="kp-product-old-price">€${product.oldPrice.toFixed(2)}</div>
-                  ` : ''}
-                </div>
-              ` : ''}
-            </div>
-          </div>
-        </a>
-      `;
-    });
-    
-    html += '</div>';
-    return html;
-  }
-  
-  /**
-   * Render search results
-   */
-  function renderResults(data) {
-    const resultsContainer = document.getElementById('kp-search-results');
-    
-    if (!data.success) {
-      resultsContainer.innerHTML = `
-        <div class="kp-error">
-          ${data.suggestion || 'Er ging iets mis. Probeer een andere zoekopdracht.'}
-        </div>
-      `;
-      return;
-    }
-    
-    // Store results for filtering/sorting
-    currentResults = data;
-    const { results } = data;
-    
-    // No results
-    if (results.total === 0) {
-      resultsContainer.innerHTML = `
-        <div class="kp-error">
-          Geen producten gevonden. Probeer een andere zoekopdracht.
-        </div>
-      `;
-      return;
-    }
-    
-    let html = '';
-    
-    // AI Advice
-    if (results.advice) {
-      html += `
-        <div class="kp-ai-advice">
-          <div class="kp-ai-advice-label">AI Advies</div>
-          <div class="kp-ai-advice-text">${results.advice}</div>
-        </div>
-      `;
-    }
-    
-    // Apply filter and sort
-    const products = filterAndSortProducts(results.items);
-    const saleCount = results.items.filter(p => p.onSale).length;
-    
-    // Results header with count and controls
-    html += `
-      <div class="kp-results-header">
-        <div class="kp-results-count">
-          ${products.length} ${products.length === 1 ? 'product' : 'producten'} gevonden
-          ${saleCount > 0 && currentFilter === 'all' ? ` (${saleCount} in de aanbieding)` : ''}
-        </div>
-        <div class="kp-controls">
-          <div class="kp-control-group">
-            <label class="kp-control-label">Filter</label>
-            <select id="kp-filter-select" class="kp-select">
-              <option value="all" ${currentFilter === 'all' ? 'selected' : ''}>Alle producten</option>
-              <option value="sale" ${currentFilter === 'sale' ? 'selected' : ''}>Alleen aanbiedingen${saleCount > 0 ? ` (${saleCount})` : ''}</option>
-            </select>
-          </div>
-          <div class="kp-control-group">
-            <label class="kp-control-label">Sorteer op</label>
-            <select id="kp-sort-select" class="kp-select">
-              <option value="popular" ${currentSort === 'popular' ? 'selected' : ''}>Populair</option>
-              <option value="price-asc" ${currentSort === 'price-asc' ? 'selected' : ''}>Prijs (laag → hoog)</option>
-              <option value="price-desc" ${currentSort === 'price-desc' ? 'selected' : ''}>Prijs (hoog → laag)</option>
-              ${saleCount > 0 ? `<option value="discount" ${currentSort === 'discount' ? 'selected' : ''}>Hoogste korting</option>` : ''}
-            </select>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Products grid
-    html += renderProductsGrid(products);
-    
-    resultsContainer.innerHTML = html;
-    
-    // Attach event listeners for filter/sort
-    const filterSelect = document.getElementById('kp-filter-select');
-    const sortSelect = document.getElementById('kp-sort-select');
-    
-    if (filterSelect) {
-      filterSelect.addEventListener('change', (e) => {
-        currentFilter = e.target.value;
-        renderResults(currentResults);
-      });
-    }
-    
-    if (sortSelect) {
-      sortSelect.addEventListener('change', (e) => {
-        currentSort = e.target.value;
-        renderResults(currentResults);
-      });
-    }
-    
-    // Attach click tracking to product links
-    const productLinks = resultsContainer.querySelectorAll('.kp-product-link');
-    productLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        const productId = link.getAttribute('data-product-id');
-        const productUrl = link.getAttribute('data-product-url');
-        if (productId && productUrl) {
-          trackProductClick(productId, productUrl);
-        }
-      });
-    });
-  }
-  
-  /**
-   * Get optimized image URL (smaller size for better performance)
-   */
   function getOptimizedImageUrl(imageUrl) {
     if (!imageUrl) return null;
-    
-    // Convert to 350x350 thumbnail format
-    // From: https://cdn.webshopapp.com/shops/269557/files/486441724/image.jpg
-    // To:   https://cdn.webshopapp.com/shops/269557/files/486441724/350x350x2/image.jpg
     const match = imageUrl.match(/(.+\/files\/\d+)\/(.+)$/);
-    if (match) {
-      return `${match[1]}/350x350x2/${match[2]}`;
-    }
-    
-    return imageUrl; // Return original if pattern doesn't match
+    return match ? `${match[1]}/350x350x2/${match[2]}` : imageUrl;
   }
   
-  /**
-   * Escape HTML to prevent XSS
-   */
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -748,27 +387,352 @@
   }
   
   /**
-   * Public API
+   * Inject styles
    */
-  window.KunstpakketSearch = {
-    version: WIDGET_VERSION,
-    search: performSearch,
-    getResults: () => currentResults,
-    enable: () => {
-      localStorage.setItem('kp_search_enabled', 'true');
-      if (!document.getElementById('kp-ai-search-widget')) {
-        init();
+  function injectStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Search bar in .container-bar */
+      #kp-search-bar {
+        flex: 1;
+        max-width: 500px;
+        margin-right: 20px;
       }
-    },
-    disable: () => {
-      localStorage.removeItem('kp_search_enabled');
-      const widget = document.getElementById('kp-ai-search-widget');
-      if (widget) widget.remove();
-    },
-    isEnabled: () => localStorage.getItem('kp_search_enabled') === 'true'
+      
+      #kp-search-input-bar {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: all 0.2s;
+      }
+      
+      #kp-search-input-bar:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      
+      /* Fullscreen overlay */
+      #kp-search-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 999999;
+        align-items: flex-start;
+        justify-content: center;
+        overflow-y: auto;
+        padding: 20px;
+      }
+      
+      .kp-overlay-content {
+        background: white;
+        width: 100%;
+        max-width: 1400px;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        margin: 40px auto;
+        max-height: calc(100vh - 80px);
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .kp-overlay-header {
+        position: sticky;
+        top: 0;
+        background: white;
+        padding: 24px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 10;
+        border-radius: 12px 12px 0 0;
+      }
+      
+      .kp-search-box-overlay {
+        flex: 1;
+        display: flex;
+        gap: 12px;
+      }
+      
+      #kp-search-input-overlay {
+        flex: 1;
+        padding: 14px 18px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.2s;
+      }
+      
+      #kp-search-input-overlay:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      
+      #kp-search-button-overlay {
+        padding: 14px 28px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      #kp-search-button-overlay:hover {
+        background: #2563eb;
+      }
+      
+      #kp-search-button-overlay:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      .kp-close-button {
+        width: 48px;
+        height: 48px;
+        border: none;
+        background: #f1f5f9;
+        border-radius: 50%;
+        font-size: 32px;
+        color: #64748b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      
+      .kp-close-button:hover {
+        background: #e2e8f0;
+        color: #334155;
+      }
+      
+      #kp-search-results-overlay {
+        padding: 24px;
+        overflow-y: auto;
+      }
+      
+      .kp-loading, .kp-error, .kp-no-results {
+        text-align: center;
+        padding: 60px 20px;
+        font-size: 18px;
+        color: #64748b;
+      }
+      
+      .kp-error {
+        color: #ef4444;
+      }
+      
+      .kp-results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      
+      .kp-results-count {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+      
+      .kp-controls {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      
+      .kp-select {
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+      }
+      
+      .kp-products-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+      
+      .kp-product-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .kp-product-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+      
+      .kp-product-card img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+      }
+      
+      .kp-no-image {
+        width: 100%;
+        aspect-ratio: 1;
+        background: #f1f5f9;
+      }
+      
+      .kp-product-info {
+        padding: 16px;
+        position: relative;
+      }
+      
+      .kp-sale-badge {
+        position: absolute;
+        top: -12px;
+        right: 16px;
+        background: #ef4444;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      
+      .kp-product-title {
+        font-size: 15px;
+        font-weight: 500;
+        color: #1e293b;
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+      
+      .kp-product-pricing {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      
+      .kp-product-price {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      
+      .kp-product-old-price {
+        font-size: 15px;
+        color: #94a3b8;
+        text-decoration: line-through;
+      }
+      
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .kp-products-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      
+      @media (max-width: 640px) {
+        #kp-search-bar {
+          max-width: 100%;
+          margin-right: 0;
+          margin-bottom: 12px;
+        }
+        
+        .kp-overlay-content {
+          margin: 0;
+          border-radius: 0;
+          max-height: 100vh;
+        }
+        
+        .kp-overlay-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        
+        .kp-search-box-overlay {
+          flex-direction: column;
+        }
+        
+        .kp-close-button {
+          align-self: flex-end;
+        }
+        
+        .kp-products-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .kp-results-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        
+        .kp-controls {
+          flex-direction: column;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  /**
+   * Initialize
+   */
+  function init() {
+    console.log(`[KP Search Overlay] v${VERSION} loaded`);
+    
+    // Check purchase page
+    checkPurchasePage();
+    
+    // Check if enabled
+    const enabled = localStorage.getItem('kp_search_enabled');
+    if (enabled !== 'true') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('f') === '1') {
+        localStorage.setItem('kp_search_enabled', 'true');
+      } else {
+        return;
+      }
+    }
+    
+    // Inject styles
+    injectStyles();
+    
+    // Create overlay
+    createOverlay();
+    
+    // Inject search bar
+    injectSearchBar();
+    
+    console.log('[KP Search Overlay] Initialized');
+  }
+  
+  // Public API
+  window.KunstpakketSearchOverlay = {
+    version: VERSION,
+    open: openOverlay,
+    close: closeOverlay
   };
   
-  // Auto-initialize on DOM ready
+  // Auto-initialize
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
