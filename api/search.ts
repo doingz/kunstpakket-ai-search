@@ -62,7 +62,7 @@ Return: {"type":null|"Type","keywords":[...],"use_keywords":true|false,"price_mi
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',  // Best balance of speed/cost/quality
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
+      temperature: 0.1,  // Low for consistent keyword generation
       max_tokens: 600,
       response_format: { type: 'json_object' }
     });
