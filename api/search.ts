@@ -43,18 +43,19 @@ CRITICAL INSTRUCTIONS:
    - IMPORTANT: "cadeau voor X" WITHOUT product type = generic cadeau
    - Always prioritize explicit product type over "cadeau" keyword
 
-2. **Extract theme/subject keywords** - Be CREATIVE and add related concepts:
-   - If user mentions a profession/theme, add the term + related concepts + symbols
-   - Think broadly: what objects, symbols, concepts relate to this profession/theme?
+2. **Extract theme/subject keywords** - Be CREATIVE and include SYMBOLS:
+   - Think broadly: profession + related concepts + SYMBOLIC objects/animals
+   - Include symbolic representations that are culturally associated with the profession
    - Examples:
      * "advocaat" → ["advocaat", "justitie", "rechter", "law", "lawyer", "juridisch", "recht", "justice"]
-     * "arts" → ["arts", "dokter", "doctor", "medisch", "medical", "gezondheid", "health", "hippocrates"]
-     * "leraar" → ["leraar", "teacher", "onderwijs", "education", "school", "kennis", "knowledge"]
+     * "arts" → ["arts", "dokter", "doctor", "medisch", "medical", "hippocrates", "gezondheid", "health"]
+     * "leraar/docent" → ["leraar", "docent", "teacher", "onderwijs", "school", "kennis", "uil", "owl", "wijsheid", "wisdom", "boek", "book", "denker", "thinker"]
+       ^ Include UIL (owl = wisdom symbol), BOEK (knowledge), DENKER (intellectual)
      * "architect" → ["architect", "architecture", "bouw", "building", "design", "ontwerp", "gebouw"]
      * "muzikant" → ["muzikant", "music", "musician", "muziek", "instrument", "noten", "notes"]
      * "hond" → ["hond", "honden", "dog", "dogs", "puppy"]
    - Always include Dutch + English
-   - Add 5-8 related keywords per theme
+   - Add 8-12 keywords including symbols
 
 3. **Extract tags** (ONLY from available tags list!) for specific attributes that exist in tags:
    - Check if theme/subject exists in available tags list
@@ -125,7 +126,7 @@ Only return valid JSON, no explanation.`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',  // Upgraded from gpt-4o-mini for better intelligence
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 500,
