@@ -8,6 +8,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sql } from '../lib/db.js';
+import { detectProductType } from '../lib/type-detector.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '..', 'data');
@@ -311,6 +312,61 @@ ${tagList.map(tag => `  '${tag.replace(/'/g, "\\'")}',`).join('\n')}
 }
 
 /**
+ * Detect and update product types based on title, description, tags, and categories
+ */
+async function detectAndUpdateTypes() {
+  try {
+    // Get all products with their tags and categories
+    const products = await sql`
+      SELECT 
+        p.id,
+        p.title,
+        p.content,
+        ARRAY_AGG(DISTINCT t.title) FILTER (WHERE t.title IS NOT NULL) as tags,
+        ARRAY_AGG(DISTINCT c.title) FILTER (WHERE c.title IS NOT NULL) as categories
+      FROM products p
+      LEFT JOIN product_tags pt ON p.id = pt.product_id
+      LEFT JOIN tags t ON pt.tag_id = t.id
+      LEFT JOIN product_categories pc ON p.id = pc.product_id
+      LEFT JOIN categories c ON pc.category_id = c.id
+      WHERE p.is_visible = true
+      GROUP BY p.id, p.title, p.content
+    `;
+    
+    let updated = 0;
+    let undetected = 0;
+    const typeCounts = {};
+    
+    for (const product of products.rows) {
+      const detectedType = detectProductType(product);
+      
+      if (detectedType) {
+        await sql`
+          UPDATE products 
+          SET type = ${detectedType}
+          WHERE id = ${product.id}
+        `;
+        updated++;
+        typeCounts[detectedType] = (typeCounts[detectedType] || 0) + 1;
+      } else {
+        undetected++;
+      }
+    }
+    
+    console.log(`  ✅ Updated ${updated} products with types:`);
+    for (const [type, count] of Object.entries(typeCounts)) {
+      console.log(`     ${type}: ${count}`);
+    }
+    if (undetected > 0) {
+      console.log(`  ⚠️  ${undetected} products without detected type`);
+    }
+    
+  } catch (error) {
+    console.error('  ⚠️  Failed to detect types:', error.message);
+  }
+}
+
+/**
  * Show import statistics
  */
 async function showStats() {
@@ -382,6 +438,10 @@ async function main() {
     if (categoriesProducts) await importProductCategories(categoriesProducts);
 
     await showStats();
+    
+    // Detect and update product types
+    console.log('\n🔍 Detecting product types...');
+    await detectAndUpdateTypes();
     
     // Regenerate tag list for AI
     console.log('\n🔄 Regenerating tag list for AI...');

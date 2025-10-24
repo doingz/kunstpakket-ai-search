@@ -21,42 +21,37 @@ Search query: "${query}"
 
 ${tagsSection}
 
-Available product categories:
-- Beelden & Beeldjes (sculptures, figurines)
-- Schilderijen (paintings)
-- Vazen & Schalen (vases, bowls)
-- Bronzen Beelden (bronze sculptures)
-- Moederdag Cadeau (Mother's Day gifts)
-- Relatiegeschenken (corporate gifts)
-- Sportbeelden (sports figurines)
-- Liefde & Huwelijk (love & wedding)
-- Jubileum & Afscheid (anniversary & farewell)
+Available product types (use for strict filtering):
+- Beeld (sculptures, figurines, statues)
+- Schilderij (paintings, prints, giclees, art on canvas)
+- Vaas (vases)
+- Mok (mugs, cups)
+- Wandbord (decorative plates)
+- Schaal (bowls)
+- Glasobject (glass art, crystal)
+- Cadeau (gifts)
 
 CRITICAL INSTRUCTIONS:
-1. **Include RELEVANT synonyms and product variations** for keywords:
-   - Singular/plural forms (beeldje → beeldje, beeld, beelden, beeldjes)
-   - Dutch AND English equivalents for THE SAME THING (beeldje → sculptuur, sculpture, figurine, statue)
-   - Common typos and alternatives (beedje → beeldje, schiderijtje → schilderij)
-   - IMPORTANT: Do NOT mix different product types! Be specific!
-     * schilderij ↔ giclee, giclée, print, prent (these are ALL schilderijen types!)
-       → schilderij, schilderijen, schildering, painting, paintings, giclee, giclée, print, prent
-       → ALWAYS map to category "Schilderijen"
-     * giclee/print searched? → treat as schilderij + add giclee terms
-     * vaas → vaas, vazen, vase, vases (NOT schaal - that's different!)
-     * mok → mok, mokken, cup, mug (NOT vaas, glas!)
-     * beeld → beeld, beelden, beeldje, beeldjes, sculptuur, sculpture, figurine, statue
-     * Avoid generic terms like "kunst", "art", "cadeau" as keywords
-   - DO NOT just return the exact search term - always add variations!
+1. **Detect product type** - if user searches for a product type, set it:
+   - "schilderij", "painting", "giclee", "print" → type: "Schilderij"
+   - "beeld", "beeldje", "sculpture" → type: "Beeld"  
+   - "vaas", "vase" → type: "Vaas"
+   - "mok", "cup", "mug" → type: "Mok"
+   - "wandbord", "plate" → type: "Wandbord"
+   - "schaal", "bowl" → type: "Schaal"
+   - ONLY set type if user explicitly searches for it!
 
-2. Detect if query matches a category and include ALL relevant ones
+2. **Include RELEVANT synonyms** for keywords (but NOT if type is already set):
+   - Singular/plural forms (hart → hart, hartje, harten)
+   - Dutch AND English (heart → heart, hearts, hart, hartje)
+   - Common typos (schiderijtje → schilderij)
+   - DO NOT add keywords if type is already detected!
 
-3. Extract ONLY specific, concrete attributes as tags (NEVER generic categories!):
+3. Extract ONLY specific, concrete attributes as tags:
    - Physical attributes: hart → hart, hartje, love, hearts, heart, liefde
-   - Specific sports: voetballer → voetbal, voetballer, football, soccer
-   - Specific professions: muzikant → muziek, music, musician
-   - CRITICAL: Do NOT add generic tags like "dier", "animal", "sport" - only add tags if the user asks for a SPECIFIC attribute!
-   - If the query is just "hond" (a subject), leave tags EMPTY - it's just a keyword search!
-   - Tags are for FILTERING, not for general search terms!
+   - Specific subjects: voetballer → voetbal, voetballer, football, soccer
+   - ONLY use tags from the available tags list above!
+   - Tags are for FILTERING on specific themes/attributes
 
 4. Parse price ranges intelligently:
    - "max 80 euro", "onder 50" → price_max
@@ -65,38 +60,35 @@ CRITICAL INSTRUCTIONS:
    - "rond 50", "ongeveer 40", "om en nabij 60" → price_min = X * 0.8, price_max = X * 1.2
 
 Return JSON with:
-- keywords: array of search terms INCLUDING synonyms and variations (Dutch + English)
-- categories: array of matching category names
-- tags: array of tags/attributes with synonyms
+- type: ONE product type from the list above (Beeld, Schilderij, Vaas, Mok, Wandbord, Schaal, Glasobject, Cadeau) or null
+- keywords: array of search terms for SUBJECTS/THEMES (not product types!)
+- tags: array of specific attributes with synonyms (ONLY from available tags list!)
 - price_min: number or null
 - price_max: number or null
 - confidence: 0.0-1.0
 
-GOOD Examples (notice RELEVANT synonyms only):
-
-Input: "beeldje"
-Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue","figuur"],"categories":["Beelden & Beeldjes"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+GOOD Examples:
 
 Input: "schilderij"
-Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings","giclee","giclée","print","prent"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+Output: {"type":"Schilderij","keywords":[],"tags":[],"price_min":null,"price_max":null,"confidence":0.95}
 
 Input: "giclee"
-Output: {"keywords":["giclee","giclée","print","prent","schilderij","schilderijen","painting"],"categories":["Schilderijen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+Output: {"type":"Schilderij","keywords":[],"tags":[],"price_min":null,"price_max":null,"confidence":0.95}
 
-Input: "vaas"
-Output: {"keywords":["vaas","vazen","vase","vases"],"categories":["Vazen & Schalen"],"tags":[],"price_min":null,"price_max":null,"confidence":0.9}
+Input: "beeldje"
+Output: {"type":"Beeld","keywords":[],"tags":[],"price_min":null,"price_max":null,"confidence":0.95}
 
 Input: "beeldje met hart max 80 euro"
-Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine","statue"],"categories":["Beelden & Beeldjes"],"tags":["hart","hartje","heart","hearts","love","liefde"],"price_min":null,"price_max":80,"confidence":0.95}
+Output: {"type":"Beeld","keywords":[],"tags":["hart","hartje","heart","hearts","love","liefde"],"price_min":null,"price_max":80,"confidence":0.95}
 
 Input: "beeldje met een voetballer"
-Output: {"keywords":["beeldje","beeld","beelden","beeldjes","sculptuur","sculpture","figurine"],"categories":["Beelden & Beeldjes","Sportbeelden"],"tags":["voetbal","voetballer","football","soccer"],"price_min":null,"price_max":null,"confidence":0.9}
+Output: {"type":"Beeld","keywords":[],"tags":["voetbal","voetballer","football","soccer"],"price_min":null,"price_max":null,"confidence":0.95}
 
 Input: "hond"
-Output: {"keywords":["hond","honden","dog","dogs"],"categories":[],"tags":[],"price_min":null,"price_max":null,"confidence":0.8}
+Output: {"type":null,"keywords":["hond","honden","dog","dogs"],"tags":[],"price_min":null,"price_max":null,"confidence":0.85}
 
-Input: "klein schilderij voor moederdag onder 50 euro"
-Output: {"keywords":["schilderij","schilderijen","schildering","painting","paintings"],"categories":["Schilderijen","Moederdag Cadeau"],"tags":["klein","kleine","small","compact"],"price_min":null,"price_max":50,"confidence":0.92}
+Input: "schilderij max 300 euro"
+Output: {"type":"Schilderij","keywords":[],"tags":[],"price_min":null,"price_max":300,"confidence":0.95}
 
 BAD Examples (DO NOT DO THIS):
 Input: "schilderij"
@@ -139,8 +131,8 @@ Only return valid JSON, no explanation.`;
     return {
       original: query,
       parsed: { 
+        type: null,
         keywords: [query],
-        categories: [],
         tags: [],
         price_min: null,
         price_max: null,
@@ -158,9 +150,15 @@ function buildSearchQuery(filters: any) {
   const params: any[] = [];
   let paramIndex = 1;
 
-  // Full-text search with fuzzy matching
+  // Product type - STRICT filtering (enriched during sync)
+  if (filters.type) {
+    params.push(filters.type);
+    conditions.push(`type = $${paramIndex}`);
+    paramIndex++;
+  }
+
+  // Keywords - only for subject/theme search (NOT for product types!)
   if (filters.keywords && filters.keywords.length > 0) {
-    // Create OR conditions for each keyword
     const keywordConditions = filters.keywords.map((keyword: string) => {
       const likePattern = `%${keyword}%`;
       params.push(keyword, likePattern);
@@ -190,7 +188,7 @@ function buildSearchQuery(filters: any) {
     paramIndex++;
   }
 
-  // Tags
+  // Tags - for specific attributes/themes
   if (filters.tags && filters.tags.length > 0) {
     params.push(filters.tags);
     conditions.push(`id IN (
@@ -198,40 +196,6 @@ function buildSearchQuery(filters: any) {
       WHERE tag_id IN (SELECT id FROM tags WHERE title = ANY($${paramIndex}))
     )`);
     paramIndex++;
-  }
-
-  // Categories - STRICT type filtering
-  // If AI detects a product type category, use it as a hard filter
-  if (filters.categories && filters.categories.length > 0) {
-    const typeCategories = ['Schilderijen', 'Schalen', 'Vazen', 'Wandborden', 'Beelden'];
-    const detectedType = filters.categories.find((cat: string) => 
-      typeCategories.some(type => cat.includes(type))
-    );
-    
-    if (detectedType) {
-      // Map to actual database category name
-      let categoryPattern = '';
-      if (detectedType.includes('Schilderij')) {
-        categoryPattern = '%Schilderij%';
-      } else if (detectedType.includes('Vazen') || detectedType.includes('Schalen')) {
-        categoryPattern = '%Schalen & Vazen%';
-      } else if (detectedType.includes('Wandbord')) {
-        categoryPattern = '%Wandbord%';
-      } else if (detectedType.includes('Beeld')) {
-        categoryPattern = '%beeld%'; // lowercase for all beeld variations
-      }
-      
-      if (categoryPattern) {
-        params.push(categoryPattern);
-        conditions.push(`id IN (
-          SELECT product_id FROM product_categories 
-          WHERE category_id IN (
-            SELECT id FROM categories WHERE title ILIKE $${paramIndex}
-          )
-        )`);
-        paramIndex++;
-      }
-    }
   }
 
   return { conditions, params };
