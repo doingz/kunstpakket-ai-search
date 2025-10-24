@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.2.0';
+  const VERSION = '2.2.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -865,15 +865,25 @@
     checkPurchasePage();
     
     // Check if widget should be enabled (f=1 flag required)
+    // Clear old localStorage from when widget was public
+    const storedVersion = localStorage.getItem('kp_search_version');
+    if (storedVersion !== VERSION) {
+      // New version - reset everything
+      localStorage.removeItem('kp_search_enabled');
+      localStorage.setItem('kp_search_version', VERSION);
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasF1 = urlParams.get('f') === '1';
     const enabled = localStorage.getItem('kp_search_enabled');
-    if (enabled !== 'true') {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('f') === '1') {
-        localStorage.setItem('kp_search_enabled', 'true');
-      } else {
-        console.log('[KP Search] Widget disabled (add ?f=1 to enable)');
-        return;
-      }
+    
+    if (hasF1) {
+      // Enable widget
+      localStorage.setItem('kp_search_enabled', 'true');
+    } else if (enabled !== 'true') {
+      // Not enabled and no f=1 parameter
+      console.log('[KP Search] Widget disabled (add ?f=1 to enable)');
+      return;
     }
     
     // Inject styles
