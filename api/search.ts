@@ -367,7 +367,7 @@ export default async function handler(req: Request) {
 
   try {
     const body = await req.json();
-    const { query, limit = 20, offset = 0 } = body;
+    const { query, limit = 1000, offset = 0 } = body;  // Default to 1000 (show all results)
 
     if (!query) {
       return new Response(
