@@ -12,45 +12,18 @@ const openai = new OpenAI({
 async function parseQuery(query: string) {
   const start = Date.now();
   
-  const prompt = `Parse Dutch product search query. Extract: type, keywords, price.
+  const prompt = `Parse this Dutch search query intelligently into JSON.
 
 Query: "${query}"
 
-Product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
+Available product types: Beeld, Schilderij, Vaas, Mok, Onderzetter, Theelicht, Spiegeldoosje, Wandbord, Schaal, Glasobject
 
-Rules:
-1. TYPE: Set ONLY if explicitly mentioned ("beeldje"→"Beeld", "schilderij"→"Schilderij")
-2. KEYWORDS: ⚠️ Context-aware keyword generation:
-   
-   SPECIFIC subjects (bodybuilder, voetballer, tennisser, judoka):
-   - Focus on EXACT subject + direct variants (5-15 keywords)
-   - Include: singular/plural/verb forms of the MAIN subject
-   - Avoid generic terms (NOT: atleet, sporter, kracht, fitness)
-   - Example: "bodybuilder" → ["bodybuilder","bodybuilders","bodybuilding","bodybuilden"]
-   
-   BROAD subjects (sport, dieren, kunst, cadeau):
-   - Generate 25-40 keywords with ALL variations
-   - Include: singular/plural/diminutives/gender/compounds/subcategories
-   - Example: "sport" → ["sport","sporter","voetbal","tennis","golf","darten",...]
-   
-   Multi-word = FULL PHRASES ("romeinse goden" NOT "god")
-3. PRICE: Parse ranges ("onder 50"→price_max:50, "tussen 30-50"→price_min:30,price_max:50)
+Extract:
+- type: product type if explicitly mentioned, otherwise null
+- keywords: relevant search terms (be smart: specific queries need focused keywords, broad queries need expansive keywords)
+- price_min/price_max: from phrases like "onder 50", "tussen 30-50", "max 300"
 
-Special:
-- "cadeau" = NOT a type (extract theme keywords instead)
-- Questions → extract subject keywords
-- Mythology/religion → use full phrases to avoid false matches
-
-Examples:
-"beeldje" → {"type":"Beeld","keywords":[]}
-"schilderij max 300" → {"type":"Schilderij","keywords":[],"price_max":300}
-"bodybuilder" → {"type":null,"keywords":["bodybuilder","bodybuilders","bodybuilding","bodybuilden","bodybuilder beeld"]}
-"voetballer" → {"type":null,"keywords":["voetbal","voetballer","voetbalster","voetballen","soccer","football","voetbalspeler"]}
-"hond" → {"type":null,"keywords":["hond","honden","hondje","hondjes","dog","dogs","puppy","puppies","huisdier","huisdieren"]}
-"beeld voor sporter" → {"type":"Beeld","keywords":["sport","sporten","sporter","sportster","sportief","atleet","voetbal","voetballer","tennis","tennisser","golf","golfer","hardlopen","hardloper","marathon","darten","schaatsen","judo","volleybal","fietsen","wielrennen","biker"]}
-"romeinse goden" → {"type":null,"keywords":["romeinse goden","romeins","rome","romeinen","mythologie","god","goden","godin","godinnen","jupiter","mars","venus"]}
-
-Only return valid JSON, no explanation.`;
+Return only valid JSON.`;
 
   try {
     const response = await openai.chat.completions.create({
