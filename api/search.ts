@@ -47,7 +47,8 @@ async function parseFilters(query: string) {
         priceMax: z.number().optional().nullable(),
         productType: z.string().optional().nullable().describe('Product type: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek'),
         keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, artists, objects). Empty array if none.'),
-        requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
+        requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description'),
+        isVague: z.boolean().default(false).describe('True if query is too vague to find good results (e.g. "cadeau voor mijn zus", "iets leuks"). Requires at least ONE specific detail: product type, price, theme, color, artist, animal, or occasion.')
       }),
       prompt: `Analyze this Dutch product search query and extract filters: "${query}"
 
@@ -56,6 +57,9 @@ Extract:
 2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek
 3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
 4. requiresExactMatch: true if keywords MUST appear in title/description
+5. isVague: true if query lacks specific details. Examples:
+   - TOO VAGUE (isVague=true): "cadeau voor mijn zus", "iets leuks", "origineel cadeau", "een mooi geschenk"
+   - SPECIFIC ENOUGH (isVague=false): "kat beeld", "schilderij blauw", "cadeau onder 50 euro", "sportbeeld", "huwelijkscadeau"
 
 CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
@@ -109,7 +113,8 @@ Examples:
       priceMax: null,
       productType: null,
       keywords: [],
-      requiresExactMatch: false
+      requiresExactMatch: false,
+      isVague: false
     };
   }
 }
@@ -285,27 +290,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       result = await sql.query(fallbackQuery, fallbackParams);
     }
 
-    // Check if query is too vague
+    // Check if query is too vague (AI-determined)
     const total = result.rows.length;
     
-    // Generic words that don't help narrow down search
-    const genericWords = ['cadeau', 'cadeautje', 'gift', 'iets', 'mooi', 'leuk', 'bijzonder', 'origineel', 'uniek'];
-    const isOnlyGenericKeywords = filters.keywords.length > 0 && 
-      filters.keywords.every(kw => genericWords.includes(kw.toLowerCase()));
-    
-    // Check if results have low average similarity (indicates poor match quality)
-    const avgSimilarity = total > 0 
-      ? result.rows.reduce((sum, row) => sum + parseFloat(row.similarity), 0) / total 
-      : 0;
-    const hasLowQualityResults = avgSimilarity < 0.45;
-    
-    const isVagueQuery = !filters.productType && 
-      !filters.priceMax && 
-      !filters.priceMin && 
-      (filters.keywords.length === 0 || isOnlyGenericKeywords) &&
-      (total === 0 || hasLowQualityResults);
-
-    if (isVagueQuery) {
+    if (filters.isVague) {
       // Return helpful message with suggestions
       return res.status(200).json({
         success: true,
