@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.7.1';
+  const VERSION = '2.7.2';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -151,22 +151,17 @@
             product_url: window.location.pathname.replace('.html', '').replace('/', '')
           });
           
-          // Use sendBeacon for reliability
-          if (navigator.sendBeacon) {
-            const blob = new Blob([data], { type: 'application/json' });
-            const sent = navigator.sendBeacon(ANALYTICS_API, blob);
-            console.log('[KP Search] Click tracked via sendBeacon:', sent ? '✅' : '❌');
-          } else {
-            fetch(ANALYTICS_API, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: data,
-              keepalive: true
-            })
-            .then(res => res.json())
-            .then(json => console.log('[KP Search] Click tracked:', json))
-            .catch(err => console.warn('[KP Search] Click tracking failed:', err));
-          }
+          // Use fetch with keepalive (more reliable than sendBeacon for CORS)
+          fetch(ANALYTICS_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: data,
+            keepalive: true,
+            mode: 'cors',
+            credentials: 'omit'  // Don't send cookies (fixes CORS)
+          })
+          .then(() => console.log('[KP Search] Click tracked ✅'))
+          .catch(err => console.warn('[KP Search] Click tracking failed:', err.message));
           
           // Clean up URL (remove tracking params)
           urlParams.delete('bsclick');
