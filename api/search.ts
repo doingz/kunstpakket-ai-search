@@ -38,18 +38,24 @@ CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
 - DO NOT add product types as keywords
 - For artist names: extract both full name AND last name (e.g. "Van Gogh" → ["van gogh", "gogh"])
+- For animals: add common synonyms (e.g. "kat" → ["kat", "poes"], "hond" → ["hond", "honden"])
+- For occasions: use broader terms (e.g. "huwelijkscadeau" → ["huwelijk", "trouwen"], "bedankje" → ["bedanken", "dank"])
 - For vague price terms ("niet te duur", "goedkoop", "luxe") → return null for price (semantic search will handle it)
+- Use requiresExactMatch=false for generic searches, true only for very specific items (artists, specific objects)
 
 Examples:
-"kat" → {"keywords": ["kat"], "requiresExactMatch": true}
+"kat" → {"keywords": ["kat", "poes"], "requiresExactMatch": false}
+"poes" → {"keywords": ["kat", "poes"], "requiresExactMatch": false}
+"hond" → {"keywords": ["hond", "honden"], "requiresExactMatch": false}
 "Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
-"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond"], "requiresExactMatch": true}
+"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond", "honden"], "requiresExactMatch": false}
 "schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
 "niet te duur" → {"priceMax": null}
 "goedkoop cadeau" → {"priceMax": null}
 "iets moois" → {}
-"poes" → {"keywords": ["poes", "kat"], "requiresExactMatch": false}
-"klassiek" → {"keywords": ["klassiek"], "requiresExactMatch": false}`,
+"huwelijkscadeau" → {"keywords": ["huwelijk", "trouwen", "bruiloft"], "requiresExactMatch": false}
+"bedankje" → {"keywords": ["bedanken", "dank", "thanks"], "requiresExactMatch": false}
+"klassiek" → {"keywords": ["klassiek", "traditioneel", "vintage"], "requiresExactMatch": false}`,
     });
 
     return object;
