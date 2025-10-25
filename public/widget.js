@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.5.1';
+  const VERSION = '2.6.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -120,6 +120,57 @@
         title.includes('bedankt') ||
         title.includes('thank you')) {
       trackPurchase();
+    }
+  }
+  
+  /**
+   * Check for click tracking parameter (iOS Safari proof!)
+   * URL format: ?bsclick=1&sid=search_id&pid=product_id
+   */
+  function checkClickTracking() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      if (urlParams.get('bsclick') === '1') {
+        const searchId = urlParams.get('sid');
+        const productId = urlParams.get('pid');
+        
+        if (searchId && productId) {
+          console.log('[KP Search] Click tracking detected:', { searchId, productId });
+          
+          const data = JSON.stringify({
+            event: 'click',
+            client_id: 'kunstpakket.nl',
+            search_id: searchId,
+            product_id: productId,
+            product_url: window.location.pathname.replace('.html', '').replace('/', '')
+          });
+          
+          // Use sendBeacon for reliability
+          if (navigator.sendBeacon) {
+            const blob = new Blob([data], { type: 'application/json' });
+            navigator.sendBeacon(ANALYTICS_API, blob);
+          } else {
+            fetch(ANALYTICS_API, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: data,
+              keepalive: true
+            }).catch(() => {});
+          }
+          
+          // Clean up URL (remove tracking params)
+          urlParams.delete('bsclick');
+          urlParams.delete('sid');
+          urlParams.delete('pid');
+          
+          const newSearch = urlParams.toString();
+          const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
+    } catch (err) {
+      console.warn('[KP Search] Click tracking error:', err);
     }
   }
   
@@ -361,10 +412,16 @@
       <div class="kp-products-grid">
     `;
     
+    const searchId = sessionStorage.getItem('kp_search_id') || '';
+    
     products.forEach(product => {
       const imageUrl = getOptimizedImageUrl(product.image);
+      
+      // Add tracking params to URL for reliable click tracking (iOS Safari proof!)
+      const trackingUrl = `https://www.kunstpakket.nl/${product.url}.html?bsclick=1&sid=${searchId}&pid=${product.id}`;
+      
       html += `
-        <a href="https://www.kunstpakket.nl/${product.url}.html" 
+        <a href="${trackingUrl}" 
            class="kp-product-card" 
            data-product-id="${product.id}"
            data-product-url="${product.url}">
@@ -398,25 +455,8 @@
       });
     }
     
-    document.querySelectorAll('.kp-product-card').forEach(card => {
-      // Use mousedown for iOS Safari compatibility (fires before click)
-      card.addEventListener('mousedown', (e) => {
-        const productId = card.getAttribute('data-product-id');
-        const productUrl = card.getAttribute('data-product-url');
-        if (productId && productUrl) {
-          trackProductClick(productId, productUrl);
-        }
-      });
-      
-      // Also handle touch events for mobile
-      card.addEventListener('touchstart', (e) => {
-        const productId = card.getAttribute('data-product-id');
-        const productUrl = card.getAttribute('data-product-url');
-        if (productId && productUrl) {
-          trackProductClick(productId, productUrl);
-        }
-      }, { passive: true });
-    });
+    // Note: Click tracking now happens via URL params (?bsclick=1&sid=...&pid=...)
+    // This is much more reliable than event listeners, especially on iOS Safari!
   }
   
   function filterAndSortProducts(products) {
@@ -906,6 +946,9 @@
    */
   async function init() {
     console.log(`[KP Search Overlay] v${VERSION} loaded`);
+    
+    // Check for click tracking (URL params from search results)
+    checkClickTracking();
     
     // Check purchase page
     checkPurchasePage();
