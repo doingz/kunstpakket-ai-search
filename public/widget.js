@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '3.2.0';
+  const VERSION = '3.2.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
