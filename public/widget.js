@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.7.0';
+  const VERSION = '2.7.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -122,7 +122,8 @@
   
   /**
    * Check for click tracking parameter (iOS Safari proof!)
-   * URL format: ?bsclick=1&sid=search_id&pid=product_id&pname=product_name
+   * URL format: ?bsclick=1&bssid=search_id&bspid=product_id&bspname=product_name
+   * All params prefixed with 'bs' to prevent Lightspeed filtering
    */
   function checkClickTracking() {
     try {
@@ -134,9 +135,9 @@
       }
       
       if (urlParams.get('bsclick') === '1') {
-        const searchId = urlParams.get('sid');
-        const productId = urlParams.get('pid');
-        const productName = urlParams.get('pname'); // Product name from URL!
+        const searchId = urlParams.get('bssid');  // Changed from 'sid' to 'bssid'
+        const productId = urlParams.get('bspid');  // Changed from 'pid' to 'bspid'
+        const productName = urlParams.get('bspname'); // Changed from 'pname' to 'bspname'
         
         if (searchId && productId) {
           console.log('[KP Search] Click tracking detected:', { searchId, productId, productName });
@@ -169,9 +170,9 @@
           
           // Clean up URL (remove tracking params)
           urlParams.delete('bsclick');
-          urlParams.delete('sid');
-          urlParams.delete('pid');
-          urlParams.delete('pname'); // Also remove product name
+          urlParams.delete('bssid');   // Changed from 'sid'
+          urlParams.delete('bspid');   // Changed from 'pid'
+          urlParams.delete('bspname'); // Changed from 'pname'
           
           const newSearch = urlParams.toString();
           const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
@@ -435,8 +436,9 @@
       
       // Add tracking params to URL for reliable click tracking (iOS Safari proof!)
       // Include product name for easy analytics without database lookup!
+      // All params prefixed with 'bs' so Lightspeed doesn't filter them
       const productName = encodeURIComponent(product.title);
-      const trackingUrl = `https://www.kunstpakket.nl/${product.url}.html?bsclick=1&sid=${searchId}&pid=${product.id}&pname=${productName}`;
+      const trackingUrl = `https://www.kunstpakket.nl/${product.url}.html?bsclick=1&bssid=${searchId}&bspid=${product.id}&bspname=${productName}`;
       
       html += `
         <a href="${trackingUrl}" 
