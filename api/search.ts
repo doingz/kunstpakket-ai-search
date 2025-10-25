@@ -16,26 +16,34 @@ export const config = {
 
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
-  const { object } = await generateObject({
-    model: openai('gpt-4o-mini'),
-    schema: z.object({
-      priceMin: z.number().optional().describe('Minimum price in euros'),
-      priceMax: z.number().optional().describe('Maximum price in euros'),
-      categories: z.array(z.string()).optional().describe('Product categories like "geschenken", "kunst", "decoratie"')
-    }),
-    prompt: `Extract filters from this Dutch product search query: "${query}"
+  try {
+    const { object } = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: z.object({
+        priceMin: z.number().nullable().optional(),
+        priceMax: z.number().nullable().optional(),
+        categories: z.array(z.string()).nullable().optional()
+      }),
+      prompt: `Extract price and category filters from: "${query}"
+
+Return JSON with:
+- priceMin: number or null
+- priceMax: number or null  
+- categories: string[] or null
 
 Examples:
-- "schilderij onder 50 euro" → priceMax: 50
-- "cadeau voor moeder niet te duur" → priceMax: 100, categories: ["geschenken"]
-- "tussen 20 en 50 euro" → priceMin: 20, priceMax: 50
-- "iets leuks" → (no filters)
-- "Van Gogh" → (no filters, let embeddings handle it)
-
-Return only the filters that are clearly mentioned. Be conservative with priceMax inference.`,
-  });
-  
-  return object;
+"onder 50 euro" → {"priceMax": 50}
+"tussen 20 en 50" → {"priceMin": 20, "priceMax": 50}
+"schilderij" → {}
+"Van Gogh" → {}`,
+    });
+    
+    return object;
+  } catch (error) {
+    console.error('Filter parsing failed:', error);
+    // Fallback: no filters
+    return {};
+  }
 }
 
 // Format product for response
