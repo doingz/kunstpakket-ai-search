@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '3.1.0';
+  const VERSION = '3.1.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -763,27 +763,30 @@
         color: #64748b;
       }
       
-      /* Needs More Info - AI Conversational */
+      /* Needs More Info - AI Conversational (same style as verkooppraatje) */
       .kp-needs-more-info {
-        max-width: 700px;
-        margin: 40px auto;
-        padding: 24px;
+        background: #fefbf3;
+        padding: 24px 28px;
+        border-radius: 16px;
+        margin: 24px;
+        border: 1px solid #d4af37;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
       
       .kp-advice-message {
-        font-size: 18px;
-        line-height: 1.7;
-        color: #1e293b;
-        margin-bottom: 20px;
+        font-size: 16px;
+        line-height: 1.8;
+        color: #475569;
+        margin-bottom: 16px;
       }
       
       .kp-advice-suggestion {
-        font-size: 15px;
+        font-size: 14px;
         line-height: 1.6;
         color: #64748b;
         font-style: italic;
-        padding-top: 16px;
-        border-top: 1px solid #e2e8f0;
+        padding-top: 12px;
+        border-top: 1px solid rgba(212, 175, 55, 0.2);
       }
       
       .kp-error {
