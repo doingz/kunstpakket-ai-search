@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.9.2';
+  const VERSION = '3.0.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -388,6 +388,45 @@
   function renderResults(data) {
     const container = document.getElementById('kp-search-results-overlay');
     
+    // Check if we need more info from the user
+    if (data.needsMoreInfo && data.suggestions) {
+      container.innerHTML = `
+        <div class="kp-needs-more-info">
+          <div class="kp-info-message">${data.message}</div>
+          <div class="kp-suggestions">
+            ${data.suggestions.map(suggestion => `
+              <button class="kp-suggestion-btn" data-type="${suggestion.type}" data-value="${suggestion.value}">
+                ${suggestion.label}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      
+      // Add click handlers for suggestion buttons
+      container.querySelectorAll('.kp-suggestion-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const type = btn.dataset.type;
+          const value = btn.dataset.value;
+          const input = document.getElementById('kp-search-input-overlay');
+          
+          // Build refined query based on suggestion type
+          let refinedQuery = input.value.trim();
+          if (type === 'productType') {
+            refinedQuery = `${value} ${refinedQuery}`.trim();
+          } else if (type === 'price') {
+            refinedQuery = `${refinedQuery} max ${value} euro`.trim();
+          }
+          
+          // Update input and search
+          input.value = refinedQuery;
+          performSearch(refinedQuery);
+        });
+      });
+      
+      return;
+    }
+    
     if (!data.success || !data.results?.items || data.results.items.length === 0) {
       container.innerHTML = '<div class="kp-no-results">Geen producten gevonden</div>';
       return;
@@ -750,6 +789,55 @@
         padding: 60px 20px;
         font-size: 18px;
         color: #64748b;
+      }
+      
+      /* Needs More Info - Smart Fallback */
+      .kp-needs-more-info {
+        text-align: center;
+        padding: 60px 20px;
+      }
+      
+      .kp-info-message {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 32px;
+        line-height: 1.5;
+      }
+      
+      .kp-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        max-width: 700px;
+        margin: 0 auto;
+      }
+      
+      .kp-suggestion-btn {
+        padding: 14px 24px;
+        background: white;
+        color: #1e293b;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .kp-suggestion-btn:hover {
+        border-color: #f5876e;
+        background: #fff5f3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 135, 110, 0.2);
+      }
+      
+      .kp-suggestion-btn:active {
+        transform: translateY(0);
       }
       
       .kp-error {

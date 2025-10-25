@@ -226,7 +226,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     orderBy += ', stock_sold DESC NULLS LAST';
 
-    // Vector similarity search with SQL filters and keyword boosting
+    // Vector similarity search with SQL filters, keyword boosting, and similarity threshold
+    const similarityThreshold = 0.3; // Minimum similarity score to filter out irrelevant results
+    
     const queryText = `
       SELECT 
         p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type,
@@ -235,6 +237,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       FROM products p
       LEFT JOIN product_categories pc ON p.id = pc.product_id
       WHERE ${whereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+        AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
       GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.embedding, p.stock_sold
       ORDER BY ${orderBy.replace(/\b(title|embedding|stock_sold)\b/g, 'p.$1')}
       LIMIT 50
@@ -273,6 +276,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         FROM products p
         LEFT JOIN product_categories pc ON p.id = pc.product_id
         WHERE ${fallbackWhereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+          AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
         GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.embedding, p.stock_sold
         ORDER BY p.embedding <=> $1::vector, p.stock_sold DESC NULLS LAST
         LIMIT 50
@@ -281,8 +285,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       result = await sql.query(fallbackQuery, fallbackParams);
     }
 
-    // Generate friendly advice message
+    // Check if query is too vague (no results + no specific filters)
     const total = result.rows.length;
+    const isVagueQuery = total === 0 && 
+      !filters.productType && 
+      !filters.priceMax && 
+      !filters.priceMin && 
+      filters.keywords.length === 0;
+
+    if (isVagueQuery) {
+      // Return helpful message with suggestions
+      return res.status(200).json({
+        success: true,
+        needsMoreInfo: true,
+        message: 'Ik heb wat meer details nodig om je te helpen! Wat voor soort cadeau zoek je?',
+        suggestions: [
+          { type: 'productType', label: '🗿 Beeld', value: 'Beeld' },
+          { type: 'productType', label: '🎨 Schilderij', value: 'Schilderij' },
+          { type: 'productType', label: '🏺 Vaas', value: 'Vaas' },
+          { type: 'productType', label: '☕ Mok', value: 'Mok' },
+          { type: 'price', label: '💰 Tot €50', value: 50 },
+          { type: 'price', label: '💎 Tot €100', value: 100 },
+          { type: 'price', label: '✨ Tot €200', value: 200 }
+        ],
+        query: {
+          original: query,
+          filters: filters,
+          took_ms: Date.now() - start
+        }
+      });
+    }
+
+    // Generate friendly advice message for valid results
     let advice = '';
     
     if (total === 0) {
@@ -301,6 +335,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const response = {
       success: true,
+      needsMoreInfo: false,
       query: {
         original: query,
         filters: filters,
