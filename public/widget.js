@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.6.0';
+  const VERSION = '2.6.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -125,7 +125,7 @@
   
   /**
    * Check for click tracking parameter (iOS Safari proof!)
-   * URL format: ?bsclick=1&sid=search_id&pid=product_id
+   * URL format: ?bsclick=1&sid=search_id&pid=product_id&pname=product_name
    */
   function checkClickTracking() {
     try {
@@ -134,15 +134,17 @@
       if (urlParams.get('bsclick') === '1') {
         const searchId = urlParams.get('sid');
         const productId = urlParams.get('pid');
+        const productName = urlParams.get('pname'); // Product name from URL!
         
         if (searchId && productId) {
-          console.log('[KP Search] Click tracking detected:', { searchId, productId });
+          console.log('[KP Search] Click tracking detected:', { searchId, productId, productName });
           
           const data = JSON.stringify({
             event: 'click',
             client_id: 'kunstpakket.nl',
             search_id: searchId,
             product_id: productId,
+            product_name: productName || null, // Include product name for easy analytics!
             product_url: window.location.pathname.replace('.html', '').replace('/', '')
           });
           
@@ -163,6 +165,7 @@
           urlParams.delete('bsclick');
           urlParams.delete('sid');
           urlParams.delete('pid');
+          urlParams.delete('pname'); // Also remove product name
           
           const newSearch = urlParams.toString();
           const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
@@ -418,7 +421,9 @@
       const imageUrl = getOptimizedImageUrl(product.image);
       
       // Add tracking params to URL for reliable click tracking (iOS Safari proof!)
-      const trackingUrl = `https://www.kunstpakket.nl/${product.url}.html?bsclick=1&sid=${searchId}&pid=${product.id}`;
+      // Include product name for easy analytics without database lookup!
+      const productName = encodeURIComponent(product.title);
+      const trackingUrl = `https://www.kunstpakket.nl/${product.url}.html?bsclick=1&sid=${searchId}&pid=${product.id}&pname=${productName}`;
       
       html += `
         <a href="${trackingUrl}" 
