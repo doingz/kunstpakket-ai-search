@@ -106,6 +106,8 @@ function formatProduct(row: any) {
       ? Math.round((1 - parseFloat(row.price) / parseFloat(row.old_price)) * 100) 
       : 0,
     image: row.image,
+    type: row.type,
+    categories: row.category_ids || [],
     similarity: row.similarity ? parseFloat(row.similarity) : null
   };
 }
@@ -198,11 +200,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Vector similarity search with SQL filters and keyword boosting
     const queryText = `
       SELECT 
-        id, title, full_title, description, url, price, old_price, image,
-        1 - (embedding <=> $1::vector) as similarity
-      FROM products
-      WHERE ${whereClause}
-      ORDER BY ${orderBy}
+        p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type,
+        1 - (p.embedding <=> $1::vector) as similarity,
+        ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
+      FROM products p
+      LEFT JOIN product_categories pc ON p.id = pc.product_id
+      WHERE ${whereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+      GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.embedding, p.stock_sold
+      ORDER BY ${orderBy.replace(/\b(title|embedding|stock_sold)\b/g, 'p.$1')}
       LIMIT 50
     `;
 
@@ -233,11 +238,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       const fallbackQuery = `
         SELECT 
-          id, title, full_title, description, url, price, old_price, image, type,
-          1 - (embedding <=> $1::vector) as similarity
-        FROM products
-        WHERE ${fallbackWhereClause}
-        ORDER BY embedding <=> $1::vector, stock_sold DESC NULLS LAST
+          p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type,
+          1 - (p.embedding <=> $1::vector) as similarity,
+          ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
+        FROM products p
+        LEFT JOIN product_categories pc ON p.id = pc.product_id
+        WHERE ${fallbackWhereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+        GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.embedding, p.stock_sold
+        ORDER BY p.embedding <=> $1::vector, p.stock_sold DESC NULLS LAST
         LIMIT 50
       `;
       
