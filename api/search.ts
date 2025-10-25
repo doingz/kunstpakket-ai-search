@@ -285,13 +285,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       result = await sql.query(fallbackQuery, fallbackParams);
     }
 
-    // Check if query is too vague (no results + no specific filters)
+    // Check if query is too vague
     const total = result.rows.length;
-    const isVagueQuery = total === 0 && 
-      !filters.productType && 
+    
+    // Generic words that don't help narrow down search
+    const genericWords = ['cadeau', 'cadeautje', 'gift', 'iets', 'mooi', 'leuk', 'bijzonder', 'origineel', 'uniek'];
+    const isOnlyGenericKeywords = filters.keywords.length > 0 && 
+      filters.keywords.every(kw => genericWords.includes(kw.toLowerCase()));
+    
+    // Check if results have low average similarity (indicates poor match quality)
+    const avgSimilarity = total > 0 
+      ? result.rows.reduce((sum, row) => sum + parseFloat(row.similarity), 0) / total 
+      : 0;
+    const hasLowQualityResults = avgSimilarity < 0.4;
+    
+    const isVagueQuery = !filters.productType && 
       !filters.priceMax && 
       !filters.priceMin && 
-      filters.keywords.length === 0;
+      (filters.keywords.length === 0 || isOnlyGenericKeywords) &&
+      (total === 0 || hasLowQualityResults);
 
     if (isVagueQuery) {
       // Return helpful message with suggestions
