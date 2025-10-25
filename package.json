@@ -22,8 +22,10 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "@ai-sdk/openai": "^2.0.53",
     "@vercel/postgres": "^0.10.0",
+    "ai": "^5.0.78",
+    "dotenv": "^16.4.5",
     "openai": "^4.70.0"
   }
 }

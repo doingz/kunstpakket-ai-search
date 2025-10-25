@@ -1,19 +1,16 @@
 /**
- * Generate embeddings for all existing products
- * One-time script to populate embedding column
+ * Generate embeddings for all products with AI SDK
+ * Much faster and more reliable than raw OpenAI
  */
-
 import 'dotenv/config';
 import { sql } from '@vercel/postgres';
 import { generateEmbeddingsBatch } from '../lib/generate-embeddings.js';
 
 const BATCH_SIZE = 100;
 
-async function generateAllEmbeddings() {
-  console.log('🔮 Generating embeddings for all products...\n');
+async function main() {
+  console.log('🔮 Generating embeddings with AI SDK...\n');
   
-  // Get all visible products WITH their categories
-  // Note: brand is just an ID stored as text, we don't have brand names
   const { rows } = await sql`
     SELECT 
       p.id, 
@@ -31,25 +28,22 @@ async function generateAllEmbeddings() {
     ORDER BY p.id
   `;
   
-  console.log(`Found ${rows.length} products to process`);
-  console.log(`Cost estimate: ~€${(rows.length * 0.000004).toFixed(4)}`);
-  console.log(`Processing in batches of ${BATCH_SIZE}...\n`);
+  console.log(`Found ${rows.length} products`);
+  console.log(`Cost: ~€${(rows.length * 0.000004).toFixed(4)}\n`);
   
-  let successCount = 0;
-  let errorCount = 0;
+  let success = 0;
+  let errors = 0;
   
-  // Process in batches
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE);
     const batchNum = Math.floor(i / BATCH_SIZE) + 1;
     const totalBatches = Math.ceil(rows.length / BATCH_SIZE);
     
-    console.log(`[${batchNum}/${totalBatches}] Processing batch of ${batch.length} products...`);
+    console.log(`[${batchNum}/${totalBatches}] Processing ${batch.length} products...`);
     
     try {
       const embeddings = await generateEmbeddingsBatch(batch);
       
-      // Update database
       for (let j = 0; j < batch.length; j++) {
         try {
           await sql`
@@ -57,40 +51,34 @@ async function generateAllEmbeddings() {
             SET embedding = ${JSON.stringify(embeddings[j])}::vector
             WHERE id = ${batch[j].id}
           `;
-          successCount++;
+          success++;
         } catch (err) {
-          console.error(`  ⚠️  Failed to update product ${batch[j].id}:`, err.message);
-          errorCount++;
+          console.error(`  ⚠️  Product ${batch[j].id} failed:`, err.message);
+          errors++;
         }
       }
       
-      console.log(`  ✅ Batch ${batchNum} completed (${successCount} total)\n`);
-      
+      console.log(`  ✅ Done (${success} total)\n`);
     } catch (error) {
-      console.error(`  ❌ Batch ${batchNum} failed:`, error.message);
-      errorCount += batch.length;
+      console.error(`  ❌ Batch failed:`, error.message);
+      errors += batch.length;
     }
   }
   
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📊 SUMMARY');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`✅ Success: ${successCount}`);
-  console.log(`❌ Errors: ${errorCount}`);
-  console.log(`📦 Total: ${rows.length}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`✅ Success: ${success}`);
+  console.log(`❌ Errors: ${errors}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   
-  if (errorCount === 0) {
-    console.log('🎉 All embeddings generated successfully!');
-  } else {
-    console.log(`⚠️  Completed with ${errorCount} errors`);
+  if (errors === 0) {
+    console.log('🎉 All done!');
   }
 }
 
-generateAllEmbeddings()
+main()
   .then(() => process.exit(0))
   .catch(err => {
-    console.error('💥 Fatal error:', err);
+    console.error('💥 Fatal:', err);
     process.exit(1);
   });
 
