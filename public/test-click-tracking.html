@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Click Tracking</title>
+</head>
+<body>
+  <h1>Test Click Tracking</h1>
+  
+  <p>Current URL: <span id="url"></span></p>
+  
+  <div id="log" style="margin-top: 20px; padding: 10px; background: #f0f0f0; font-family: monospace; white-space: pre-wrap;"></div>
+  
+  <script>
+    // Display current URL
+    document.getElementById('url').textContent = window.location.href;
+    
+    const log = document.getElementById('log');
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    
+    // Intercept console logs
+    console.log = function(...args) {
+      log.textContent += '[LOG] ' + args.join(' ') + '\n';
+      originalLog.apply(console, args);
+    };
+    console.warn = function(...args) {
+      log.textContent += '[WARN] ' + args.join(' ') + '\n';
+      originalWarn.apply(console, args);
+    };
+    console.error = function(...args) {
+      log.textContent += '[ERROR] ' + args.join(' ') + '\n';
+      originalError.apply(console, args);
+    };
+    
+    console.log('Test page loaded');
+    console.log('URL params:', new URLSearchParams(window.location.search).toString());
+  </script>
+  
+  <!-- Load widget -->
+  <script src="./widget.js"></script>
+  
+  <hr>
+  <h2>Test Links</h2>
+  <p>
+    <a href="?bsclick=1&sid=test_123&pid=84764645&pname=Test%20Product">
+      Click here to test tracking
+    </a>
+  </p>
+</body>
+</html>
+
