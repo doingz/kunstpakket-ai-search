@@ -155,6 +155,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const result = await sql.query(queryText, params);
 
+    // Generate friendly advice message
+    const total = result.rows.length;
+    let advice = '';
+    
+    if (total === 0) {
+      advice = 'Helaas geen producten gevonden. Probeer een andere zoekopdracht of minder specifieke filters.';
+    } else if (total === 1) {
+      advice = '✨ Er is 1 perfect product voor je gevonden!';
+    } else if (total <= 5) {
+      advice = `🎨 Ik heb ${total} mooie producten voor je gevonden!`;
+    } else if (total <= 20) {
+      advice = `✨ Er zijn ${total} prachtige producten die aan je wensen voldoen!`;
+    } else {
+      const emojis = ['🎨', '✨', '🎁', '💎', '🌟'];
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+      advice = `${emoji} Ik heb ${total} producten gevonden! Bekijk ze allemaal en vind jouw favoriet.`;
+    }
+
     const response = {
       success: true,
       query: {
@@ -164,7 +182,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       results: {
         total: result.rows.length,
-        items: result.rows.map(formatProduct)
+        showing: result.rows.length,
+        items: result.rows.map(formatProduct),
+        advice: advice
       }
     };
 
