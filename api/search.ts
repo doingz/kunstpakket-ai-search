@@ -158,7 +158,8 @@ async function parseFilters(query: string) {
 
 Extract:
 1. priceMin/priceMax: Concrete numbers ONLY. For "niet te duur", "goedkoop", "luxe" → return null (not enough info)
-2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek
+2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder
+   IMPORTANT: "Keramiek" should map to "Beeld" (ceramic items are sculptures/beelden)
 3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
 4. requiresExactMatch: true if keywords MUST appear in title/description
 
@@ -177,7 +178,8 @@ Extract:
    "cadeau" → keywords: [], productType: null, priceMax: null → isVague: TRUE
 
 CRITICAL RULES:
-- Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
+- Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur/keramiek, vaas, mok, schaal, wandbord, onderzetters, theelicht
+- IMPORTANT: "keramiek", "keramieken beeld", "ballonhond" → productType: "Beeld" (ceramics are sculptures)
 - DO NOT add product types as keywords
 - For artist names: extract both full name AND last name (e.g. "Van Gogh" → ["van gogh", "gogh"])
 - For animals: add common synonyms (e.g. "kat" → ["kat", "poes"], "hond" → ["hond", "honden"])
