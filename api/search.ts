@@ -297,7 +297,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const avgSimilarity = total > 0 
       ? result.rows.reduce((sum, row) => sum + parseFloat(row.similarity), 0) / total 
       : 0;
-    const hasLowQualityResults = avgSimilarity < 0.4;
+    const hasLowQualityResults = avgSimilarity < 0.45;
     
     const isVagueQuery = !filters.productType && 
       !filters.priceMax && 
