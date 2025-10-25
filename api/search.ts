@@ -11,7 +11,7 @@ import { z } from 'zod';
 // Explicit Node.js runtime
 export const config = {
   runtime: 'nodejs',
-  maxDuration: 30
+  maxDuration: 30 // text-embedding-3-small (1536 dims)
 };
 
 // AI-powered filter extraction using generateObject
@@ -121,9 +121,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const [filters, { embedding }] = await Promise.all([
       parseFilters(query),
       embed({
-        model: openai.embedding('text-embedding-3-large'),
-        value: query,
-        dimensions: 1536 // Reduce from 3072 to 1536 (fits pgvector 2000 limit, keeps quality)
+        model: openai.embedding('text-embedding-3-small'),
+        value: query
       })
     ]);
 
