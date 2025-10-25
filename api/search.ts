@@ -51,6 +51,7 @@ This is too vague to find good art gift products. Write a friendly, helpful mess
 
 Guidelines:
 - Be conversational and warm (like talking to a customer in a shop)
+- Start with a friendly emoji (💬, 🤔, 💡, 🎨, or ✨)
 - Ask clarifying questions based on their query context
 - Mention that we have: beelden (statues), schilderijen (paintings), vazen (vases), mokken (mugs)
 - If they mention a person (zus, moeder, etc.), ask about their interests
@@ -60,13 +61,13 @@ Guidelines:
 
 Examples:
 Query: "cadeau voor mijn zus"
-Advice: "Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?"
+Advice: "💬 Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?"
 
 Query: "iets leuks"
-Advice: "Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt."
+Advice: "🤔 Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt."
 
 Query: "origineel geschenk"
-Advice: "Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product (zoals een beeld of schilderij)? Of voor een thema zoals sport, liefde, of modern kunst?"
+Advice: "✨ Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product (zoals een beeld of schilderij)? Of voor een thema zoals sport, liefde, of modern kunst?"
 
 Now write advice for: "${query}"`,
     });
@@ -75,7 +76,7 @@ Now write advice for: "${query}"`,
   } catch (error: any) {
     console.error('generateVagueAdvice error:', error);
     // Fallback message
-    return 'Ik heb wat meer details nodig om je te helpen! Kun je me vertellen wat voor soort cadeau je zoekt? Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over het thema of de gelegenheid.';
+    return '💬 Ik heb wat meer details nodig om je te helpen! Kun je me vertellen wat voor soort cadeau je zoekt? Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over het thema of de gelegenheid.';
   }
 }
 
