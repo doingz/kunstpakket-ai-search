@@ -163,7 +163,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       LIMIT 50
     `;
 
-    const result = await sql.query(queryText, params);
+    let result = await sql.query(queryText, params);
+
+    // If 0 results with keywords, retry without keyword filter (fallback to semantic search)
+    if (result.rows.length === 0 && filters.keywords && filters.keywords.length > 0) {
+      // Rebuild query without keyword filtering
+      let fallbackWhereClause = 'is_visible = true AND embedding IS NOT NULL';
+      const fallbackParams: any[] = [JSON.stringify(embedding)];
+      let fallbackParamIndex = 2;
+      
+      if (filters.productType) {
+        fallbackParams.push(filters.productType);
+        fallbackWhereClause += ` AND type = $${fallbackParamIndex++}`;
+      }
+      
+      if (filters.priceMax) {
+        fallbackParams.push(filters.priceMax);
+        fallbackWhereClause += ` AND price <= $${fallbackParamIndex++}`;
+      }
+      
+      if (filters.priceMin) {
+        fallbackParams.push(filters.priceMin);
+        fallbackWhereClause += ` AND price >= $${fallbackParamIndex++}`;
+      }
+      
+      const fallbackQuery = `
+        SELECT 
+          id, title, full_title, description, url, price, old_price, image,
+          1 - (embedding <=> $1::vector) as similarity
+        FROM products
+        WHERE ${fallbackWhereClause}
+        ORDER BY embedding <=> $1::vector, stock_sold DESC NULLS LAST
+        LIMIT 50
+      `;
+      
+      result = await sql.query(fallbackQuery, fallbackParams);
+    }
 
     // Generate friendly advice message
     const total = result.rows.length;
