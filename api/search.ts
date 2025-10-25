@@ -16,42 +16,54 @@ export const config = {
 
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
-  const { object } = await generateObject({
-    model: openai('gpt-4o-mini'),
-    schema: z.object({
-      priceMin: z.number().optional(),
-      priceMax: z.number().optional(),
-      productType: z.string().optional().describe('Product type: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek'),
-      keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, artists, objects). Empty array if none.'),
-      requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
-    }),
-    prompt: `Analyze this Dutch product search query and extract filters: "${query}"
+  try {
+    const { object } = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: z.object({
+        priceMin: z.number().optional().nullable(),
+        priceMax: z.number().optional().nullable(),
+        productType: z.string().optional().nullable().describe('Product type: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek'),
+        keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, artists, objects). Empty array if none.'),
+        requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
+      }),
+      prompt: `Analyze this Dutch product search query and extract filters: "${query}"
 
 Extract:
-1. priceMin/priceMax: Numbers mentioned with "onder", "boven", "tussen", "max", "maximaal"
+1. priceMin/priceMax: Concrete numbers ONLY. For "niet te duur", "goedkoop", "luxe" → return null (not enough info)
 2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek
-3. keywords: ONLY specific subjects (animals like "hond/kat", artists like "Van Gogh", brands, person names)
-4. requiresExactMatch: true ONLY if keywords need to be in title/description
+3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
+4. requiresExactMatch: true if keywords MUST appear in title/description
 
 CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
 - DO NOT add product types as keywords
-- ONLY extract specific subjects as keywords: animals, artists, person names, brands
+- For artist names: extract both full name AND last name (e.g. "Van Gogh" → ["van gogh", "gogh"])
+- For vague price terms ("niet te duur", "goedkoop", "luxe") → return null for price (semantic search will handle it)
 
 Examples:
 "kat" → {"keywords": ["kat"], "requiresExactMatch": true}
-"hond" → {"keywords": ["hond"], "requiresExactMatch": true}
-"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond"], "requiresExactMatch": true}
 "Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
+"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond"], "requiresExactMatch": true}
 "schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
-"een schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
-"beeld" → {"productType": "Beeld"}
-"vaas" → {"productType": "Vaas"}
-"cadeau voor moeder" → {"keywords": ["moeder"]}
-"iets moois" → {}`,
-  });
-  
-  return object;
+"niet te duur" → {"priceMax": null}
+"goedkoop cadeau" → {"priceMax": null}
+"iets moois" → {}
+"poes" → {"keywords": ["poes", "kat"], "requiresExactMatch": false}
+"klassiek" → {"keywords": ["klassiek"], "requiresExactMatch": false}`,
+    });
+
+    return object;
+  } catch (error: any) {
+    console.error('parseFilters error:', error);
+    // Fallback: return empty filters on AI failure
+    return {
+      priceMin: null,
+      priceMax: null,
+      productType: null,
+      keywords: [],
+      requiresExactMatch: false
+    };
+  }
 }
 
 // Format product for response
@@ -166,8 +178,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let result = await sql.query(queryText, params);
 
     // If 0 results with keywords, retry without keyword filter (fallback to semantic search)
-    if (result.rows.length === 0 && filters.keywords && filters.keywords.length > 0) {
-      // Rebuild query without keyword filtering
+    if (result.rows.length === 0 && filters.keywords && filters.keywords.length > 0 && filters.requiresExactMatch) {
+      // Rebuild query without keyword filtering (keep type/price)
       let fallbackWhereClause = 'is_visible = true AND embedding IS NOT NULL';
       const fallbackParams: any[] = [JSON.stringify(embedding)];
       let fallbackParamIndex = 2;
@@ -189,7 +201,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       const fallbackQuery = `
         SELECT 
-          id, title, full_title, description, url, price, old_price, image,
+          id, title, full_title, description, url, price, old_price, image, type,
           1 - (embedding <=> $1::vector) as similarity
         FROM products
         WHERE ${fallbackWhereClause}
