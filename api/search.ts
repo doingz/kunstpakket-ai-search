@@ -5,6 +5,10 @@
 import { sql } from '@vercel/postgres';
 import OpenAI from 'openai';
 
+// Vercel Serverless Function configuration
+export const maxDuration = 30; // 30 seconds timeout
+export const dynamic = 'force-dynamic'; // Disable caching
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
