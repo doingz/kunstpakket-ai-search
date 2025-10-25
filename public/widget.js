@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.9.1';
+  const VERSION = '2.9.2';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -550,7 +550,7 @@
         background: white;
         border: 2px solid #e2e8f0;
         border-radius: 12px;
-        padding: 8px 16px;
+        padding: 8px 8px 8px 16px;
         transition: all 0.2s;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       }
@@ -906,7 +906,7 @@
         
         .kp-search-wrapper {
           flex-direction: row;
-          padding: 4px 16px;
+          padding: 2px 8px 2px 14px;
         }
         
         #kp-search-input-bar {
