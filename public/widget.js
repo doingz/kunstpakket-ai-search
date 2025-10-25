@@ -5,10 +5,10 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.3.0';
+  const VERSION = '2.4.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
-    : 'https://kunstpakket-ai-search.vercel.app/api';
+    : 'https://kunstpakket.bluestars.app/api';
   const ANALYTICS_API = 'https://analytics.bluestars.app/api/track';
   
   let isSearching = false;

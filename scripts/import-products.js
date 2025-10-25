@@ -1,6 +1,6 @@
 /**
  * Import products from Lightspeed data and generate embeddings
- * Run with: node scripts/import-products.js
+ * Run with: npm run import
  */
 import { embedMany } from 'ai';
 import { openai } from '@ai-sdk/openai';
@@ -10,11 +10,34 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const startTime = Date.now();
+
 // Read Lightspeed sync data
+console.log('📖 Reading data files...');
 const products = JSON.parse(fs.readFileSync('data/products.json', 'utf-8'));
+const variants = JSON.parse(fs.readFileSync('data/variants.json', 'utf-8'));
 const categoriesProducts = JSON.parse(fs.readFileSync('data/categories-products.json', 'utf-8'));
 
-console.log(`📦 Found ${products.length} products to import`);
+console.log(`   Products: ${products.length}`);
+console.log(`   Variants: ${variants.length}`);
+console.log(`   Category mappings: ${categoriesProducts.length}`);
+console.log('');
+
+// Build variant map (productId -> default variant with price)
+const variantMap = new Map();
+variants.forEach(variant => {
+  const productId = variant.product?.resource?.id;
+  if (productId && variant.isDefault) {
+    variantMap.set(productId, {
+      priceExcl: parseFloat(variant.priceExcl) || 0,
+      oldPriceExcl: variant.oldPriceExcl ? parseFloat(variant.oldPriceExcl) : null,
+      stockSold: variant.stockSold || 0
+    });
+  }
+});
+
+console.log(`✅ Mapped ${variantMap.size} default variants with prices`);
+console.log('');
 
 // Build embedding text from product data
 function buildEmbeddingText(product) {
@@ -22,6 +45,7 @@ function buildEmbeddingText(product) {
     product.title,
     product.fulltitle,
     product.description?.replace(/<[^>]*>/g, ''), // Strip HTML
+    product.brand?.title
   ].filter(Boolean);
   
   return parts.join(' ').trim();
@@ -36,7 +60,7 @@ function getProductCategories(productId) {
 
 // Process in batches to avoid rate limits
 async function processBatch(batch, batchNum, totalBatches) {
-  console.log(`\n🔄 Processing batch ${batchNum}/${totalBatches} (${batch.length} products)`);
+  console.log(`\n🔄 Batch ${batchNum}/${totalBatches} (${batch.length} products)`);
   
   try {
     // Generate embeddings for this batch
@@ -51,48 +75,65 @@ async function processBatch(batch, batchNum, totalBatches) {
     console.log(`  ✅ Generated ${embeddings.length} embeddings`);
     console.log(`  💾 Inserting into database...`);
     
+    let inserted = 0;
+    let updated = 0;
+    
     // Insert products with embeddings
     for (let i = 0; i < batch.length; i++) {
       const product = batch[i];
       const embedding = embeddings[i];
+      const variant = variantMap.get(product.id) || { priceExcl: 0, oldPriceExcl: null, stockSold: 0 };
       
-      // Insert product (using existing schema with 'brand' column)
-      await sql`
-        INSERT INTO products (
-          id, title, full_title, description, content, url, 
-          brand, price, old_price, is_visible, image, stock_sold,
-          embedding
-        )
-        VALUES (
-          ${product.id},
-          ${product.title},
-          ${product.fulltitle || product.title},
-          ${product.description || ''},
-          ${product.content || ''},
-          ${product.url},
-          ${product.brand?.resource?.id || null},
-          ${parseFloat(product.priceExcl) || 0},
-          ${product.oldPriceExcl ? parseFloat(product.oldPriceExcl) : null},
-          ${product.isVisible},
-          ${product.image?.src || null},
-          ${product.stockSold || 0},
-          ${JSON.stringify(embedding)}::vector
-        )
-        ON CONFLICT (id) DO UPDATE SET
-          title = EXCLUDED.title,
-          full_title = EXCLUDED.full_title,
-          description = EXCLUDED.description,
-          content = EXCLUDED.content,
-          url = EXCLUDED.url,
-          brand = EXCLUDED.brand,
-          price = EXCLUDED.price,
-          old_price = EXCLUDED.old_price,
-          is_visible = EXCLUDED.is_visible,
-          image = EXCLUDED.image,
-          stock_sold = EXCLUDED.stock_sold,
-          embedding = EXCLUDED.embedding,
-          updated_at = NOW()
-      `;
+      // Check if product exists
+      const existing = await sql`SELECT id FROM products WHERE id = ${product.id}`;
+      const isUpdate = existing.rows.length > 0;
+      
+      if (isUpdate) {
+        // Update existing product
+        await sql`
+          UPDATE products SET
+            title = ${product.title},
+            full_title = ${product.fulltitle || product.title},
+            description = ${product.description || ''},
+            content = ${product.content || ''},
+            url = ${product.url},
+            brand = ${product.brand?.title || null},
+            price = ${variant.priceExcl},
+            old_price = ${variant.oldPriceExcl},
+            is_visible = ${product.isVisible},
+            image = ${product.image?.src || null},
+            stock_sold = ${variant.stockSold},
+            embedding = ${JSON.stringify(embedding)}::vector,
+            updated_at = NOW()
+          WHERE id = ${product.id}
+        `;
+        updated++;
+      } else {
+        // Insert new product
+        await sql`
+          INSERT INTO products (
+            id, title, full_title, description, content, url, 
+            brand, price, old_price, is_visible, image, stock_sold,
+            embedding
+          )
+          VALUES (
+            ${product.id},
+            ${product.title},
+            ${product.fulltitle || product.title},
+            ${product.description || ''},
+            ${product.content || ''},
+            ${product.url},
+            ${product.brand?.title || null},
+            ${variant.priceExcl},
+            ${variant.oldPriceExcl},
+            ${product.isVisible},
+            ${product.image?.src || null},
+            ${variant.stockSold},
+            ${JSON.stringify(embedding)}::vector
+          )
+        `;
+        inserted++;
+      }
       
       // Insert categories
       const categories = getProductCategories(product.id);
@@ -100,73 +141,74 @@ async function processBatch(batch, batchNum, totalBatches) {
         await sql`
           INSERT INTO product_categories (product_id, category_id)
           VALUES (${product.id}, ${categoryId})
-          ON CONFLICT DO NOTHING
+          ON CONFLICT (product_id, category_id) DO NOTHING
         `;
       }
     }
     
-    console.log(`  ✅ Batch ${batchNum} complete!`);
+    console.log(`  ✅ Batch complete! (${inserted} new, ${updated} updated)`);
+    
   } catch (error) {
-    console.error(`  ❌ Error in batch ${batchNum}:`, error.message);
+    console.error(`  ❌ Batch ${batchNum} failed:`, error.message);
     throw error;
   }
 }
 
-// Main import function
-async function importProducts() {
+async function main() {
+  console.log('📦 Starting import...\n');
+  
+  // Filter visible products only
+  const visibleProducts = products.filter(p => p.isVisible);
+  const hiddenCount = products.length - visibleProducts.length;
+  
+  console.log(`✅ Importing ${visibleProducts.length} visible products`);
+  console.log(`   (${hiddenCount} hidden products skipped)`);
+  console.log('');
+  
   const BATCH_SIZE = 50;
   const batches = [];
   
-  // Only import visible products
-  const visibleProducts = products.filter(p => p.isVisible);
-  console.log(`✅ Importing ${visibleProducts.length} visible products (${products.length - visibleProducts.length} hidden skipped)`);
-  
-  // Split into batches
   for (let i = 0; i < visibleProducts.length; i += BATCH_SIZE) {
     batches.push(visibleProducts.slice(i, i + BATCH_SIZE));
   }
   
-  console.log(`📊 Created ${batches.length} batches of ${BATCH_SIZE} products each\n`);
+  console.log(`📊 Processing ${batches.length} batches of ${BATCH_SIZE} products`);
   
-  const startTime = Date.now();
-  
-  // Process batches sequentially to avoid rate limits
+  // Process all batches
   for (let i = 0; i < batches.length; i++) {
     await processBatch(batches[i], i + 1, batches.length);
-    
-    // Small delay between batches to be nice to the API
-    if (i < batches.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
   }
   
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`\n🎉 Import complete! ${visibleProducts.length} products imported in ${elapsed}s`);
+  // Final stats
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`\n✅ Import complete in ${duration}s!`);
   
-  // Show stats
   const stats = await sql`
     SELECT 
       COUNT(*) as total,
-      COUNT(CASE WHEN embedding IS NOT NULL THEN 1 END) as with_embeddings,
-      AVG(price) as avg_price
+      COUNT(embedding) as with_embeddings,
+      COUNT(CASE WHEN price > 0 THEN 1 END) as with_price,
+      AVG(price) as avg_price,
+      MAX(price) as max_price
     FROM products
-    WHERE is_visible = true
   `;
   
+  const s = stats.rows[0];
   console.log(`\n📊 Database stats:`);
-  console.log(`   Total products: ${stats.rows[0].total}`);
-  console.log(`   With embeddings: ${stats.rows[0].with_embeddings}`);
-  console.log(`   Average price: €${parseFloat(stats.rows[0].avg_price).toFixed(2)}`);
+  console.log(`   Total products: ${s.total}`);
+  console.log(`   With embeddings: ${s.with_embeddings}`);
+  console.log(`   With price > 0: ${s.with_price}`);
+  console.log(`   Average price: €${parseFloat(s.avg_price || 0).toFixed(2)}`);
+  console.log(`   Max price: €${parseFloat(s.max_price || 0).toFixed(2)}`);
+  console.log('');
 }
 
-// Run import
-importProducts()
+main()
   .then(() => {
-    console.log('\n✅ All done!');
+    console.log('✅ Done!');
     process.exit(0);
   })
-  .catch(error => {
-    console.error('\n❌ Import failed:', error);
+  .catch((err) => {
+    console.error('\n❌ Import failed:', err);
     process.exit(1);
   });
-
