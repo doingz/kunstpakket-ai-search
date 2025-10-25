@@ -28,22 +28,23 @@ async function parseFilters(query: string) {
 
 Extract:
 1. priceMin/priceMax: Numbers mentioned with "onder", "boven", "tussen", "max", "maximaal"
-2. keywords: Specific nouns (animals, artists, objects, names)
-3. requiresExactMatch: true if query is about SPECIFIC things (animals, artists, brands)
+2. keywords: ONLY specific subjects (animals like "hond/kat", artists like "Van Gogh", brands)
+3. requiresExactMatch: true ONLY if keywords need to be in title/description
 
-Rules:
-- For specific subjects (hond, kat, Van Gogh), extract as keywords + set requiresExactMatch=true
-- For vague queries (iets moois, cadeau), no keywords or requiresExactMatch=false
-- Always return valid JSON
+CRITICAL RULES:
+- DO NOT extract product types (schilderij, beeld, vaas, mok) as keywords
+- ONLY extract specific subjects: animals, artists, person names, brands
+- Product types should use semantic search, not keyword filtering
 
 Examples:
 "kat" → {"keywords": ["kat"], "requiresExactMatch": true}
 "hond" → {"keywords": ["hond"], "requiresExactMatch": true}
 "een beeldje met een hond, max 80 euro" → {"priceMax": 80, "keywords": ["hond"], "requiresExactMatch": true}
 "Van Gogh schilderij" → {"keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
-"cadeau voor moeder niet te duur" → {"priceMax": 100, "keywords": ["moeder", "cadeau"], "requiresExactMatch": false}
-"iets moois voor woonkamer" → {"keywords": [], "requiresExactMatch": false}
-"tussen 20 en 50 euro" → {"priceMin": 20, "priceMax": 50, "keywords": [], "requiresExactMatch": false}`,
+"schilderij max 300 euro" → {"priceMax": 300, "keywords": [], "requiresExactMatch": false}
+"beeld" → {"keywords": [], "requiresExactMatch": false}
+"cadeau voor moeder" → {"keywords": ["moeder"], "requiresExactMatch": false}
+"iets moois" → {"keywords": [], "requiresExactMatch": false}`,
   });
   
   return object;
