@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.6.2';
+  const VERSION = '2.6.3';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -156,14 +156,18 @@
           // Use sendBeacon for reliability
           if (navigator.sendBeacon) {
             const blob = new Blob([data], { type: 'application/json' });
-            navigator.sendBeacon(ANALYTICS_API, blob);
+            const sent = navigator.sendBeacon(ANALYTICS_API, blob);
+            console.log('[KP Search] Click tracked via sendBeacon:', sent ? '✅' : '❌');
           } else {
             fetch(ANALYTICS_API, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: data,
               keepalive: true
-            }).catch(() => {});
+            })
+            .then(res => res.json())
+            .then(json => console.log('[KP Search] Click tracked:', json))
+            .catch(err => console.warn('[KP Search] Click tracking failed:', err));
           }
           
           // Clean up URL (remove tracking params)
