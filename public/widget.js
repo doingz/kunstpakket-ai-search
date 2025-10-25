@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.1.4';
+  const VERSION = '4.2.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -200,10 +200,6 @@
     searchBar.id = 'kp-search-bar';
     searchBar.innerHTML = `
       <div class="kp-search-wrapper">
-        <svg class="kp-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
         <input 
           type="search" 
           id="kp-search-input-bar" 
@@ -211,7 +207,11 @@
           autocomplete="off"
           enterkeyhint="search"
         />
-        <button id="kp-search-button-bar" class="kp-search-btn">Zoeken</button>
+        <button id="kp-search-button-bar" class="kp-ai-search-btn" aria-label="Zoeken">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+            <path d="M16.269 18.626c-1.526 1.267-3.502 2.032-5.661 2.032-4.834 0-8.749-3.834-8.749-8.543s3.915-8.543 8.749-8.543c.483 0 .957.038 1.419.112a.8.8 0 1 1-.252 1.58 7.41 7.41 0 0 0-1.167-.092c-3.94 0-7.149 3.105-7.149 6.943s3.209 6.943 7.149 6.943c1.959 0 3.737-.767 5.03-2.01a.83.83 0 0 1 .072-.084.81.81 0 0 1 .102-.089c.999-1.029 1.678-2.356 1.881-3.829a.8.8 0 1 1 1.585.219 8.41 8.41 0 0 1-1.876 4.231l3.92 3.819a.8.8 0 0 1-1.116 1.146l-3.936-3.834zM18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z"/>
+          </svg>
+        </button>
       </div>
     `;
     
@@ -576,34 +576,26 @@
       .kp-search-wrapper {
         display: flex;
         align-items: center;
-        gap: 0;
+        gap: 12px;
         width: 100%;
         max-width: 600px;
         margin: 0 auto;
-        background: white;
-        border: 2px solid #e2e8f0;
+        background: #f6f6f6;
+        border: none;
         border-radius: 12px;
-        padding: 8px 8px 8px 16px;
+        padding: 12px 16px;
         transition: all 0.2s;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       }
       
       .kp-search-wrapper:focus-within {
-        border-color: #f5876e;
-        box-shadow: 0 4px 12px rgba(245, 135, 110, 0.15);
-      }
-      
-      .kp-search-icon {
-        color: #94a3b8;
-        flex-shrink: 0;
-        margin-right: 12px;
+        background: #ececec;
       }
       
       #kp-search-input-bar {
         flex: 1;
         border: none;
         outline: none;
-        padding: 12px 0;
+        padding: 0;
         font-size: 15px;
         color: #1e293b;
         background: transparent;
@@ -619,27 +611,36 @@
         color: #94a3b8;
       }
       
-      .kp-search-btn {
-        padding: 12px 24px;
-        background: #f5876e;
-        color: white;
+      .kp-ai-search-btn {
+        background: transparent;
         border: none;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
+        padding: 4px;
         cursor: pointer;
         transition: all 0.2s;
-        white-space: nowrap;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
       }
       
-      .kp-search-btn:hover {
-        background: #f26d52;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(245, 135, 110, 0.4);
+      .kp-ai-search-btn svg {
+        display: block;
+        fill: #1e293b;
+        transition: all 0.2s;
       }
       
-      .kp-search-btn:active {
-        transform: translateY(0);
+      .kp-ai-search-btn:hover {
+        background: rgba(30, 41, 59, 0.08);
+      }
+      
+      .kp-ai-search-btn:hover svg {
+        fill: #f5876e;
+        transform: scale(1.1);
+      }
+      
+      .kp-ai-search-btn:active {
+        transform: scale(0.95);
       }
       
       /* Help text under search bar */
@@ -1004,20 +1005,9 @@
           font-size: 16px;
         }
         
-        .kp-search-btn {
-          padding: 10px 12px;
-          font-size: 0;
-        }
-        
-        .kp-search-btn::before {
-          content: '';
-          display: inline-block;
+        .kp-ai-search-btn svg {
           width: 20px;
           height: 20px;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
-          background-size: contain;
-          background-repeat: no-repeat;
-          background-position: center;
         }
         
         .kp-overlay-header {
