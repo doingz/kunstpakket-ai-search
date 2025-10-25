@@ -182,7 +182,7 @@ CRITICAL RULES:
 - IMPORTANT: "keramiek", "keramieken beeld", "ballonhond" → productType: "Beeld" (ceramics are sculptures)
 - DO NOT add product types as keywords
 - For artist names: extract both full name AND last name (e.g. "Van Gogh" → ["van gogh", "gogh"])
-- For animals: add common synonyms (e.g. "kat" → ["kat", "poes"], "hond" → ["hond", "honden"])
+- For animals: add common synonyms AND English translations (e.g. "kat" → ["kat", "poes", "cat"], "hond" → ["hond", "honden", "dog"], "paard" → ["paard", "paarden", "horse"])
 - For occasions: use broader terms (e.g. "huwelijkscadeau" → ["huwelijk", "trouwen"], "bedankje" → ["bedanken", "dank"])
 - For categories (important!): extract relevant keywords based on these popular categories:
   * Sport/Fitness → ["sport", "fitness", "atleet", "voetbal", "golf"]
@@ -204,6 +204,8 @@ Examples:
 "onder 100 euro" → {"priceMax": 100, "isVague": false}
 "sportbeeld" → {"productType": "Beeld", "keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false, "isVague": false}
 "mok" → {"productType": "Mok", "isVague": false}
+"hond" → {"keywords": ["hond", "honden", "dog"], "isVague": false}
+"dog" → {"keywords": ["hond", "honden", "dog"], "isVague": false}
 "sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false, "isVague": false}
 "kat" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
 "poes" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
