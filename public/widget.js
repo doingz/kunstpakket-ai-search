@@ -5,11 +5,14 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.4.0';
+  const VERSION = '2.5.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
   const ANALYTICS_API = 'https://analytics.bluestars.app/api/track';
+  
+  // LIVE MODE - set to true to enable widget for all users
+  const LIVE = true;  // Change to false to require ?f=1 parameter
   
   let isSearching = false;
   let currentResults = null;
@@ -895,8 +898,14 @@
     const hasF1 = urlParams.get('f') === '1';
     const enabled = localStorage.getItem('kp_search_enabled');
     
-    // Check if f=1 is required
-    if (flags.require_f1) {
+    // LIVE mode overrides server flag
+    const requireF1 = LIVE ? false : flags.require_f1;
+    
+    if (LIVE) {
+      console.log('[KP Search] 🟢 LIVE MODE - Widget enabled for all users');
+      localStorage.setItem('kp_search_enabled', 'true');
+    } else if (requireF1) {
+      // Check if f=1 is required
       if (hasF1) {
         // Enable widget
         localStorage.setItem('kp_search_enabled', 'true');
