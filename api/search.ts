@@ -152,11 +152,16 @@ Extract:
 2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek
 3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
 4. requiresExactMatch: true if keywords MUST appear in title/description
-5. isVague: Set to FALSE if ANY of these is present:
-   - productType is set (Beeld, Schilderij, etc.)
-   - priceMin or priceMax is set
-   - keywords array has at least 1 item
-   Set to TRUE only if ALL are empty/null (no type, no price, no keywords)
+5. isVague: SIMPLE RULE:
+   - isVague = FALSE if ANY of these is present: productType OR keywords.length > 0 OR priceMax OR priceMin
+   - isVague = TRUE only if ALL are empty (no type, no theme, no price)
+   
+   Examples:
+   - "sportbeeld" → isVague: FALSE (has type + keywords)
+   - "mok" → isVague: FALSE (has type)
+   - "sport" → isVague: FALSE (has keywords)
+   - "onder 100 euro" → isVague: FALSE (has price)
+   - "cadeau voor mijn zus" → isVague: TRUE (nothing useful)
 
 CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
@@ -181,6 +186,10 @@ CRITICAL RULES:
 Examples:
 "cadeau voor mijn zus" → {"isVague": true}
 "iets leuks" → {"isVague": true}
+"onder 100 euro" → {"priceMax": 100, "isVague": false}
+"sportbeeld" → {"productType": "Beeld", "keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false, "isVague": false}
+"mok" → {"productType": "Mok", "isVague": false}
+"sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false, "isVague": false}
 "kat" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
 "poes" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
 "hond" → {"keywords": ["hond", "honden"], "requiresExactMatch": false, "isVague": false}
