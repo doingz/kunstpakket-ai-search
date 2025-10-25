@@ -122,7 +122,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       parseFilters(query),
       embed({
         model: openai.embedding('text-embedding-3-large'),
-        value: query
+        value: query,
+        dimensions: 1536 // Reduce from 3072 to 1536 (fits pgvector 2000 limit, keeps quality)
       })
     ]);
 

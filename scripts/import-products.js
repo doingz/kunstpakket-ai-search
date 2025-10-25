@@ -70,7 +70,8 @@ async function processBatch(batch, batchNum, totalBatches) {
     
     const { embeddings } = await embedMany({
       model: openai.embedding('text-embedding-3-large'),
-      values: texts
+      values: texts,
+      dimensions: 1536 // Reduce from 3072 to 1536 (fits pgvector 2000 limit, better quality than small model)
     });
     
     console.log(`  ✅ Generated ${embeddings.length} embeddings`);

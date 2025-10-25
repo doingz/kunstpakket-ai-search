@@ -15,8 +15,7 @@ async function setupSchema() {
     // Execute all schema migrations in order
     const migrations = [
       'schema/001_init.sql',
-      'schema/002_add_type.sql',
-      'schema/003_upgrade_embedding_dimensions.sql'
+      'schema/002_add_type.sql'
     ];
     
     for (const migrationFile of migrations) {
