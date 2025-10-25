@@ -7,13 +7,29 @@ import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
-import fs from 'fs';
-import path from 'path';
-
-// Load categories for ID->name lookup
-const categoriesPath = path.join(process.cwd(), 'data', 'categories.json');
-const categoriesData = JSON.parse(fs.readFileSync(categoriesPath, 'utf-8'));
-const categoryMap = new Map(categoriesData.map((c: any) => [c.id, c.title]));
+// Category map for ID->name lookup (hardcoded for performance - update when categories change)
+const categoryMap = new Map([
+  [8159306, "Liefde & Huwelijk"],
+  [8159309, "Relatiegeschenken & Eindejaarsgeschenken"],
+  [8159312, "Zakelijke Geschenken"],
+  [8159321, "Moderne Kunstcadeaus"],
+  [8159330, "Bedankbeelden"],
+  [10284228, "Sportbeelden"],
+  [10870334, "Jubileum & Afscheid"],
+  [11492653, "Geslaagd & Examen"],
+  [12363590, "Alle Bronzen & Moderne Beelden"],
+  [12702320, "Schalen & Vazen"],
+  [29063882, "Keramiek & Beelden"],
+  [29063885, "Schilderijen"],
+  [29063888, "Zorg & Verpleging"],
+  [29063891, "Gezinsbeelden"],
+  [29063909, "Wandborden"],
+  [29063912, "Museum Kunstcadeaus"],
+  [29063915, "Exclusief Brons"],
+  [29064002, "Samenwerking & Teambuilding"],
+  [29064053, "Frontpagina producten"],
+  [29386437, "Nieuw"]
+]);
 
 // Explicit Node.js runtime
 export const config = {
