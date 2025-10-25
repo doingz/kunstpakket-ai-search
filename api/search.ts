@@ -7,6 +7,13 @@ import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+
+// Load categories for ID->name lookup
+const categoriesPath = path.join(process.cwd(), 'data', 'categories.json');
+const categoriesData = JSON.parse(fs.readFileSync(categoriesPath, 'utf-8'));
+const categoryMap = new Map(categoriesData.map((c: any) => [c.id, c.title]));
 
 // Explicit Node.js runtime
 export const config = {
@@ -93,6 +100,12 @@ Examples:
 
 // Format product for response
 function formatProduct(row: any) {
+  const categoryIds = row.category_ids || [];
+  const categories = categoryIds.map((id: number) => ({
+    id,
+    name: categoryMap.get(id) || `Unknown (${id})`
+  }));
+  
   return {
     id: row.id,
     title: row.title,
@@ -107,7 +120,7 @@ function formatProduct(row: any) {
       : 0,
     image: row.image,
     type: row.type,
-    categories: row.category_ids || [],
+    categories: categories,  // Now includes {id, name}
     similarity: row.similarity ? parseFloat(row.similarity) : null
   };
 }
