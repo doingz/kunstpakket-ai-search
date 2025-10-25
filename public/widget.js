@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.6.3';
+  const VERSION = '2.7.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -21,12 +21,9 @@
   /**
    * Analytics tracking
    */
-  function trackSearch(query, resultCount) {
+  function trackSearch(searchId, query, resultCount) {
     try {
-      const searchId = crypto.randomUUID();
-      sessionStorage.setItem('kp_search_id', searchId);
-      sessionStorage.setItem('kp_last_query', query);
-      
+      // searchId is now passed as parameter (already in sessionStorage)
       fetch(ANALYTICS_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -355,6 +352,11 @@
     button.textContent = 'Zoeken...';
     resultsContainer.innerHTML = '<div class="kp-loading">🔍 Zoeken...</div>';
     
+    // Generate search_id BEFORE search (so it's available for URL generation)
+    const searchId = crypto.randomUUID();
+    sessionStorage.setItem('kp_search_id', searchId);
+    sessionStorage.setItem('kp_last_query', query);
+    
     try {
       const response = await fetch(`${API_BASE}/search`, {
         method: 'POST',
@@ -368,7 +370,9 @@
       currentResults = data;
       
       const resultCount = data.results?.total || data.results?.items?.length || 0;
-      trackSearch(query, resultCount);
+      
+      // Track search with pre-generated searchId
+      trackSearch(searchId, query, resultCount);
       
       renderResults(data);
       
