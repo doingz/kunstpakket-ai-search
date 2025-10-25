@@ -4,7 +4,7 @@
  */
 import { embed } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { createClient } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 
 export const runtime = 'edge'; // Use Edge Runtime for faster cold starts
 export const maxDuration = 25; // Edge functions max 25s
@@ -13,9 +13,9 @@ export const dynamic = 'force-dynamic';
 // Simple regex parsing for type and price
 function parseFilters(query: string) {
   const lowerQuery = query.toLowerCase();
-  
+
   // Extract type
-  let type = null;
+  let type: string | null = null;
   const types = ['beeld', 'schilderij', 'vaas', 'mok', 'onderzetter', 'theelicht', 'spiegeldoosje', 'wandbord', 'schaal', 'glasobject'];
   for (const t of types) {
     if (lowerQuery.includes(t)) {
@@ -23,23 +23,23 @@ function parseFilters(query: string) {
       break;
     }
   }
-  
+
   // Extract price
-  let price_min = null;
-  let price_max = null;
-  
+  let price_min: number | null = null;
+  let price_max: number | null = null;
+
   const maxMatch = lowerQuery.match(/(?:onder|max(?:imaal)?|tot)\s+(\d+)/);
   if (maxMatch) price_max = parseInt(maxMatch[1]);
-  
+
   const minMatch = lowerQuery.match(/(?:vanaf|min(?:imaal)?|boven)\s+(\d+)/);
   if (minMatch) price_min = parseInt(minMatch[1]);
-  
+
   const rangeMatch = lowerQuery.match(/tussen\s+(\d+)\s+en\s+(\d+)/);
   if (rangeMatch) {
     price_min = parseInt(rangeMatch[1]);
     price_max = parseInt(rangeMatch[2]);
   }
-  
+
   return { type, price_min, price_max };
 }
 
@@ -92,8 +92,8 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const { query } = await req.json();
-    if (!query) {
+    const { query: searchQuery } = await req.json();
+    if (!searchQuery) {
       return new Response(JSON.stringify({ error: 'Query required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -103,57 +103,51 @@ export default async function handler(req: Request) {
     const start = Date.now();
 
     // Parse filters (fast, no AI)
-    const filters = parseFilters(query);
+    const filters = parseFilters(searchQuery);
     
     // Generate embedding with AI SDK (one API call)
     const { embedding } = await embed({
       model: openai.textEmbeddingModel('text-embedding-3-small'),
-      value: query
+      value: searchQuery
     });
     
-    // Build query
-    const conditions = ['is_visible = true', 'embedding IS NOT NULL'];
-    const params: any[] = [JSON.stringify(embedding)];
+    // Build WHERE clause as string
+    let whereClause = 'is_visible = true AND embedding IS NOT NULL';
+    const sqlParams: any[] = [JSON.stringify(embedding)];
     let paramIndex = 2;
-    
+
     if (filters.type) {
-      params.push(filters.type);
-      conditions.push(`type = $${paramIndex++}`);
+      whereClause += ` AND type = $${paramIndex++}`;
+      sqlParams.push(filters.type);
     }
-    
+
     if (filters.price_min) {
-      params.push(filters.price_min);
-      conditions.push(`price >= $${paramIndex++}`);
+      whereClause += ` AND price >= $${paramIndex++}`;
+      sqlParams.push(filters.price_min);
     }
-    
+
     if (filters.price_max) {
-      params.push(filters.price_max);
-      conditions.push(`price <= $${paramIndex++}`);
+      whereClause += ` AND price <= $${paramIndex++}`;
+      sqlParams.push(filters.price_max);
     }
-    
-    // Vector search with explicit client
-    const client = createClient();
-    await client.connect();
-    
-    const queryStr = `
-      SELECT 
+
+    // Vector search with sql template literal (Edge Runtime compatible)
+    const queryText = `
+      SELECT
         id, title, full_title, content, brand, price, old_price,
         stock_sold, image, url
       FROM products
-      WHERE ${conditions.join(' AND ')}
-      ORDER BY 
-        embedding <=> $1::vector,
-        stock_sold DESC NULLS LAST
+      WHERE ${whereClause}
+      ORDER BY embedding <=> $1::vector, stock_sold DESC NULLS LAST
       LIMIT 50
     `;
-    
-    const result = await client.query(queryStr, params);
-    await client.end();
+
+    const result = await sql.query(queryText, sqlParams);
     
     const response = {
       success: true,
       query: {
-        original: query,
+        original: searchQuery,
         parsed: filters,
         took_ms: Date.now() - start
       },
