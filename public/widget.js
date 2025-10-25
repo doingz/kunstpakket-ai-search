@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.7.2';
+  const VERSION = '2.8.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -212,6 +212,16 @@
           enterkeyhint="search"
         />
         <button id="kp-search-button-bar" class="kp-search-btn">Zoeken</button>
+      </div>
+      <div class="kp-search-help">
+        <svg class="kp-help-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span class="kp-help-text">
+          Stel een vraag in natuurlijke taal. Bijvoorbeeld: "ik zoek een beeldje met een hart onder 80 euro" of "ik zoek een schilderij onder 300 euro"
+        </span>
       </div>
     `;
     
@@ -602,6 +612,29 @@
       
       .kp-search-btn:active {
         transform: translateY(0);
+      }
+      
+      /* Help text under search bar */
+      .kp-search-help {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        max-width: 600px;
+        margin: 12px auto 0;
+        padding: 0 16px;
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.5;
+      }
+      
+      .kp-help-icon {
+        flex-shrink: 0;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+      
+      .kp-help-text {
+        flex: 1;
       }
       
       /* Fullscreen overlay */
