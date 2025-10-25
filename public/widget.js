@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.2.3';
+  const VERSION = '4.2.4';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -1035,11 +1035,6 @@
         
         #kp-search-input-overlay {
           font-size: 16px;
-        }
-        
-        .kp-ai-search-btn-overlay svg {
-          width: 20px;
-          height: 20px;
         }
         
         .kp-close-button {
