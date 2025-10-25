@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.6.1';
+  const VERSION = '2.6.2';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -130,6 +130,11 @@
   function checkClickTracking() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
+      
+      // Debug: always log if we're checking
+      if (urlParams.has('bsclick')) {
+        console.log('[KP Search] bsclick parameter detected in URL');
+      }
       
       if (urlParams.get('bsclick') === '1') {
         const searchId = urlParams.get('sid');
@@ -952,10 +957,7 @@
   async function init() {
     console.log(`[KP Search Overlay] v${VERSION} loaded`);
     
-    // Check for click tracking (URL params from search results)
-    checkClickTracking();
-    
-    // Check purchase page
+    // Check purchase page (only track if user came from search)
     checkPurchasePage();
     
     // Check feature flags from server
@@ -1021,7 +1023,15 @@
     close: closeOverlay
   };
   
-  // Auto-initialize
+  // ALWAYS check for click tracking (even if widget is disabled!)
+  // This must run on every page to track clicks from search results
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkClickTracking);
+  } else {
+    checkClickTracking();
+  }
+  
+  // Auto-initialize widget
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
