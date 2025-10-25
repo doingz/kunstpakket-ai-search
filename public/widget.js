@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.5.0';
+  const VERSION = '2.5.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -217,13 +217,22 @@
     // Event listeners
     document.getElementById('kp-close-overlay').addEventListener('click', closeOverlay);
     document.getElementById('kp-search-button-overlay').addEventListener('click', () => {
-      const query = document.getElementById('kp-search-input-overlay').value.trim();
-      if (query) performSearch(query);
+      const input = document.getElementById('kp-search-input-overlay');
+      const query = input.value.trim();
+      if (query) {
+        performSearch(query);
+        // Close keyboard on mobile after search
+        setTimeout(() => input.blur(), 100);
+      }
     });
     document.getElementById('kp-search-input-overlay').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         const query = e.target.value.trim();
-        if (query) performSearch(query);
+        if (query) {
+          performSearch(query);
+          // Close keyboard on mobile after search
+          setTimeout(() => e.target.blur(), 100);
+        }
       }
     });
     
@@ -252,9 +261,15 @@
     if (query) {
       input.value = query;
       performSearch(query);
+      
+      // Blur input after search to close keyboard on mobile
+      setTimeout(() => {
+        input.blur();
+      }, 100);
+    } else {
+      // Only focus if no query (empty overlay)
+      input.focus();
     }
-    
-    input.focus();
   }
   
   function closeOverlay() {
