@@ -74,7 +74,7 @@ async function processBatch(batch, batchNum, totalBatches) {
       dimensions: 1536 // Reduce from 3072 to 1536 (fits pgvector 2000 limit, better quality than small model)
     });
     
-    console.log(`  ✅ Generated ${embeddings.length} embeddings`);
+    console.log(`  ✅ Generated ${embeddings.length} embeddings (${embeddings[0].length} dimensions)`);
     console.log(`  💾 Inserting into database...`);
     
     let inserted = 0;
