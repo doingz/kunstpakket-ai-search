@@ -224,11 +224,17 @@ export default async function handler(req: Request) {
       original: query
     });
     
-    // Generate advice
-    const advice = await generateAdvice(query, {
+    // Generate advice (with timeout fallback)
+    const advicePromise = generateAdvice(query, {
       total: searchResults.total,
       showing: searchResults.items.length
     });
+    
+    const timeoutPromise = new Promise<string>((resolve) => 
+      setTimeout(() => resolve(`Er zijn ${searchResults.total} producten gevonden!`), 2000)
+    );
+    
+    const advice = await Promise.race([advicePromise, timeoutPromise]);
 
     const response = {
       success: true,
