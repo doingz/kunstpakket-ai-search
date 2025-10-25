@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.0.2';
+  const VERSION = '4.0.3';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -395,7 +395,13 @@
           <div class="kp-advice-message">
             ${escapeHtml(data.advice)}
             <div class="kp-advice-examples">
-              Probeer bijvoorbeeld: "kat beeld", "schilderij blauw", "sportbeeld onder 100 euro", "bloemen vaas", of "modern beeld"
+              Probeer bijvoorbeeld:<br>
+              • "kat beeld" (type + thema)<br>
+              • "sportbeeld onder 100 euro" (type + thema + budget)<br>
+              • "bloemen vaas max 80 euro" (type + thema + budget)<br>
+              • "modern schilderij" (type + stijl)<br>
+              • "liefde beeld onder 50 euro" (type + thema + budget)<br>
+              • "huwelijkscadeau beeld" (thema + type)
             </div>
           </div>
           <button class="kp-search-again-btn" id="kp-search-again">Zoek opnieuw</button>
