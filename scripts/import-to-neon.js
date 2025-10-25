@@ -333,6 +333,67 @@ async function detectAndUpdateTypes() {
 }
 
 /**
+ * Generate embeddings for all products
+ */
+async function generateEmbeddings() {
+  try {
+    const { generateEmbedding } = await import('../lib/generate-embeddings.js');
+    
+    console.log('\n🔮 Generating embeddings...');
+    
+    // Get all visible products with full data for embeddings
+    const products = await sql`
+      SELECT 
+        p.id,
+        p.title,
+        p.full_title,
+        p.description,
+        p.type,
+        p.brand as brand_name,
+        ARRAY_AGG(DISTINCT c.title) FILTER (WHERE c.title IS NOT NULL) as categories
+      FROM products p
+      LEFT JOIN product_categories pc ON p.id = pc.product_id
+      LEFT JOIN categories c ON pc.category_id = c.id
+      WHERE p.is_visible = true
+      GROUP BY p.id, p.title, p.full_title, p.description, p.type, p.brand
+    `;
+    
+    let embeddingCount = 0;
+    let errorCount = 0;
+    
+    for (const product of products.rows) {
+      try {
+        const embedding = await generateEmbedding(product);
+        
+        await sql`
+          UPDATE products
+          SET embedding = ${JSON.stringify(embedding)}::vector
+          WHERE id = ${product.id}
+        `;
+        
+        embeddingCount++;
+        
+        // Show progress every 100 products
+        if (embeddingCount % 100 === 0) {
+          console.log(`  Progress: ${embeddingCount}/${products.rows.length}`);
+        }
+      } catch (error) {
+        console.error(`  ⚠️  Embedding for product ${product.id} failed:`, error.message);
+        errorCount++;
+      }
+    }
+    
+    console.log(`  ✅ Embeddings generated: ${embeddingCount}`);
+    if (errorCount > 0) {
+      console.log(`  ⚠️  Errors: ${errorCount}`);
+    }
+    
+  } catch (error) {
+    console.error('  ⚠️  Failed to generate embeddings:', error.message);
+  }
+}
+
+/**
  * Show import statistics
  */
 async function showStats() {
@@ -408,6 +469,9 @@ async function main() {
     // Detect and update product types
     console.log('\n🔍 Detecting product types...');
     await detectAndUpdateTypes();
+    
+    // Generate embeddings for vector search
+    await generateEmbeddings();
 
     console.log('\n✅ Import complete!');
     process.exit(0);
