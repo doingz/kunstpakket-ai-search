@@ -12,25 +12,37 @@ async function setupSchema() {
   console.log('🗄️  Setting up database schema...\n');
   
   try {
-    // Read and execute schema file directly
-    const schemaSQL = fs.readFileSync('schema/001_init.sql', 'utf-8');
+    // Execute all schema migrations in order
+    const migrations = [
+      'schema/001_init.sql',
+      'schema/002_add_type.sql',
+      'schema/003_upgrade_embedding_dimensions.sql'
+    ];
     
-    console.log('📝 Executing schema SQL...\n');
-    
-    try {
-      await sql.query(schemaSQL);
-      console.log('✅ Schema executed successfully\n');
-    } catch (error) {
-      // Some errors are okay (like extension already exists)
-      if (error.message.includes('already exists')) {
-        console.log('⚠️  Some objects already exist (continuing)\n');
-      } else {
-        console.error('Schema execution error:', error.message);
-        throw error;
+    for (const migrationFile of migrations) {
+      if (!fs.existsSync(migrationFile)) {
+        console.log(`⏭️  Skipping ${migrationFile} (not found)\n`);
+        continue;
+      }
+      
+      console.log(`📝 Executing ${migrationFile}...\n`);
+      const schemaSQL = fs.readFileSync(migrationFile, 'utf-8');
+      
+      try {
+        await sql.query(schemaSQL);
+        console.log(`✅ ${migrationFile} executed successfully\n`);
+      } catch (error) {
+        // Some errors are okay (like extension already exists)
+        if (error.message.includes('already exists') || error.message.includes('does not exist')) {
+          console.log(`⚠️  Some objects already exist or don't exist (continuing)\n`);
+        } else {
+          console.error('Schema execution error:', error.message);
+          throw error;
+        }
       }
     }
     
-    console.log('✅ Schema setup complete!\n');
+    console.log('✅ All migrations complete!\n');
     
     // Verify pgvector is installed
     const result = await sql`

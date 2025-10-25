@@ -69,7 +69,7 @@ async function processBatch(batch, batchNum, totalBatches) {
     console.log(`  ⏳ Generating embeddings...`);
     
     const { embeddings } = await embedMany({
-      model: openai.embedding('text-embedding-3-small'),
+      model: openai.embedding('text-embedding-3-large'),
       values: texts
     });
     

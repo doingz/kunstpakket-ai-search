@@ -121,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const [filters, { embedding }] = await Promise.all([
       parseFilters(query),
       embed({
-        model: openai.embedding('text-embedding-3-small'),
+        model: openai.embedding('text-embedding-3-large'),
         value: query
       })
     ]);
