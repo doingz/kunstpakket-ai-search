@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.3.3';
+  const VERSION = '4.3.4';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -697,7 +697,7 @@
         border-bottom: 1px solid #e2e8f0;
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-between;
         gap: 12px;
         z-index: 10;
       }
