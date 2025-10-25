@@ -13,57 +13,54 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Simplified AI parsing - extract filters only
-async function parseQuery(query: string) {
+// Simple regex-based parsing - fast, no AI needed
+function parseQuery(query: string) {
   const start = Date.now();
+  const lowerQuery = query.toLowerCase();
   
-  const prompt = `Extract filters from Dutch search query. Return JSON only.
-
-Query: "${query}"
-
-Extract:
-- type: exact product type (Beeld|Schilderij|Vaas|Mok|Onderzetter|Theelicht|Spiegeldoosje|Wandbord|Schaal|Glasobject) or null
-- price_min: minimum price in euros or null
-- price_max: maximum price in euros or null
-- semantic_query: the rest (theme, style, subject, mood) for semantic search
-
-Examples:
-"modern schilderij onder 300" → {"type":"Schilderij","price_max":300,"semantic_query":"modern"}
-"leuk cadeau" → {"type":null,"price_min":null,"price_max":null,"semantic_query":"leuk cadeau"}
-"van gogh vaas" → {"type":"Vaas","price_min":null,"price_max":null,"semantic_query":"van gogh"}
-"beeldje met voetballer" → {"type":"Beeld","price_min":null,"price_max":null,"semantic_query":"voetballer"}
-
-Return JSON only.`;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',  // Cheaper model for simpler task
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0,
-      max_tokens: 100,
-      response_format: { type: 'json_object' }
-    });
-
-    const parsed = JSON.parse(response.choices[0].message.content || '{}');
-    
-    return {
-      original: query,
-      parsed,
-      took_ms: Date.now() - start
-    };
-  } catch (error) {
-    console.error('AI parse error:', error);
-    return {
-      original: query,
-      parsed: { 
-        type: null,
-        price_min: null,
-        price_max: null,
-        semantic_query: query
-      },
-      took_ms: Date.now() - start
-    };
+  // Extract type
+  let type = null;
+  const types = ['beeld', 'schilderij', 'vaas', 'mok', 'onderzetter', 'theelicht', 'spiegeldoosje', 'wandbord', 'schaal', 'glasobject'];
+  for (const t of types) {
+    if (lowerQuery.includes(t)) {
+      type = t.charAt(0).toUpperCase() + t.slice(1);
+      break;
+    }
   }
+  
+  // Extract price
+  let price_min = null;
+  let price_max = null;
+  
+  // "onder X euro" or "maximaal X"
+  const maxMatch = lowerQuery.match(/(?:onder|max(?:imaal)?|tot)\s+(\d+)/);
+  if (maxMatch) {
+    price_max = parseInt(maxMatch[1]);
+  }
+  
+  // "vanaf X euro" or "minimaal X"
+  const minMatch = lowerQuery.match(/(?:vanaf|min(?:imaal)?|boven)\s+(\d+)/);
+  if (minMatch) {
+    price_min = parseInt(minMatch[1]);
+  }
+  
+  // "tussen X en Y"
+  const rangeMatch = lowerQuery.match(/tussen\s+(\d+)\s+en\s+(\d+)/);
+  if (rangeMatch) {
+    price_min = parseInt(rangeMatch[1]);
+    price_max = parseInt(rangeMatch[2]);
+  }
+  
+  return {
+    original: query,
+    parsed: {
+      type,
+      price_min,
+      price_max,
+      semantic_query: query
+    },
+    took_ms: Date.now() - start
+  };
 }
 
 // Vector search with SQL filters
@@ -139,43 +136,23 @@ function formatProduct(row: any) {
   };
 }
 
-// Generate advice message
-async function generateAdvice(query: string, results: any) {
-  if (results.total === 0) {
+// Simple advice message - no AI needed
+function generateAdvice(query: string, total: number) {
+  if (total === 0) {
     return 'Helaas geen producten gevonden. Probeer een andere zoekopdracht.';
   }
-
-  const prompt = `Write a friendly, helpful message in Dutch about these search results.
-
-Query: "${query}"
-Found: ${results.total} products
-Showing: ${results.showing} products
-
-Requirements:
-- Use first person ("Ik heb...") or neutral ("Er zijn..."), NEVER use second person ("Je hebt...")
-- Make it friendly, warm and inviting (2-3 sentences)
-- Be natural, encouraging and conversational
-- ALWAYS include ONE relevant emoji at the start of the message
-- Make it feel personal and helpful
-
-Examples:
-- "🎨 Ik heb 15 prachtige mokken voor je gevonden! Van klassiek tot modern, er zit vast iets moois tussen voor jou."
-- "✨ Er zijn 8 kunstwerken die perfect passen bij je zoekopdracht. Neem gerust de tijd om rond te kijken!"
-- "🎁 Ik vond 12 mooie cadeaus onder €50 voor je. Hopelijk zit er iets tussen dat je zoekt!"`;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 100
-    });
-
-    return response.choices[0].message.content?.trim() || 
-           `Gevonden: ${results.total} producten. Bekijk de resultaten hieronder!`;
-  } catch (error) {
-    console.error('Advice generation error:', error);
-    return `Gevonden: ${results.total} producten.`;
+  
+  const emojis = ['🎨', '✨', '🎁', '💎', '🌟', '🖼️', '🎭'];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+  
+  if (total === 1) {
+    return `${emoji} Er is 1 product gevonden dat past bij je zoekopdracht!`;
+  } else if (total <= 5) {
+    return `${emoji} Er zijn ${total} producten gevonden! Neem gerust de tijd om te bekijken.`;
+  } else if (total <= 20) {
+    return `${emoji} Ik heb ${total} mooie producten voor je gevonden! Hopelijk zit er iets tussen dat je zoekt.`;
+  } else {
+    return `${emoji} Er zijn ${total} producten gevonden die passen bij je zoekopdracht!`;
   }
 }
 
@@ -219,26 +196,17 @@ export default async function handler(req: Request) {
 
     const queryStart = Date.now();
 
-    // Parse query (extract filters)
-    const parsed = await parseQuery(query);
+    // Parse query (fast, no AI)
+    const parsed = parseQuery(query);
     
-    // Vector search with filters
+    // Vector search with filters (only 1 AI call: embedding)
     const searchResults = await vectorSearch({
       ...parsed.parsed,
       original: query
     });
     
-    // Generate advice (with timeout fallback)
-    const advicePromise = generateAdvice(query, {
-      total: searchResults.total,
-      showing: searchResults.items.length
-    });
-    
-    const timeoutPromise = new Promise<string>((resolve) => 
-      setTimeout(() => resolve(`Er zijn ${searchResults.total} producten gevonden!`), 2000)
-    );
-    
-    const advice = await Promise.race([advicePromise, timeoutPromise]);
+    // Generate advice (fast, no AI)
+    const advice = generateAdvice(query, searchResults.total);
 
     const response = {
       success: true,
