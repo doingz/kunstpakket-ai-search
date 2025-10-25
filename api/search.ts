@@ -8,7 +8,7 @@ import { sql } from '@vercel/postgres';
 import { z } from 'zod';
 
 export const runtime = 'edge';
-export const maxDuration = 10;
+export const maxDuration = 25; // Edge max is 25s
 export const dynamic = 'force-dynamic';
 
 // AI-powered filter extraction using generateObject
