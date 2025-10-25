@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.8.2';
+  const VERSION = '2.8.3';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -214,7 +214,7 @@
         <button id="kp-search-button-bar" class="kp-search-btn">Zoeken</button>
       </div>
       <div class="kp-search-help">
-        <svg class="kp-help-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="kp-help-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
