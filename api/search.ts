@@ -21,6 +21,7 @@ async function parseFilters(query: string) {
     schema: z.object({
       priceMin: z.number().optional(),
       priceMax: z.number().optional(),
+      productType: z.string().optional().describe('Product type: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek'),
       keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, artists, objects). Empty array if none.'),
       requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
     }),
@@ -28,23 +29,26 @@ async function parseFilters(query: string) {
 
 Extract:
 1. priceMin/priceMax: Numbers mentioned with "onder", "boven", "tussen", "max", "maximaal"
-2. keywords: ONLY specific subjects (animals like "hond/kat", artists like "Van Gogh", brands)
-3. requiresExactMatch: true ONLY if keywords need to be in title/description
+2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek
+3. keywords: ONLY specific subjects (animals like "hond/kat", artists like "Van Gogh", brands, person names)
+4. requiresExactMatch: true ONLY if keywords need to be in title/description
 
 CRITICAL RULES:
-- DO NOT extract product types (schilderij, beeld, vaas, mok) as keywords
-- ONLY extract specific subjects: animals, artists, person names, brands
-- Product types should use semantic search, not keyword filtering
+- Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
+- DO NOT add product types as keywords
+- ONLY extract specific subjects as keywords: animals, artists, person names, brands
 
 Examples:
 "kat" → {"keywords": ["kat"], "requiresExactMatch": true}
 "hond" → {"keywords": ["hond"], "requiresExactMatch": true}
-"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "keywords": ["hond"], "requiresExactMatch": true}
-"Van Gogh schilderij" → {"keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
-"schilderij max 300 euro" → {"priceMax": 300, "keywords": [], "requiresExactMatch": false}
-"beeld" → {"keywords": [], "requiresExactMatch": false}
-"cadeau voor moeder" → {"keywords": ["moeder"], "requiresExactMatch": false}
-"iets moois" → {"keywords": [], "requiresExactMatch": false}`,
+"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond"], "requiresExactMatch": true}
+"Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
+"schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
+"een schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
+"beeld" → {"productType": "Beeld"}
+"vaas" → {"productType": "Vaas"}
+"cadeau voor moeder" → {"keywords": ["moeder"]}
+"iets moois" → {}`,
   });
   
   return object;
@@ -108,6 +112,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let whereClause = 'is_visible = true AND embedding IS NOT NULL';
     const params: any[] = [JSON.stringify(embedding)];
     let paramIndex = 2;
+
+    if (filters.productType) {
+      params.push(filters.productType);
+      whereClause += ` AND type = $${paramIndex++}`;
+    }
 
     if (filters.priceMax) {
       params.push(filters.priceMax);

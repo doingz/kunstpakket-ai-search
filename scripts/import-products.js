@@ -7,6 +7,7 @@ import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { detectType } from '../lib/type-detector.js';
 
 dotenv.config();
 
@@ -83,6 +84,7 @@ async function processBatch(batch, batchNum, totalBatches) {
       const product = batch[i];
       const embedding = embeddings[i];
       const variant = variantMap.get(product.id) || { priceExcl: 0, oldPriceExcl: null, stockSold: 0 };
+      const productType = detectType(product);
       
       // Check if product exists
       const existing = await sql`SELECT id FROM products WHERE id = ${product.id}`;
@@ -103,6 +105,7 @@ async function processBatch(batch, batchNum, totalBatches) {
             is_visible = ${product.isVisible},
             image = ${product.image?.src || null},
             stock_sold = ${variant.stockSold},
+            type = ${productType},
             embedding = ${JSON.stringify(embedding)}::vector,
             updated_at = NOW()
           WHERE id = ${product.id}
@@ -113,7 +116,7 @@ async function processBatch(batch, batchNum, totalBatches) {
         await sql`
           INSERT INTO products (
             id, title, full_title, description, content, url, 
-            brand, price, old_price, is_visible, image, stock_sold,
+            brand, price, old_price, is_visible, image, stock_sold, type,
             embedding
           )
           VALUES (
@@ -129,6 +132,7 @@ async function processBatch(batch, batchNum, totalBatches) {
             ${product.isVisible},
             ${product.image?.src || null},
             ${variant.stockSold},
+            ${productType},
             ${JSON.stringify(embedding)}::vector
           )
         `;
