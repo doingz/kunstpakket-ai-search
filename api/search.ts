@@ -1,13 +1,14 @@
 /**
  * AI-powered semantic search with Vercel AI SDK + pgvector
- * Edge Runtime for fastest cold starts
+ * Node.js runtime for stable imports (Edge has ESM bundling issues)
  */
 import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
 
-// Using Serverless (Node.js) instead of Edge due to module import issues
+// Explicit Node.js runtime
+export const runtime = 'nodejs';
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 

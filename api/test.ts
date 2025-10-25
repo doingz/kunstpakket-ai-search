@@ -5,7 +5,8 @@ import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
-// Serverless instead of Edge
+// Explicit Node.js runtime for stable imports
+export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 export default async function handler(req: Request) {
