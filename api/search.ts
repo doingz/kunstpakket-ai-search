@@ -16,34 +16,28 @@ export const config = {
 
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
-  try {
-    const { object } = await generateObject({
-      model: openai('gpt-4o-mini'),
-      schema: z.object({
-        priceMin: z.number().nullable().optional(),
-        priceMax: z.number().nullable().optional(),
-        categories: z.array(z.string()).nullable().optional()
-      }),
-      prompt: `Extract price and category filters from: "${query}"
+  const { object } = await generateObject({
+    model: openai('gpt-4o-mini'),
+    schema: z.object({
+      priceMin: z.number().optional(),
+      priceMax: z.number().optional(),
+      categories: z.array(z.string()).optional()
+    }),
+    prompt: `Extract price and category filters from this Dutch search query: "${query}"
 
-Return JSON with:
-- priceMin: number or null
-- priceMax: number or null  
-- categories: string[] or null
+Only extract explicitly mentioned numbers and categories.
 
 Examples:
-"onder 50 euro" → {"priceMax": 50}
-"tussen 20 en 50" → {"priceMin": 20, "priceMax": 50}
-"schilderij" → {}
-"Van Gogh" → {}`,
-    });
-    
-    return object;
-  } catch (error) {
-    console.error('Filter parsing failed:', error);
-    // Fallback: no filters
-    return {};
-  }
+- "schilderij onder 50 euro" → {"priceMax": 50}
+- "tussen 20 en 50" → {"priceMin": 20, "priceMax": 50}
+- "cadeau" → {"categories": ["geschenken"]}
+- "schilderij" → {}
+- "Van Gogh" → {}
+
+Return empty object {} if no filters found.`,
+  });
+  
+  return object;
 }
 
 // Format product for response
