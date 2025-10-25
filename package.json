@@ -1,7 +1,6 @@
 {
   "name": "kunstpakket-ai-search",
   "version": "2.0.0",
-  "type": "module",
   "description": "AI-powered search widget for Kunstpakket.nl",
   "scripts": {
     "sync": "node scripts/sync-lightspeed.js",
