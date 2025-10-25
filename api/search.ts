@@ -154,9 +154,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let orderBy = 'embedding <=> $1::vector';
     
     if (filters.requiresExactMatch && filters.keywords && filters.keywords.length > 0) {
+      // Calculate starting index for keyword parameters
+      let keywordParamStartIndex = 2;
+      if (filters.productType) keywordParamStartIndex++;
+      if (filters.priceMax) keywordParamStartIndex++;
+      if (filters.priceMin) keywordParamStartIndex++;
+      
       // Boost products with keywords in title
       const keywordBoost = filters.keywords.map((_, idx) => 
-        `CASE WHEN title ILIKE $${2 + (filters.priceMax ? 1 : 0) + (filters.priceMin ? 1 : 0) + idx} THEN 0 ELSE 1 END`
+        `CASE WHEN title ILIKE $${keywordParamStartIndex + idx} THEN 0 ELSE 1 END`
       ).join(' + ');
       
       orderBy = `(${keywordBoost}), ${orderBy}`;
