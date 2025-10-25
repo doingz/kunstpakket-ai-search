@@ -57,9 +57,11 @@ Extract:
 2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek
 3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
 4. requiresExactMatch: true if keywords MUST appear in title/description
-5. isVague: true if query lacks specific details. Examples:
-   - TOO VAGUE (isVague=true): "cadeau voor mijn zus", "iets leuks", "origineel cadeau", "een mooi geschenk"
-   - SPECIFIC ENOUGH (isVague=false): "kat beeld", "schilderij blauw", "cadeau onder 50 euro", "sportbeeld", "huwelijkscadeau"
+5. isVague: Set to FALSE if ANY of these is present:
+   - productType is set (Beeld, Schilderij, etc.)
+   - priceMin or priceMax is set
+   - keywords array has at least 1 item
+   Set to TRUE only if ALL are empty/null (no type, no price, no keywords)
 
 CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
@@ -82,10 +84,13 @@ CRITICAL RULES:
 - Use requiresExactMatch=false for category/occasion searches (broader matching)
 
 Examples:
-"kat" → {"keywords": ["kat", "poes"], "requiresExactMatch": false}
-"poes" → {"keywords": ["kat", "poes"], "requiresExactMatch": false}
-"hond" → {"keywords": ["hond", "honden"], "requiresExactMatch": false}
-"Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
+"cadeau voor mijn zus" → {"isVague": true}
+"iets leuks" → {"isVague": true}
+"kat" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
+"poes" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
+"hond" → {"keywords": ["hond", "honden"], "requiresExactMatch": false, "isVague": false}
+"Beeld max 200 euro" → {"productType": "Beeld", "priceMax": 200, "isVague": false}
+"Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true, "isVague": false}
 "een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond", "honden"], "requiresExactMatch": false}
 "schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
 "niet te duur" → {"priceMax": null}
