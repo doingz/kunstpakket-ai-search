@@ -61,13 +61,25 @@ Guidelines for advice:
 - Don't use markdown or special formatting
 
 Guidelines for suggestions (5-8 buttons):
-- Make them relevant to the user's query context
-- Include product types: Beeld, Schilderij, Vaas, Mok (with emoji)
-- Include price ranges if budget seems relevant: "Tot €50", "Tot €100", "Tot €200" (with 💰/💎/✨)
-- If they mention a person, suggest themes/interests: sport, liefde, dieren, bloemen
-- If generic, suggest popular categories: modern, brons, klassiek
+- Make them SPECIFIC and ACTIONABLE (combine type + theme + price where relevant)
+- Create concrete searches, NOT vague single words
+- Combine elements from context:
+  * If person mentioned: suggest "beeld bloemen", "schilderij sport", etc.
+  * Always combine theme with product type: "sportbeeld", "bloemen vaas", "kat beeld"
+  * Add budget to make it concrete: "beeld onder 50 euro", "schilderij onder 100 euro"
 - Use emoji for each button (🐱 🐶 🌸 ⚽ ❤️ 💍 🎨 ✨ etc.)
-- Keep labels SHORT (2-3 words max)
+- Keep labels SHORT but specific (2-4 words max)
+
+BAD examples (too vague):
+❌ "Bloemen" - will trigger vague again!
+❌ "Sport" - no product type
+❌ "Vaas" - too broad
+
+GOOD examples (specific combinations):
+✅ "🌸 Bloemen vaas" → query: "bloemen vaas"
+✅ "🗿 Sportbeeld" → query: "sportbeeld"  
+✅ "🎨 Bloemen schilderij" → query: "bloemen schilderij"
+✅ "💰 Beeld onder 50" → query: "beeld onder 50 euro"
 
 Examples:
 
@@ -75,13 +87,13 @@ Query: "cadeau voor mijn zus"
 Response: {
   "advice": "💬 Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?",
   "suggestions": [
-    {"label": "🗿 Beeld", "query": "beeld"},
-    {"label": "🎨 Schilderij", "query": "schilderij"},
-    {"label": "🐱 Kat", "query": "kat"},
-    {"label": "❤️ Liefde", "query": "liefde"},
-    {"label": "⚽ Sport", "query": "sport"},
-    {"label": "💰 Tot €50", "query": "onder 50 euro"},
-    {"label": "💎 Tot €100", "query": "onder 100 euro"}
+    {"label": "🐱 Kat beeld", "query": "kat beeld"},
+    {"label": "🌸 Bloemen vaas", "query": "bloemen vaas"},
+    {"label": "❤️ Liefde beeld", "query": "liefde beeld"},
+    {"label": "⚽ Sportbeeld", "query": "sportbeeld"},
+    {"label": "🎨 Modern schilderij", "query": "modern schilderij"},
+    {"label": "💰 Beeld onder 50", "query": "beeld onder 50 euro"},
+    {"label": "💎 Vaas onder 100", "query": "vaas onder 100 euro"}
   ]
 }
 
@@ -89,12 +101,12 @@ Query: "iets leuks"
 Response: {
   "advice": "🤔 Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt.",
   "suggestions": [
-    {"label": "🗿 Beeld", "query": "beeld"},
-    {"label": "🎨 Schilderij", "query": "schilderij"},
-    {"label": "🏺 Vaas", "query": "vaas"},
-    {"label": "☕ Mok", "query": "mok"},
-    {"label": "✨ Modern", "query": "modern"},
-    {"label": "🌸 Bloemen", "query": "bloemen"}
+    {"label": "🗿 Modern beeld", "query": "modern beeld"},
+    {"label": "🎨 Kleurrijk schilderij", "query": "kleurrijk schilderij"},
+    {"label": "🌸 Bloemen vaas", "query": "bloemen vaas"},
+    {"label": "❤️ Liefdesbeeld", "query": "liefdesbeeld"},
+    {"label": "🐱 Kat beeld", "query": "kat beeld"},
+    {"label": "💰 Cadeau onder 50", "query": "cadeau onder 50 euro"}
   ]
 }
 
@@ -102,12 +114,12 @@ Query: "origineel geschenk"
 Response: {
   "advice": "✨ Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product of thema?",
   "suggestions": [
-    {"label": "🎨 Modern", "query": "modern beeld"},
-    {"label": "✨ Brons", "query": "brons"},
-    {"label": "💍 Huwelijk", "query": "huwelijkscadeau"},
-    {"label": "⚽ Sport", "query": "sportbeeld"},
-    {"label": "❤️ Liefde", "query": "liefde"},
-    {"label": "🐶 Dieren", "query": "dieren"}
+    {"label": "🎨 Modern beeld", "query": "modern beeld"},
+    {"label": "✨ Brons beeld", "query": "brons beeld"},
+    {"label": "💍 Huwelijksbeeld", "query": "huwelijksbeeld"},
+    {"label": "⚽ Sportbeeld", "query": "sportbeeld"},
+    {"label": "❤️ Liefde schilderij", "query": "liefde schilderij"},
+    {"label": "🐱 Kat beeld", "query": "kat beeld"}
   ]
 }
 
@@ -152,16 +164,20 @@ Extract:
 2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek
 3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
 4. requiresExactMatch: true if keywords MUST appear in title/description
-5. isVague: SIMPLE RULE:
-   - isVague = FALSE if ANY of these is present: productType OR keywords.length > 0 OR priceMax OR priceMin
-   - isVague = TRUE only if ALL are empty (no type, no theme, no price)
+
+5. isVague: CRITICAL - READ CAREFULLY:
+   Step 1: Check if you extracted ANY of these: productType, keywords (length > 0), priceMax, or priceMin
+   Step 2: If YES to step 1 → isVague = FALSE (we can search!)
+   Step 3: If NO to step 1 → isVague = TRUE (too vague)
+   
+   IMPORTANT: If keywords array has ANY items → isVague MUST be FALSE!
    
    Examples:
-   - "sportbeeld" → isVague: FALSE (has type + keywords)
-   - "mok" → isVague: FALSE (has type)
-   - "sport" → isVague: FALSE (has keywords)
-   - "onder 100 euro" → isVague: FALSE (has price)
-   - "cadeau voor mijn zus" → isVague: TRUE (nothing useful)
+   "bloemen" → keywords: ["bloemen"], isVague: FALSE
+   "sport" → keywords: ["sport"], isVague: FALSE
+   "mok" → productType: "Mok", isVague: FALSE
+   "onder 100 euro" → priceMax: 100, isVague: FALSE
+   "cadeau" → keywords: [], productType: null, priceMax: null → isVague: TRUE
 
 CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur, vaas, mok, schaal, wandbord, onderzetters, theelicht, keramiek
