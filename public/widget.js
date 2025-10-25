@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.8.1';
+  const VERSION = '2.8.2';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -621,7 +621,7 @@
         gap: 8px;
         max-width: 600px;
         margin: 16px auto 0;
-        padding: 0;
+        padding: 0 20px;
         font-size: 14.5px;
         color: #64748b;
         line-height: 1.6;
@@ -629,7 +629,7 @@
       
       .kp-help-icon {
         flex-shrink: 0;
-        color: #94a3b8;
+        color: #f5876e;
         margin-top: 3px;
       }
       
