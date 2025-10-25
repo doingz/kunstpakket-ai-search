@@ -17,10 +17,12 @@ const startTime = Date.now();
 console.log('📖 Reading data files...');
 const products = JSON.parse(fs.readFileSync('data/products.json', 'utf-8'));
 const variants = JSON.parse(fs.readFileSync('data/variants.json', 'utf-8'));
+const categories = JSON.parse(fs.readFileSync('data/categories.json', 'utf-8'));
 const categoriesProducts = JSON.parse(fs.readFileSync('data/categories-products.json', 'utf-8'));
 
 console.log(`   Products: ${products.length}`);
 console.log(`   Variants: ${variants.length}`);
+console.log(`   Categories: ${categories.length}`);
 console.log(`   Category mappings: ${categoriesProducts.length}`);
 console.log('');
 
@@ -40,13 +42,31 @@ variants.forEach(variant => {
 console.log(`✅ Mapped ${variantMap.size} default variants with prices`);
 console.log('');
 
+// Build category map (categoryId -> category name)
+const categoryMap = new Map();
+categories.forEach(cat => {
+  categoryMap.set(cat.id, cat.title);
+});
+console.log(`✅ Mapped ${categoryMap.size} categories`);
+console.log('');
+
 // Build embedding text from product data
 function buildEmbeddingText(product) {
+  // Get category names for this product
+  const productCategoryIds = categoriesProducts
+    .filter(cp => cp.product.id === product.id)
+    .map(cp => cp.category.id);
+  
+  const categoryNames = productCategoryIds
+    .map(id => categoryMap.get(id))
+    .filter(Boolean);
+  
   const parts = [
     product.title,
     product.fulltitle,
     product.description?.replace(/<[^>]*>/g, ''), // Strip HTML
-    product.brand?.title
+    product.brand?.title,
+    ...categoryNames // Add category names to embedding!
   ].filter(Boolean);
   
   return parts.join(' ').trim();
