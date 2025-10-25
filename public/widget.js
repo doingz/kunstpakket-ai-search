@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.3.4';
+  const VERSION = '4.4.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -349,7 +349,7 @@
     const button = document.getElementById('kp-search-button-overlay');
     
     button.disabled = true;
-    resultsContainer.innerHTML = '<div class="kp-loading">🔍 Zoeken...</div>';
+    resultsContainer.innerHTML = '<div class="kp-loading">Zoeken<span class="kp-dots"><span>.</span><span>.</span><span>.</span></span></div>';
     
     // Generate search_id BEFORE search (so it's available for URL generation)
     const searchId = crypto.randomUUID();
@@ -808,6 +808,36 @@
         padding: 60px 20px;
         font-size: 18px;
         color: #64748b;
+      }
+      
+      .kp-dots {
+        display: inline-block;
+      }
+      
+      .kp-dots span {
+        animation: kp-dot-pulse 1.4s infinite;
+        opacity: 0;
+      }
+      
+      .kp-dots span:nth-child(1) {
+        animation-delay: 0s;
+      }
+      
+      .kp-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      
+      .kp-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      
+      @keyframes kp-dot-pulse {
+        0%, 60%, 100% {
+          opacity: 0;
+        }
+        30% {
+          opacity: 1;
+        }
       }
       
       /* Needs More Info - AI Conversational (same style as verkooppraatje) */
