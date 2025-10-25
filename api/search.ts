@@ -16,50 +16,37 @@ export const config = {
 
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
-  try {
-    const { object } = await generateObject({
-      model: openai('gpt-4o-mini'),
-      schema: z.object({
-        priceMin: z.number().nullable().optional(),
-        priceMax: z.number().nullable().optional(),
-        categories: z.array(z.string()).nullable().optional(),
-        keywords: z.array(z.string()).nullable().optional().describe('Specific subjects, animals, artists, or objects mentioned'),
-        requiresExactMatch: z.boolean().nullable().optional().describe('True if query is about specific things that need keyword matching')
-      }),
-      prompt: `Extract filters and keywords from this Dutch product search query: "${query}"
+  const { object } = await generateObject({
+    model: openai('gpt-4o-mini'),
+    schema: z.object({
+      priceMin: z.number().optional(),
+      priceMax: z.number().optional(),
+      keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, artists, objects). Empty array if none.'),
+      requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
+    }),
+    prompt: `Analyze this Dutch product search query and extract filters: "${query}"
 
-IMPORTANT RULES:
-1. Extract specific subjects as keywords (animals, artists, names, objects)
-2. Set requiresExactMatch=true if user searches for SPECIFIC things (not vague queries)
-3. Keywords should be Dutch words that appear in product titles/descriptions
-4. ALWAYS return valid JSON, even for simple queries
+Extract:
+1. priceMin/priceMax: Numbers mentioned with "onder", "boven", "tussen", "max", "maximaal"
+2. keywords: Specific nouns (animals, artists, objects, names)
+3. requiresExactMatch: true if query is about SPECIFIC things (animals, artists, brands)
+
+Rules:
+- For specific subjects (hond, kat, Van Gogh), extract as keywords + set requiresExactMatch=true
+- For vague queries (iets moois, cadeau), no keywords or requiresExactMatch=false
+- Always return valid JSON
 
 Examples:
-- "kat" → {"keywords": ["kat"], "requiresExactMatch": true}
-- "hond" → {"keywords": ["hond"], "requiresExactMatch": true}
-- "een beeldje met een hond, max 80 euro" → {"priceMax": 80, "keywords": ["hond"], "requiresExactMatch": true}
-- "Van Gogh schilderij" → {"keywords": ["van gogh", "gogh", "schilderij"], "requiresExactMatch": true}
-- "cadeau voor moeder" → {"keywords": ["moeder", "cadeau"], "requiresExactMatch": false}
-- "iets moois" → {"requiresExactMatch": false}
-
-CRITICAL: Always return a valid object. Use null for missing values.`,
-    });
-    
-    // Clean up null values
-    return {
-      priceMin: object.priceMin || undefined,
-      priceMax: object.priceMax || undefined,
-      categories: object.categories || undefined,
-      keywords: object.keywords || undefined,
-      requiresExactMatch: object.requiresExactMatch || false
-    };
-  } catch (error) {
-    console.error('Filter parsing error:', error);
-    // Fallback: treat query as keywords for semantic search only
-    return {
-      requiresExactMatch: false
-    };
-  }
+"kat" → {"keywords": ["kat"], "requiresExactMatch": true}
+"hond" → {"keywords": ["hond"], "requiresExactMatch": true}
+"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "keywords": ["hond"], "requiresExactMatch": true}
+"Van Gogh schilderij" → {"keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
+"cadeau voor moeder niet te duur" → {"priceMax": 100, "keywords": ["moeder", "cadeau"], "requiresExactMatch": false}
+"iets moois voor woonkamer" → {"keywords": [], "requiresExactMatch": false}
+"tussen 20 en 50 euro" → {"priceMin": 20, "priceMax": 50, "keywords": [], "requiresExactMatch": false}`,
+  });
+  
+  return object;
 }
 
 // Format product for response
