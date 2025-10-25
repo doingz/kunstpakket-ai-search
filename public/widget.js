@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.3.0';
+  const VERSION = '4.3.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -349,7 +349,6 @@
     const button = document.getElementById('kp-search-button-overlay');
     
     button.disabled = true;
-    button.textContent = 'Zoeken...';
     resultsContainer.innerHTML = '<div class="kp-loading">🔍 Zoeken...</div>';
     
     // Generate search_id BEFORE search (so it's available for URL generation)
@@ -382,7 +381,6 @@
     } finally {
       isSearching = false;
       button.disabled = false;
-      button.textContent = 'Zoeken';
     }
   }
   
