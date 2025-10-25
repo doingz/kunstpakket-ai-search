@@ -38,45 +38,97 @@ export const config = {
 };
 
 // Generate contextual advice for vague queries
-async function generateVagueAdvice(query: string): Promise<string> {
+async function generateVagueAdvice(query: string): Promise<{advice: string, suggestions: Array<{label: string, query: string}>}> {
   try {
     const { object } = await generateObject({
       model: openai('gpt-4o-mini'),
       schema: z.object({
-        advice: z.string().describe('Friendly, conversational advice message in Dutch to help refine the search. Ask clarifying questions about interests, budget, or product type. Keep it natural and helpful, like a salesperson would ask.')
+        advice: z.string().describe('Friendly, conversational advice message in Dutch to help refine the search. Ask clarifying questions about interests, budget, or product type. Keep it natural and helpful, like a salesperson would ask.'),
+        suggestions: z.array(z.object({
+          label: z.string().describe('Button label with emoji (e.g. "🐱 Kat", "💰 Tot €50")'),
+          query: z.string().describe('Search query when button is clicked')
+        })).describe('5-8 relevant quick filter suggestions based on query context')
       }),
       prompt: `The user searched for: "${query}"
 
 This is too vague to find good art gift products. Write a friendly, helpful message in Dutch to ask for more details.
 
-Guidelines:
+Guidelines for advice:
 - Be conversational and warm (like talking to a customer in a shop)
 - Start with a friendly emoji (💬, 🤔, 💡, 🎨, or ✨)
 - Ask clarifying questions based on their query context
-- Mention that we have: beelden (statues), schilderijen (paintings), vazen (vases), mokken (mugs)
-- If they mention a person (zus, moeder, etc.), ask about their interests
-- If it's generic (cadeau, gift), ask about occasion, budget, or preferences
 - Keep it SHORT (max 2-3 sentences)
 - Don't use markdown or special formatting
 
+Guidelines for suggestions (5-8 buttons):
+- Make them relevant to the user's query context
+- Include product types: Beeld, Schilderij, Vaas, Mok (with emoji)
+- Include price ranges if budget seems relevant: "Tot €50", "Tot €100", "Tot €200" (with 💰/💎/✨)
+- If they mention a person, suggest themes/interests: sport, liefde, dieren, bloemen
+- If generic, suggest popular categories: modern, brons, klassiek
+- Use emoji for each button (🐱 🐶 🌸 ⚽ ❤️ 💍 🎨 ✨ etc.)
+- Keep labels SHORT (2-3 words max)
+
 Examples:
+
 Query: "cadeau voor mijn zus"
-Advice: "💬 Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?"
+Response: {
+  "advice": "💬 Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?",
+  "suggestions": [
+    {"label": "🗿 Beeld", "query": "beeld"},
+    {"label": "🎨 Schilderij", "query": "schilderij"},
+    {"label": "🐱 Kat", "query": "kat"},
+    {"label": "❤️ Liefde", "query": "liefde"},
+    {"label": "⚽ Sport", "query": "sport"},
+    {"label": "💰 Tot €50", "query": "onder 50 euro"},
+    {"label": "💎 Tot €100", "query": "onder 100 euro"}
+  ]
+}
 
 Query: "iets leuks"
-Advice: "🤔 Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt."
+Response: {
+  "advice": "🤔 Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt.",
+  "suggestions": [
+    {"label": "🗿 Beeld", "query": "beeld"},
+    {"label": "🎨 Schilderij", "query": "schilderij"},
+    {"label": "🏺 Vaas", "query": "vaas"},
+    {"label": "☕ Mok", "query": "mok"},
+    {"label": "✨ Modern", "query": "modern"},
+    {"label": "🌸 Bloemen", "query": "bloemen"}
+  ]
+}
 
 Query: "origineel geschenk"
-Advice: "✨ Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product (zoals een beeld of schilderij)? Of voor een thema zoals sport, liefde, of modern kunst?"
+Response: {
+  "advice": "✨ Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product of thema?",
+  "suggestions": [
+    {"label": "🎨 Modern", "query": "modern beeld"},
+    {"label": "✨ Brons", "query": "brons"},
+    {"label": "💍 Huwelijk", "query": "huwelijkscadeau"},
+    {"label": "⚽ Sport", "query": "sportbeeld"},
+    {"label": "❤️ Liefde", "query": "liefde"},
+    {"label": "🐶 Dieren", "query": "dieren"}
+  ]
+}
 
-Now write advice for: "${query}"`,
+Now create advice and suggestions for: "${query}"`,
     });
 
-    return object.advice;
+    return object;
   } catch (error: any) {
     console.error('generateVagueAdvice error:', error);
-    // Fallback message
-    return '💬 Ik heb wat meer details nodig om je te helpen! Kun je me vertellen wat voor soort cadeau je zoekt? Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over het thema of de gelegenheid.';
+    // Fallback message with default suggestions
+    return {
+      advice: '💬 Ik heb wat meer details nodig om je te helpen! Kun je me vertellen wat voor soort cadeau je zoekt?',
+      suggestions: [
+        {label: '🗿 Beeld', query: 'beeld'},
+        {label: '🎨 Schilderij', query: 'schilderij'},
+        {label: '🏺 Vaas', query: 'vaas'},
+        {label: '☕ Mok', query: 'mok'},
+        {label: '💰 Tot €50', query: 'onder 50 euro'},
+        {label: '💎 Tot €100', query: 'onder 100 euro'}
+      ]
+    };
   }
 }
 
@@ -343,13 +395,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     if (filters.isVague) {
       // Generate contextual AI advice for vague queries
-      const advice = await generateVagueAdvice(query);
+      const vagueFeedback = await generateVagueAdvice(query);
       
-      // Return helpful message with AI-generated advice
+      // Return helpful message with AI-generated advice and suggestions
       return res.status(200).json({
         success: true,
         needsMoreInfo: true,
-        advice: advice,
+        advice: vagueFeedback.advice,
+        suggestions: vagueFeedback.suggestions,
         query: {
           original: query,
           filters: filters,

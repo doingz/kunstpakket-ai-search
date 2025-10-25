@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '3.1.3';
+  const VERSION = '3.2.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -389,13 +389,31 @@
     const container = document.getElementById('kp-search-results-overlay');
     
     // Check if we need more info from the user
-    if (data.needsMoreInfo && data.advice) {
+    if (data.needsMoreInfo && data.advice && data.suggestions) {
+      const suggestionsHTML = data.suggestions.map(s => 
+        `<button class="kp-filter-btn" data-query="${escapeHtml(s.query)}">${escapeHtml(s.label)}</button>`
+      ).join('');
+      
       container.innerHTML = `
         <div class="kp-needs-more-info">
-          <div class="kp-advice-message">${data.advice}</div>
-          <div class="kp-advice-suggestion">Probeer bijvoorbeeld: "kat beeld", "schilderij blauw", "sportbeeld onder 100 euro", of "huwelijkscadeau"</div>
+          <div class="kp-advice-message">${escapeHtml(data.advice)}</div>
+          <div class="kp-quick-filters">
+            ${suggestionsHTML}
+          </div>
+          <div class="kp-advice-suggestion">Of typ zelf wat je zoekt, zoals: "kat beeld", "schilderij blauw", "sportbeeld onder 100 euro"</div>
         </div>
       `;
+      
+      // Add click handlers for filter buttons
+      container.querySelectorAll('.kp-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const query = btn.dataset.query;
+          const input = document.getElementById('kp-search-input-overlay');
+          input.value = query;
+          performSearch(query);
+        });
+      });
+      
       return;
     }
     
@@ -781,7 +799,38 @@
         font-size: 16px;
         line-height: 1.8;
         color: #475569;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+      }
+      
+      .kp-quick-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      
+      .kp-filter-btn {
+        padding: 8px 16px;
+        background: white;
+        color: #78716c;
+        border: 1px solid #d4af37;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      
+      .kp-filter-btn:hover {
+        background: #d4af37;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+      }
+      
+      .kp-filter-btn:active {
+        transform: translateY(0);
       }
       
       .kp-advice-suggestion {
@@ -789,7 +838,7 @@
         line-height: 1.6;
         color: #64748b;
         font-style: italic;
-        padding-top: 12px;
+        padding-top: 16px;
         border-top: 1px solid rgba(212, 175, 55, 0.2);
       }
       
