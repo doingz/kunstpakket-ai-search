@@ -4,7 +4,9 @@
   "type": "module",
   "description": "AI-powered search widget for Kunstpakket.nl",
   "scripts": {
-    "sync": "node scripts/sync-lightspeed.js"
+    "sync": "node scripts/sync-lightspeed.js",
+    "import": "node scripts/import-products.js",
+    "db:schema": "node scripts/setup-schema.js"
   },
   "keywords": [
     "search",
@@ -16,6 +18,10 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "dotenv": "^16.4.5"
+    "@ai-sdk/openai": "^2.0.53",
+    "@vercel/postgres": "^0.10.0",
+    "ai": "^5.0.78",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
   }
 }
