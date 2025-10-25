@@ -5,9 +5,6 @@
       "maxDuration": 30
     }
   },
-  "protection": {
-    "password": null
-  },
   "rewrites": [
     {
       "source": "/api/search",
@@ -51,4 +48,3 @@
     }
   ]
 }
-
