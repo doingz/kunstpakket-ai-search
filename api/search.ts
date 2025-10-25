@@ -4,7 +4,7 @@
  */
 import { embed } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
 
 export const runtime = 'edge'; // Use Edge Runtime for faster cold starts
 export const maxDuration = 25; // Edge functions max 25s
@@ -131,7 +131,10 @@ export default async function handler(req: Request) {
       conditions.push(`price <= $${paramIndex++}`);
     }
     
-    // Vector search
+    // Vector search with explicit client
+    const client = createClient();
+    await client.connect();
+    
     const queryStr = `
       SELECT 
         id, title, full_title, content, brand, price, old_price,
@@ -144,7 +147,8 @@ export default async function handler(req: Request) {
       LIMIT 50
     `;
     
-    const result = await sql.query(queryStr, params);
+    const result = await client.query(queryStr, params);
+    await client.end();
     
     const response = {
       success: true,
