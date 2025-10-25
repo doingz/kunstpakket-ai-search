@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.0.3';
+  const VERSION = '4.1.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -390,18 +390,18 @@
     
     // Check if we need more info from the user
     if (data.needsMoreInfo && data.advice) {
+      // Generate examples HTML from AI-generated examples
+      const examplesHTML = data.examples && data.examples.length > 0
+        ? data.examples.map(ex => `• "${escapeHtml(ex)}"`).join('<br>')
+        : `• "kat beeld onder 50 euro"<br>• "bloemen vaas max 80 euro"<br>• "sportbeeld tot 100 euro"<br>• "liefde beeld onder 50 euro"<br>• "modern schilderij max 150 euro"<br>• "hond beeld onder 100 euro"`;
+      
       container.innerHTML = `
         <div class="kp-needs-more-info">
           <div class="kp-advice-message">
             ${escapeHtml(data.advice)}
             <div class="kp-advice-examples">
               Probeer bijvoorbeeld:<br>
-              • "kat beeld" (type + thema)<br>
-              • "sportbeeld onder 100 euro" (type + thema + budget)<br>
-              • "bloemen vaas max 80 euro" (type + thema + budget)<br>
-              • "modern schilderij" (type + stijl)<br>
-              • "liefde beeld onder 50 euro" (type + thema + budget)<br>
-              • "huwelijkscadeau beeld" (thema + type)
+              ${examplesHTML}
             </div>
           </div>
           <button class="kp-search-again-btn" id="kp-search-again">Zoek opnieuw</button>

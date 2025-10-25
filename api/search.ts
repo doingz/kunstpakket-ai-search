@@ -38,16 +38,13 @@ export const config = {
 };
 
 // Generate contextual advice for vague queries
-async function generateVagueAdvice(query: string): Promise<{advice: string, suggestions: Array<{label: string, query: string}>}> {
+async function generateVagueAdvice(query: string): Promise<{advice: string, examples: string[]}> {
   try {
     const { object } = await generateObject({
       model: openai('gpt-4o-mini'),
       schema: z.object({
         advice: z.string().describe('Friendly, conversational advice message in Dutch to help refine the search. Ask clarifying questions about interests, budget, or product type. Keep it natural and helpful, like a salesperson would ask.'),
-        suggestions: z.array(z.object({
-          label: z.string().describe('Button label with emoji (e.g. "🐱 Kat", "💰 Tot €50")'),
-          query: z.string().describe('Search query when button is clicked')
-        })).describe('5-8 relevant quick filter suggestions based on query context')
+        examples: z.array(z.string()).describe('6 example search queries that combine type + theme + budget. Must use real types: Beeld, Schilderij, Vaas, Mok')
       }),
       prompt: `The user searched for: "${query}"
 
@@ -60,66 +57,66 @@ Guidelines for advice:
 - Keep it SHORT (max 2-3 sentences)
 - Don't use markdown or special formatting
 
-Guidelines for suggestions (5-8 buttons):
-- Make them SPECIFIC and ACTIONABLE (combine type + theme + price where relevant)
-- Create concrete searches, NOT vague single words
-- Combine elements from context:
-  * If person mentioned: suggest "beeld bloemen", "schilderij sport", etc.
-  * Always combine theme with product type: "sportbeeld", "bloemen vaas", "kat beeld"
-  * Add budget to make it concrete: "beeld onder 50 euro", "schilderij onder 100 euro"
-- Use emoji for each button (🐱 🐶 🌸 ⚽ ❤️ 💍 🎨 ✨ etc.)
-- Keep labels SHORT but specific (2-4 words max)
+Guidelines for examples (6 search queries):
+- ALWAYS combine: Type + Theme + Budget
+- Type MUST be one of: Beeld, Schilderij, Vaas, Mok (exact spelling!)
+- Theme: based on query context (kat, sport, bloemen, liefde, modern, etc.)
+- Budget: vary between 50, 80, 100, 150, 200 euro
+- Use natural Dutch phrasing: "onder X euro", "max X euro", "tot X euro"
 
-BAD examples (too vague):
-❌ "Bloemen" - will trigger vague again!
-❌ "Sport" - no product type
-❌ "Vaas" - too broad
+CRITICAL: Every example MUST have all 3 elements!
 
-GOOD examples (specific combinations):
-✅ "🌸 Bloemen vaas" → query: "bloemen vaas"
-✅ "🗿 Sportbeeld" → query: "sportbeeld"  
-✅ "🎨 Bloemen schilderij" → query: "bloemen schilderij"
-✅ "💰 Beeld onder 50" → query: "beeld onder 50 euro"
+GOOD examples:
+✅ "kat beeld onder 50 euro"
+✅ "sportbeeld max 100 euro"
+✅ "bloemen vaas tot 80 euro"
+✅ "modern schilderij onder 150 euro"
+✅ "liefde beeld max 50 euro"
+✅ "hond beeld onder 100 euro"
+
+BAD examples (missing elements):
+❌ "kat beeld" - no budget!
+❌ "onder 100 euro" - no type or theme!
+❌ "bloemen" - no type or budget!
 
 Examples:
 
 Query: "cadeau voor mijn zus"
 Response: {
   "advice": "💬 Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?",
-  "suggestions": [
-    {"label": "🐱 Kat beeld", "query": "kat beeld"},
-    {"label": "🌸 Bloemen vaas", "query": "bloemen vaas"},
-    {"label": "❤️ Liefde beeld", "query": "liefde beeld"},
-    {"label": "⚽ Sportbeeld", "query": "sportbeeld"},
-    {"label": "🎨 Modern schilderij", "query": "modern schilderij"},
-    {"label": "💰 Beeld onder 50", "query": "beeld onder 50 euro"},
-    {"label": "💎 Vaas onder 100", "query": "vaas onder 100 euro"}
+  "examples": [
+    "kat beeld onder 50 euro",
+    "bloemen vaas max 80 euro",
+    "liefde beeld tot 100 euro",
+    "sportbeeld onder 150 euro",
+    "modern schilderij max 200 euro",
+    "hond beeld onder 50 euro"
   ]
 }
 
 Query: "iets leuks"
 Response: {
   "advice": "🤔 Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt.",
-  "suggestions": [
-    {"label": "🗿 Modern beeld", "query": "modern beeld"},
-    {"label": "🎨 Kleurrijk schilderij", "query": "kleurrijk schilderij"},
-    {"label": "🌸 Bloemen vaas", "query": "bloemen vaas"},
-    {"label": "❤️ Liefdesbeeld", "query": "liefdesbeeld"},
-    {"label": "🐱 Kat beeld", "query": "kat beeld"},
-    {"label": "💰 Cadeau onder 50", "query": "cadeau onder 50 euro"}
+  "examples": [
+    "modern beeld onder 100 euro",
+    "bloemen vaas max 50 euro",
+    "kat beeld tot 80 euro",
+    "liefde schilderij onder 150 euro",
+    "sportbeeld max 100 euro",
+    "hond beeld onder 50 euro"
   ]
 }
 
 Query: "origineel geschenk"
 Response: {
   "advice": "✨ Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product of thema?",
-  "suggestions": [
-    {"label": "🎨 Modern beeld", "query": "modern beeld"},
-    {"label": "✨ Brons beeld", "query": "brons beeld"},
-    {"label": "💍 Huwelijksbeeld", "query": "huwelijksbeeld"},
-    {"label": "⚽ Sportbeeld", "query": "sportbeeld"},
-    {"label": "❤️ Liefde schilderij", "query": "liefde schilderij"},
-    {"label": "🐱 Kat beeld", "query": "kat beeld"}
+  "examples": [
+    "modern beeld onder 100 euro",
+    "brons beeld max 150 euro",
+    "liefde schilderij tot 100 euro",
+    "sportbeeld onder 80 euro",
+    "bloemen vaas max 50 euro",
+    "kat beeld onder 100 euro"
   ]
 }
 
@@ -129,16 +126,16 @@ Now create advice and suggestions for: "${query}"`,
     return object;
   } catch (error: any) {
     console.error('generateVagueAdvice error:', error);
-    // Fallback message with default suggestions
+    // Fallback message with default examples
     return {
-      advice: '💬 Ik heb wat meer details nodig om je te helpen! Kun je me vertellen wat voor soort cadeau je zoekt?',
-      suggestions: [
-        {label: '🗿 Beeld', query: 'beeld'},
-        {label: '🎨 Schilderij', query: 'schilderij'},
-        {label: '🏺 Vaas', query: 'vaas'},
-        {label: '☕ Mok', query: 'mok'},
-        {label: '💰 Tot €50', query: 'onder 50 euro'},
-        {label: '💎 Tot €100', query: 'onder 100 euro'}
+      advice: '🤔 Ik kan je beter helpen als je me iets meer vertelt! Zoek je een beeld, schilderij, vaas of mok? En wat voor thema of budget heb je in gedachten?',
+      examples: [
+        'kat beeld onder 50 euro',
+        'bloemen vaas max 80 euro',
+        'sportbeeld tot 100 euro',
+        'liefde beeld onder 50 euro',
+        'modern schilderij max 150 euro',
+        'hond beeld onder 100 euro'
       ]
     };
   }
