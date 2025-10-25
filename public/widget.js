@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '3.1.2';
+  const VERSION = '3.1.3';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -409,7 +409,7 @@
     
     let html = '';
     
-    // Add AI advice if available
+    // Add AI advice if available (no wrapper needed - has its own margin)
     if (data.results.advice) {
       html += `
         <div class="kp-ai-intro">
@@ -417,6 +417,9 @@
         </div>
       `;
     }
+    
+    // Wrap results content in container with padding
+    html += `<div class="kp-results-content">`;
     
     html += `
       <div class="kp-results-header">
@@ -466,7 +469,8 @@
       `;
     });
     
-    html += '</div>';
+    html += '</div>'; // Close products-grid
+    html += '</div>'; // Close results-content wrapper
     container.innerHTML = html;
     
     // Restore current sort selection
@@ -752,7 +756,7 @@
       }
       
       #kp-search-results-overlay {
-        padding: 24px;
+        padding: 0;
         overflow-y: auto;
       }
       
@@ -797,7 +801,7 @@
         background: #fefbf3;
         padding: 24px 28px;
         border-radius: 16px;
-        margin-bottom: 28px;
+        margin: 24px;
         border: 1px solid #d4af37;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
@@ -806,6 +810,10 @@
         font-size: 16px;
         line-height: 1.8;
         color: #475569;
+      }
+      
+      .kp-results-content {
+        padding: 24px;
       }
       
       .kp-results-header {
