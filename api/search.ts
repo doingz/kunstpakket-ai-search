@@ -106,7 +106,7 @@ export default async function handler(req: Request) {
     
     // Generate embedding with AI SDK (one API call)
     const { embedding } = await embed({
-      model: openai.embedding('text-embedding-3-small'),
+      model: openai.textEmbeddingModel('text-embedding-3-small'),
       value: query
     });
     
