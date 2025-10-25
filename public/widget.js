@@ -51,17 +51,27 @@
       sessionStorage.setItem('kp_last_product_id', productId);
       sessionStorage.setItem('kp_last_product_url', productUrl);
       
-      fetch(ANALYTICS_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event: 'click',
-          client_id: 'kunstpakket.nl',
-          search_id: searchId,
-          product_id: productId,
-          product_url: productUrl
-        })
-      }).catch(err => console.warn('[Analytics] Click tracking failed:', err));
+      const data = JSON.stringify({
+        event: 'click',
+        client_id: 'kunstpakket.nl',
+        search_id: searchId,
+        product_id: productId,
+        product_url: productUrl
+      });
+      
+      // Use sendBeacon for iOS Safari compatibility (works even when page unloads)
+      if (navigator.sendBeacon) {
+        const blob = new Blob([data], { type: 'application/json' });
+        navigator.sendBeacon(ANALYTICS_API, blob);
+      } else {
+        // Fallback to fetch with keepalive
+        fetch(ANALYTICS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: data,
+          keepalive: true  // Keep request alive during navigation
+        }).catch(err => console.warn('[Analytics] Click tracking failed:', err));
+      }
     } catch (err) {
       console.warn('[Analytics] Error:', err);
     }
@@ -374,13 +384,23 @@
     }
     
     document.querySelectorAll('.kp-product-card').forEach(card => {
-      card.addEventListener('click', (e) => {
+      // Use mousedown for iOS Safari compatibility (fires before click)
+      card.addEventListener('mousedown', (e) => {
         const productId = card.getAttribute('data-product-id');
         const productUrl = card.getAttribute('data-product-url');
         if (productId && productUrl) {
           trackProductClick(productId, productUrl);
         }
       });
+      
+      // Also handle touch events for mobile
+      card.addEventListener('touchstart', (e) => {
+        const productId = card.getAttribute('data-product-id');
+        const productUrl = card.getAttribute('data-product-url');
+        if (productId && productUrl) {
+          trackProductClick(productId, productUrl);
+        }
+      }, { passive: true });
     });
   }
   
