@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '2.8.3';
+  const VERSION = '2.8.4';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -216,8 +216,8 @@
       <div class="kp-search-help">
         <svg class="kp-help-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
         </svg>
         <span class="kp-help-text">
           Stel een vraag in natuurlijke taal. Bijvoorbeeld: "ik zoek een beeldje met een hart onder 80 euro" of "ik zoek een schilderij onder 300 euro"
@@ -629,7 +629,7 @@
       
       .kp-help-icon {
         flex-shrink: 0;
-        color: #f5876e;
+        color: #1e293b;
         margin-top: 3px;
       }
       
