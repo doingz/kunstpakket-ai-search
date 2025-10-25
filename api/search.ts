@@ -442,16 +442,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     if (total === 0) {
       advice = 'Helaas geen producten gevonden. Probeer een andere zoekopdracht of minder specifieke filters.';
-    } else if (total === 1) {
-      advice = '✨ Er is 1 perfect product voor je gevonden!';
-    } else if (total <= 5) {
-      advice = `🎨 Ik heb ${total} mooie producten voor je gevonden!`;
-    } else if (total <= 20) {
-      advice = `✨ Er zijn ${total} prachtige producten die aan je wensen voldoen!`;
     } else {
-      const emojis = ['🎨', '✨', '🎁', '💎', '🌟'];
-      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-      advice = `${emoji} Ik heb ${total} producten gevonden! Bekijk ze allemaal en vind jouw favoriet.`;
+      // Check if we have low similarity results (no exact match)
+      const avgSimilarity = result.rows.reduce((sum, row) => sum + (row.similarity || 0), 0) / total;
+      const hasSpecificKeywords = filters.keywords && filters.keywords.length > 0 && filters.requiresExactMatch === false;
+      
+      if (avgSimilarity < 0.55 && hasSpecificKeywords && total > 5) {
+        // No exact match, but showing related results
+        const keywordText = filters.keywords.length === 1 
+          ? `"${filters.keywords[0]}"`
+          : filters.keywords.map(k => `"${k}"`).join(' of ');
+        advice = `💡 Geen exacte match gevonden voor ${keywordText}, maar wel ${total} gerelateerde producten die misschien interessant zijn!`;
+      } else if (total === 1) {
+        advice = '✨ Er is 1 perfect product voor je gevonden!';
+      } else if (total <= 5) {
+        advice = `🎨 Ik heb ${total} mooie producten voor je gevonden!`;
+      } else if (total <= 20) {
+        advice = `✨ Er zijn ${total} prachtige producten die aan je wensen voldoen!`;
+      } else {
+        const emojis = ['🎨', '✨', '🎁', '💎', '🌟'];
+        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+        advice = `${emoji} Ik heb ${total} producten gevonden! Bekijk ze allemaal en vind jouw favoriet.`;
+      }
     }
 
     const response = {
