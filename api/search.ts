@@ -6,8 +6,10 @@ import { embed } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 
-export const runtime = 'edge'; // Use Edge Runtime for faster cold starts
-export const maxDuration = 25; // Edge functions max 25s
+// Temporarily switched to Node.js runtime for debugging
+// export const runtime = 'edge';
+// export const maxDuration = 25;
+export const maxDuration = 30; // Node.js functions max 30s
 export const dynamic = 'force-dynamic';
 
 // Simple regex parsing for type and price
