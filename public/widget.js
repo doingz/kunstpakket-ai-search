@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.0.1';
+  const VERSION = '4.0.2';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -809,25 +809,23 @@
       }
       
       .kp-search-again-btn {
-        padding: 12px 24px;
-        background: transparent;
-        color: #475569;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        font-size: 15px;
+        padding: 10px 20px;
+        background: #1e293b;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
       }
       
       .kp-search-again-btn:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
-        color: #1e293b;
+        background: #334155;
       }
       
       .kp-search-again-btn:active {
-        background: #f1f5f9;
+        background: #0f172a;
       }
       
       .kp-error {
