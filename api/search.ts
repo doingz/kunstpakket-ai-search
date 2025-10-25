@@ -444,7 +444,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       advice = 'Helaas geen producten gevonden. Probeer een andere zoekopdracht of minder specifieke filters.';
     } else {
       // Check if we have low similarity results (no exact match)
-      const avgSimilarity = result.rows.reduce((sum, row) => sum + (row.similarity || 0), 0) / total;
+      // Calculate avg similarity of top 10 results (not all 50)
+      const topResults = result.rows.slice(0, Math.min(10, result.rows.length));
+      const avgSimilarity = topResults.reduce((sum, row) => sum + (row.similarity || 0), 0) / topResults.length;
       const hasSpecificKeywords = filters.keywords && filters.keywords.length > 0 && filters.requiresExactMatch === false;
       
       if (avgSimilarity < 0.58 && hasSpecificKeywords && total > 5) {
