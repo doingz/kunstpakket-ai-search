@@ -37,6 +37,48 @@ export const config = {
   maxDuration: 30 // text-embedding-3-small (1536 dims)
 };
 
+// Generate contextual advice for vague queries
+async function generateVagueAdvice(query: string): Promise<string> {
+  try {
+    const { object } = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: z.object({
+        advice: z.string().describe('Friendly, conversational advice message in Dutch to help refine the search. Ask clarifying questions about interests, budget, or product type. Keep it natural and helpful, like a salesperson would ask.')
+      }),
+      prompt: `The user searched for: "${query}"
+
+This is too vague to find good art gift products. Write a friendly, helpful message in Dutch to ask for more details.
+
+Guidelines:
+- Be conversational and warm (like talking to a customer in a shop)
+- Ask clarifying questions based on their query context
+- Mention that we have: beelden (statues), schilderijen (paintings), vazen (vases), mokken (mugs)
+- If they mention a person (zus, moeder, etc.), ask about their interests
+- If it's generic (cadeau, gift), ask about occasion, budget, or preferences
+- Keep it SHORT (max 2-3 sentences)
+- Don't use markdown or special formatting
+
+Examples:
+Query: "cadeau voor mijn zus"
+Advice: "Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?"
+
+Query: "iets leuks"
+Advice: "Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt."
+
+Query: "origineel geschenk"
+Advice: "Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product (zoals een beeld of schilderij)? Of voor een thema zoals sport, liefde, of modern kunst?"
+
+Now write advice for: "${query}"`,
+    });
+
+    return object.advice;
+  } catch (error: any) {
+    console.error('generateVagueAdvice error:', error);
+    // Fallback message
+    return 'Ik heb wat meer details nodig om je te helpen! Kun je me vertellen wat voor soort cadeau je zoekt? Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over het thema of de gelegenheid.';
+  }
+}
+
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
   try {
@@ -299,20 +341,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const total = result.rows.length;
     
     if (filters.isVague) {
-      // Return helpful message with suggestions
+      // Generate contextual AI advice for vague queries
+      const advice = await generateVagueAdvice(query);
+      
+      // Return helpful message with AI-generated advice
       return res.status(200).json({
         success: true,
         needsMoreInfo: true,
-        message: 'Ik heb wat meer details nodig om je te helpen! Wat voor soort cadeau zoek je?',
-        suggestions: [
-          { type: 'productType', label: '🗿 Beeld', value: 'Beeld' },
-          { type: 'productType', label: '🎨 Schilderij', value: 'Schilderij' },
-          { type: 'productType', label: '🏺 Vaas', value: 'Vaas' },
-          { type: 'productType', label: '☕ Mok', value: 'Mok' },
-          { type: 'price', label: '💰 Tot €50', value: 50 },
-          { type: 'price', label: '💎 Tot €100', value: 100 },
-          { type: 'price', label: '✨ Tot €200', value: 200 }
-        ],
+        advice: advice,
         query: {
           original: query,
           filters: filters,
