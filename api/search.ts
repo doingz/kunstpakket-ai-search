@@ -177,9 +177,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let result = await sql.query(queryText, params);
 
-    // If 0 results with keywords, retry without keyword filter (fallback to semantic search)
-    if (result.rows.length === 0 && filters.keywords && filters.keywords.length > 0 && filters.requiresExactMatch) {
-      // Rebuild query without keyword filtering (keep type/price)
+    // Fallback: if 0 results with keywords, retry without keyword filter (semantic search only)
+    if (result.rows.length === 0 && filters.keywords && filters.keywords.length > 0) {
+      console.log('Fallback: 0 results with keywords, retrying without keyword filter');
+      
       let fallbackWhereClause = 'is_visible = true AND embedding IS NOT NULL';
       const fallbackParams: any[] = [JSON.stringify(embedding)];
       let fallbackParamIndex = 2;
