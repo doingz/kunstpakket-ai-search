@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.0.0';
+  const VERSION = '4.0.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -392,7 +392,12 @@
     if (data.needsMoreInfo && data.advice) {
       container.innerHTML = `
         <div class="kp-needs-more-info">
-          <div class="kp-advice-message">${escapeHtml(data.advice)}</div>
+          <div class="kp-advice-message">
+            ${escapeHtml(data.advice)}
+            <div class="kp-advice-examples">
+              Probeer bijvoorbeeld: "kat beeld", "schilderij blauw", "sportbeeld onder 100 euro", "bloemen vaas", of "modern beeld"
+            </div>
+          </div>
           <button class="kp-search-again-btn" id="kp-search-again">Zoek opnieuw</button>
         </div>
       `;
@@ -790,33 +795,39 @@
         line-height: 1.8;
         color: #475569;
         margin-bottom: 24px;
-        text-align: center;
+        text-align: left;
+      }
+      
+      .kp-advice-examples {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(212, 175, 55, 0.2);
+        font-size: 14px;
+        line-height: 1.6;
+        color: #64748b;
+        font-style: italic;
       }
       
       .kp-search-again-btn {
-        display: block;
-        width: 100%;
-        max-width: 300px;
-        margin: 0 auto;
-        padding: 16px 32px;
-        background: #1e293b;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: 600;
+        padding: 12px 24px;
+        background: transparent;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
       }
       
       .kp-search-again-btn:hover {
-        background: #334155;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #1e293b;
       }
       
       .kp-search-again-btn:active {
-        transform: translateY(0);
+        background: #f1f5f9;
       }
       
       .kp-error {
