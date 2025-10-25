@@ -69,12 +69,11 @@ async function processBatch(batch, batchNum, totalBatches) {
     console.log(`  ⏳ Generating embeddings...`);
     
     const { embeddings } = await embedMany({
-      model: openai.embedding('text-embedding-3-large'),
-      values: texts,
-      dimensions: 1536 // Reduce from 3072 to 1536 (fits pgvector 2000 limit, better quality than small model)
+      model: openai.embedding('text-embedding-3-small'),
+      values: texts
     });
     
-    console.log(`  ✅ Generated ${embeddings.length} embeddings (${embeddings[0].length} dimensions)`);
+    console.log(`  ✅ Generated ${embeddings.length} embeddings`);
     console.log(`  💾 Inserting into database...`);
     
     let inserted = 0;

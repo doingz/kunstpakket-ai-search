@@ -40,8 +40,19 @@ CRITICAL RULES:
 - For artist names: extract both full name AND last name (e.g. "Van Gogh" → ["van gogh", "gogh"])
 - For animals: add common synonyms (e.g. "kat" → ["kat", "poes"], "hond" → ["hond", "honden"])
 - For occasions: use broader terms (e.g. "huwelijkscadeau" → ["huwelijk", "trouwen"], "bedankje" → ["bedanken", "dank"])
+- For categories (important!): extract relevant keywords based on these popular categories:
+  * Sport/Fitness → ["sport", "fitness", "atleet", "voetbal", "golf"]
+  * Zorg/Verpleging → ["zorg", "verpleging", "care", "dokter", "nurse"]
+  * Gezin/Familie → ["gezin", "familie", "kinderen", "vader", "moeder", "baby"]
+  * Zakelijk → ["zakelijk", "business", "corporate", "samenwerking", "team"]
+  * Liefde/Huwelijk → ["liefde", "huwelijk", "love", "trouwen", "kus"]
+  * Jubileum/Afscheid → ["jubileum", "afscheid", "pensioen", "vertrek"]
+  * Geslaagd/Examen → ["geslaagd", "examen", "studie", "diploma", "afstuderen"]
+  * Bedanken → ["bedanken", "dank", "thanks", "waardering"]
+  * Modern → ["modern", "eigentijds", "contemporary"]
+  * Exclusief → ["exclusief", "luxe", "premium", "brons"]
 - For vague price terms ("niet te duur", "goedkoop", "luxe") → return null for price (semantic search will handle it)
-- Use requiresExactMatch=false for generic searches, true only for very specific items (artists, specific objects)
+- Use requiresExactMatch=false for category/occasion searches (broader matching)
 
 Examples:
 "kat" → {"keywords": ["kat", "poes"], "requiresExactMatch": false}
@@ -55,7 +66,15 @@ Examples:
 "iets moois" → {}
 "huwelijkscadeau" → {"keywords": ["huwelijk", "trouwen", "bruiloft"], "requiresExactMatch": false}
 "bedankje" → {"keywords": ["bedanken", "dank", "thanks"], "requiresExactMatch": false}
-"klassiek" → {"keywords": ["klassiek", "traditioneel", "vintage"], "requiresExactMatch": false}`,
+"klassiek" → {"keywords": ["klassiek", "traditioneel", "vintage"], "requiresExactMatch": false}
+"sportbeeld" → {"productType": "Beeld", "keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
+"cadeau voor zorgmedewerker" → {"keywords": ["zorg", "verpleging", "care"], "requiresExactMatch": false}
+"zakelijk cadeau" → {"keywords": ["zakelijk", "business", "samenwerking", "team"], "requiresExactMatch": false}
+"jubileum" → {"keywords": ["jubileum", "afscheid", "pensioen"], "requiresExactMatch": false}
+"geslaagd cadeau" → {"keywords": ["geslaagd", "examen", "diploma", "afstuderen"], "requiresExactMatch": false}
+"gezinsbeeld" → {"productType": "Beeld", "keywords": ["gezin", "familie", "kinderen"], "requiresExactMatch": false}
+"modern beeld" → {"productType": "Beeld", "keywords": ["modern", "eigentijds"], "requiresExactMatch": false}
+"exclusief brons" → {"keywords": ["exclusief", "luxe", "premium", "brons"], "requiresExactMatch": false}`,
     });
 
     return object;
