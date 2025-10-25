@@ -1,16 +1,18 @@
 /**
  * AI-powered semantic search with Vercel AI SDK + pgvector
- * Node.js runtime for stable imports (Edge has ESM bundling issues)
+ * Node.js Serverless runtime
  */
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
 
 // Explicit Node.js runtime
-export const runtime = 'nodejs';
-export const maxDuration = 30;
-export const dynamic = 'force-dynamic';
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 30
+};
 
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
@@ -55,42 +57,27 @@ function formatProduct(row: any) {
   };
 }
 
-export default async function handler(req: Request) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    });
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { query } = await req.json();
+    const { query } = req.body;
     
     if (!query || typeof query !== 'string') {
-      return new Response(JSON.stringify({ 
+      return res.status(400).json({ 
         success: false,
         error: 'Query required' 
-      }), {
-        status: 400,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
       });
     }
 
@@ -120,9 +107,6 @@ export default async function handler(req: Request) {
       whereClause += ` AND price >= $${paramIndex++}`;
     }
 
-    // TODO: Category filtering when needed
-    // if (filters.categories?.length > 0) { ... }
-
     // Vector similarity search with SQL filters
     const queryText = `
       SELECT 
@@ -149,28 +133,15 @@ export default async function handler(req: Request) {
       }
     };
 
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return res.status(200).json(response);
 
   } catch (error: any) {
     console.error('Search error:', error);
     
-    return new Response(JSON.stringify({
+    return res.status(500).json({
       success: false,
       error: 'Search failed',
       details: error.message
-    }), {
-      status: 500,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
     });
   }
 }
-
