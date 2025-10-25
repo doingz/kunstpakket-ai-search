@@ -447,7 +447,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const avgSimilarity = result.rows.reduce((sum, row) => sum + (row.similarity || 0), 0) / total;
       const hasSpecificKeywords = filters.keywords && filters.keywords.length > 0 && filters.requiresExactMatch === false;
       
-      if (avgSimilarity < 0.55 && hasSpecificKeywords && total > 5) {
+      if (avgSimilarity < 0.58 && hasSpecificKeywords && total > 5) {
         // No exact match, but showing related results
         const keywordText = filters.keywords.length === 1 
           ? `"${filters.keywords[0]}"`
