@@ -37,110 +37,6 @@ export const config = {
   maxDuration: 30 // text-embedding-3-small (1536 dims)
 };
 
-// Generate contextual advice for vague queries
-async function generateVagueAdvice(query: string): Promise<{advice: string, examples: string[]}> {
-  try {
-    const { object } = await generateObject({
-      model: openai('gpt-4o-mini'),
-      schema: z.object({
-        advice: z.string().describe('Friendly, conversational advice message in Dutch to help refine the search. Ask clarifying questions about interests, budget, or product type. Keep it natural and helpful, like a salesperson would ask.'),
-        examples: z.array(z.string()).describe('6 example search queries that combine type + theme + budget. Must use real types: Beeld, Schilderij, Vaas, Mok')
-      }),
-      prompt: `The user searched for: "${query}"
-
-This is too vague to find good art gift products. Write a friendly, helpful message in Dutch to ask for more details.
-
-Guidelines for advice:
-- Be conversational and warm (like talking to a customer in a shop)
-- Start with a friendly emoji (💬, 🤔, 💡, 🎨, or ✨)
-- Ask clarifying questions based on their query context
-- Keep it SHORT (max 2-3 sentences)
-- Don't use markdown or special formatting
-
-Guidelines for examples (6 search queries):
-- ALWAYS combine: Type + Theme + Budget
-- Type MUST be one of: Beeld, Schilderij, Vaas, Mok (exact spelling!)
-- Theme: based on query context (kat, sport, bloemen, liefde, modern, etc.)
-- Budget: vary between 50, 80, 100, 150, 200 euro
-- Use natural Dutch phrasing: "onder X euro", "max X euro", "tot X euro"
-
-CRITICAL: Every example MUST have all 3 elements!
-
-GOOD examples:
-✅ "kat beeld onder 50 euro"
-✅ "sportbeeld max 100 euro"
-✅ "bloemen vaas tot 80 euro"
-✅ "modern schilderij onder 150 euro"
-✅ "liefde beeld max 50 euro"
-✅ "hond beeld onder 100 euro"
-
-BAD examples (missing elements):
-❌ "kat beeld" - no budget!
-❌ "onder 100 euro" - no type or theme!
-❌ "bloemen" - no type or budget!
-
-Examples:
-
-Query: "cadeau voor mijn zus"
-Response: {
-  "advice": "💬 Leuk dat je een cadeau voor je zus zoekt! Waar houdt ze van? Bijvoorbeeld: dieren, sport, kunst, of een bepaald thema? En heb je een budget in gedachten?",
-  "examples": [
-    "kat beeld onder 50 euro",
-    "bloemen vaas max 80 euro",
-    "liefde beeld tot 100 euro",
-    "sportbeeld onder 150 euro",
-    "modern schilderij max 200 euro",
-    "hond beeld onder 50 euro"
-  ]
-}
-
-Query: "iets leuks"
-Response: {
-  "advice": "🤔 Ik help je graag! Vertel me wat meer over wat je zoekt. Bijvoorbeeld: een beeld, schilderij, vaas of mok? Of vertel me over de gelegenheid of het thema waar je aan denkt.",
-  "examples": [
-    "modern beeld onder 100 euro",
-    "bloemen vaas max 50 euro",
-    "kat beeld tot 80 euro",
-    "liefde schilderij onder 150 euro",
-    "sportbeeld max 100 euro",
-    "hond beeld onder 50 euro"
-  ]
-}
-
-Query: "origineel geschenk"
-Response: {
-  "advice": "✨ Een origineel kunstcadeau is altijd een goed idee! Heb je een voorkeur voor een type product of thema?",
-  "examples": [
-    "modern beeld onder 100 euro",
-    "brons beeld max 150 euro",
-    "liefde schilderij tot 100 euro",
-    "sportbeeld onder 80 euro",
-    "bloemen vaas max 50 euro",
-    "kat beeld onder 100 euro"
-  ]
-}
-
-Now create advice and suggestions for: "${query}"`,
-    });
-
-    return object;
-  } catch (error: any) {
-    console.error('generateVagueAdvice error:', error);
-    // Fallback message with default examples
-    return {
-      advice: '🤔 Ik kan je beter helpen als je me iets meer vertelt! Zoek je een beeld, schilderij, vaas of mok? En wat voor thema of budget heb je in gedachten?',
-      examples: [
-        'kat beeld onder 50 euro',
-        'bloemen vaas max 80 euro',
-        'sportbeeld tot 100 euro',
-        'liefde beeld onder 50 euro',
-        'modern schilderij max 150 euro',
-        'hond beeld onder 100 euro'
-      ]
-    };
-  }
-}
-
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
   try {
@@ -151,8 +47,7 @@ async function parseFilters(query: string) {
         priceMax: z.number().optional().nullable(),
         productType: z.string().optional().nullable().describe('Product type: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek'),
         keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, artists, objects). Empty array if none.'),
-        requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description'),
-        isVague: z.boolean().default(false).describe('True if query is too vague to find good results (e.g. "cadeau voor mijn zus", "iets leuks"). Requires at least ONE specific detail: product type, price, theme, color, artist, animal, or occasion.')
+        requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
       }),
       prompt: `Analyze this Dutch product search query and extract filters: "${query}"
 
@@ -162,20 +57,6 @@ Extract:
    IMPORTANT: "Keramiek" should map to "Beeld" (ceramic items are sculptures/beelden)
 3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
 4. requiresExactMatch: true if keywords MUST appear in title/description
-
-5. isVague: CRITICAL - READ CAREFULLY:
-   Step 1: Check if you extracted ANY of these: productType, keywords (length > 0), priceMax, or priceMin
-   Step 2: If YES to step 1 → isVague = FALSE (we can search!)
-   Step 3: If NO to step 1 → isVague = TRUE (too vague)
-   
-   IMPORTANT: If keywords array has ANY items → isVague MUST be FALSE!
-   
-   Examples:
-   "bloemen" → keywords: ["bloemen"], isVague: FALSE
-   "sport" → keywords: ["sport"], isVague: FALSE
-   "mok" → productType: "Mok", isVague: FALSE
-   "onder 100 euro" → priceMax: 100, isVague: FALSE
-   "cadeau" → keywords: [], productType: null, priceMax: null → isVague: TRUE
 
 CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur/keramiek, vaas, mok, schaal, wandbord, onderzetters, theelicht
@@ -199,24 +80,20 @@ CRITICAL RULES:
 - Use requiresExactMatch=false for category/occasion searches (broader matching)
 
 Examples:
-"cadeau voor mijn zus" → {"isVague": true}
-"iets leuks" → {"isVague": true}
-"onder 100 euro" → {"priceMax": 100, "isVague": false}
-"sportbeeld" → {"productType": "Beeld", "keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false, "isVague": false}
-"mok" → {"productType": "Mok", "isVague": false}
-"hond" → {"keywords": ["hond", "honden", "dog"], "isVague": false}
-"dog" → {"keywords": ["hond", "honden", "dog"], "isVague": false}
-"sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false, "isVague": false}
-"kat" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
-"poes" → {"keywords": ["kat", "poes"], "requiresExactMatch": false, "isVague": false}
-"hond" → {"keywords": ["hond", "honden"], "requiresExactMatch": false, "isVague": false}
-"Beeld max 200 euro" → {"productType": "Beeld", "priceMax": 200, "isVague": false}
-"Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true, "isVague": false}
-"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond", "honden"], "requiresExactMatch": false}
+"onder 100 euro" → {"priceMax": 100}
+"sportbeeld" → {"productType": "Beeld", "keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
+"mok" → {"productType": "Mok"}
+"hond" → {"keywords": ["hond", "honden", "dog"]}
+"dog" → {"keywords": ["hond", "honden", "dog"]}
+"sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
+"kat" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
+"poes" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
+"Beeld max 200 euro" → {"productType": "Beeld", "priceMax": 200}
+"Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
+"een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond", "honden", "dog"], "requiresExactMatch": false}
 "schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
 "niet te duur" → {"priceMax": null}
 "goedkoop cadeau" → {"priceMax": null}
-"iets moois" → {}
 "huwelijkscadeau" → {"keywords": ["huwelijk", "trouwen", "bruiloft"], "requiresExactMatch": false}
 "bedankje" → {"keywords": ["bedanken", "dank", "thanks"], "requiresExactMatch": false}
 "klassiek" → {"keywords": ["klassiek", "traditioneel", "vintage"], "requiresExactMatch": false}
@@ -239,8 +116,7 @@ Examples:
       priceMax: null,
       productType: null,
       keywords: [],
-      requiresExactMatch: false,
-      isVague: false
+      requiresExactMatch: false
     };
   }
 }
@@ -357,8 +233,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     orderBy += ', stock_sold DESC NULLS LAST';
 
-    // Vector similarity search with SQL filters, keyword boosting, and similarity threshold
-    const similarityThreshold = 0.3; // Minimum similarity score to filter out irrelevant results
+    // Vector similarity search with SQL filters, keyword boosting, and higher similarity threshold
+    const similarityThreshold = 0.65; // Raised from 0.3 - only show relevant matches!
     
     const queryText = `
       SELECT 
@@ -416,56 +292,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       result = await sql.query(fallbackQuery, fallbackParams);
     }
 
-    // Check if query is too vague (AI-determined)
+    // Simple, honest advice based on results
     const total = result.rows.length;
-    
-    if (filters.isVague) {
-      // Generate contextual AI advice for vague queries
-      const vagueFeedback = await generateVagueAdvice(query);
-      
-      // Return helpful message with AI-generated advice and suggestions
-      return res.status(200).json({
-        success: true,
-        needsMoreInfo: true,
-        advice: vagueFeedback.advice,
-        suggestions: vagueFeedback.suggestions,
-        query: {
-          original: query,
-          filters: filters,
-          took_ms: Date.now() - start
-        }
-      });
-    }
-
-    // Generate friendly advice message for valid results
     let advice = '';
     
     if (total === 0) {
-      advice = 'Helaas geen producten gevonden. Probeer een andere zoekopdracht of minder specifieke filters.';
+      advice = '💡 Geen producten gevonden. Probeer specifieker te zoeken, bijvoorbeeld: "kat beeld onder 50 euro" of "sportbeeld max 100 euro".';
+    } else if (total === 1) {
+      advice = '✨ Er is 1 perfect product voor je gevonden!';
+    } else if (total <= 5) {
+      advice = `🎨 Ik heb ${total} mooie producten voor je gevonden!`;
+    } else if (total <= 20) {
+      advice = `✨ Er zijn ${total} prachtige producten die aan je wensen voldoen!`;
     } else {
-      // Check if we have low similarity results (no exact match)
-      // Calculate avg similarity of top 10 results (not all 50)
-      const topResults = result.rows.slice(0, Math.min(10, result.rows.length));
-      const avgSimilarity = topResults.reduce((sum, row) => sum + (row.similarity || 0), 0) / topResults.length;
-      const hasSpecificKeywords = filters.keywords && filters.keywords.length > 0 && filters.requiresExactMatch === false;
-      
-      if (avgSimilarity < 0.58 && hasSpecificKeywords && total > 5) {
-        // No exact match, but showing related results
-        const keywordText = filters.keywords.length === 1 
-          ? `"${filters.keywords[0]}"`
-          : filters.keywords.map(k => `"${k}"`).join(' of ');
-        advice = `💡 Geen exacte match gevonden voor ${keywordText}, maar wel ${total} gerelateerde producten die misschien interessant zijn!`;
-      } else if (total === 1) {
-        advice = '✨ Er is 1 perfect product voor je gevonden!';
-      } else if (total <= 5) {
-        advice = `🎨 Ik heb ${total} mooie producten voor je gevonden!`;
-      } else if (total <= 20) {
-        advice = `✨ Er zijn ${total} prachtige producten die aan je wensen voldoen!`;
-      } else {
-        const emojis = ['🎨', '✨', '🎁', '💎', '🌟'];
-        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-        advice = `${emoji} Ik heb ${total} producten gevonden! Bekijk ze allemaal en vind jouw favoriet.`;
-      }
+      const emojis = ['🎨', '✨', '🎁', '💎', '🌟'];
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+      advice = `${emoji} Ik heb ${total} producten gevonden! Bekijk ze allemaal en vind jouw favoriet.`;
     }
 
     const response = {

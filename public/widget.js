@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.4.0';
+  const VERSION = '4.5.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -390,37 +390,20 @@
   function renderResults(data) {
     const container = document.getElementById('kp-search-results-overlay');
     
-    // Check if we need more info from the user
-    if (data.needsMoreInfo && data.advice) {
-      // Generate examples HTML from AI-generated examples
-      const examplesHTML = data.examples && data.examples.length > 0
-        ? data.examples.map(ex => `"${escapeHtml(ex)}"`).join(', ')
-        : `"kat beeld onder 50 euro", "bloemen vaas max 80 euro", "sportbeeld tot 100 euro", "liefde beeld onder 50 euro", "modern schilderij max 150 euro", "hond beeld onder 100 euro"`;
-      
+    // No results - show helpful message
+    if (!data.success || !data.results?.items || data.results.items.length === 0) {
       container.innerHTML = `
-        <div class="kp-needs-more-info">
-          <div class="kp-advice-message">
-            ${escapeHtml(data.advice)}
-            <div class="kp-advice-examples">
-              Probeer bijvoorbeeld: ${examplesHTML}
-            </div>
+        <div class="kp-empty-state">
+          <div class="kp-empty-icon">🔍</div>
+          <h3>Geen producten gevonden</h3>
+          <p>Probeer specifieker te zoeken, bijvoorbeeld:</p>
+          <div class="kp-empty-examples">
+            "kat beeld onder 50 euro"<br>
+            "sportbeeld max 100 euro"<br>
+            "bloemen vaas onder 80 euro"
           </div>
-          <button class="kp-search-again-btn" id="kp-search-again">Zoek opnieuw</button>
         </div>
       `;
-      
-      // Add click handler for search again button
-      document.getElementById('kp-search-again').addEventListener('click', () => {
-        const input = document.getElementById('kp-search-input-overlay');
-        input.value = '';
-        input.focus();
-      });
-      
-      return;
-    }
-    
-    if (!data.success || !data.results?.items || data.results.items.length === 0) {
-      container.innerHTML = '<div class="kp-no-results">Geen producten gevonden</div>';
       return;
     }
     
@@ -840,53 +823,34 @@
         }
       }
       
-      /* Needs More Info - AI Conversational (same style as verkooppraatje) */
-      .kp-needs-more-info {
-        background: #fefbf3;
-        padding: 24px 28px;
-        border-radius: 16px;
-        margin: 24px;
-        border: 1px solid #d4af37;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        max-width: 640px;
-      }
-      
-      .kp-advice-message {
-        font-size: 16px;
-        line-height: 1.8;
-        color: #475569;
-        margin-bottom: 24px;
-        text-align: left;
-      }
-      
-      .kp-advice-examples {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid rgba(212, 175, 55, 0.2);
-        font-size: 14px;
-        line-height: 1.6;
+      /* Empty state */
+      .kp-empty-state {
+        text-align: center;
+        padding: 80px 24px;
         color: #64748b;
-        font-style: italic;
       }
       
-      .kp-search-again-btn {
-        padding: 10px 20px;
-        background: #1e293b;
-        color: white;
-        border: none;
-        border-radius: 6px;
+      .kp-empty-icon {
+        font-size: 64px;
+        margin-bottom: 24px;
+      }
+      
+      .kp-empty-state h3 {
+        font-size: 24px;
+        color: #1e293b;
+        margin-bottom: 16px;
+      }
+      
+      .kp-empty-state p {
+        font-size: 16px;
+        margin-bottom: 16px;
+      }
+      
+      .kp-empty-examples {
         font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      
-      .kp-search-again-btn:hover {
-        background: #334155;
-      }
-      
-      .kp-search-again-btn:active {
-        background: #0f172a;
+        color: #94a3b8;
+        font-style: italic;
+        line-height: 1.8;
       }
       
       .kp-error {
