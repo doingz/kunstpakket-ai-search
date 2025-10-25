@@ -1,15 +1,13 @@
 /**
- * Simple ping endpoint
+ * Ultra-simple ping - NO IMPORTS
  */
-export const runtime = 'edge';
+export const config = {
+  runtime: 'edge'
+};
 
-export default async function handler(req: Request) {
-  return new Response(JSON.stringify({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    message: 'Edge Function works!'
-  }), {
-    headers: { 'Content-Type': 'application/json' }
+export default function handler(req: Request) {
+  return new Response('OK', {
+    headers: { 'Content-Type': 'text/plain' }
   });
 }
 
