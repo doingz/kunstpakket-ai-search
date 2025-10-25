@@ -54,8 +54,8 @@ console.log('');
 function buildEmbeddingText(product) {
   // Get category names for this product
   const productCategoryIds = categoriesProducts
-    .filter(cp => cp.product.id === product.id)
-    .map(cp => cp.category.id);
+    .filter(cp => cp.product.resource.id === product.id)
+    .map(cp => cp.category.resource.id);
   
   const categoryNames = productCategoryIds
     .map(id => categoryMap.get(id))
@@ -75,8 +75,8 @@ function buildEmbeddingText(product) {
 // Get categories for a product
 function getProductCategories(productId) {
   return categoriesProducts
-    .filter(cp => cp.product.id === productId)
-    .map(cp => cp.category.id);
+    .filter(cp => cp.product.resource.id === productId)
+    .map(cp => cp.category.resource.id);
 }
 
 // Process in batches to avoid rate limits
