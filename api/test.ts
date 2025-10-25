@@ -5,8 +5,8 @@ import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
-export const runtime = 'edge';
-export const maxDuration = 25;
+// Serverless instead of Edge
+export const maxDuration = 30;
 
 export default async function handler(req: Request) {
   const start = Date.now();

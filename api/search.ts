@@ -7,8 +7,8 @@ import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
 
-export const runtime = 'edge';
-export const maxDuration = 25; // Edge max is 25s
+// Using Serverless (Node.js) instead of Edge due to module import issues
+export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
 // AI-powered filter extraction using generateObject
