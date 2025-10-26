@@ -32,8 +32,9 @@ variants.forEach(variant => {
   const productId = variant.product?.resource?.id;
   if (productId && variant.isDefault) {
     variantMap.set(productId, {
-      priceExcl: parseFloat(variant.priceExcl) || 0,
-      oldPriceExcl: variant.oldPriceExcl ? parseFloat(variant.oldPriceExcl) : null,
+      priceIncl: parseFloat(variant.priceIncl) || 0,
+      oldPriceIncl: variant.oldPriceIncl ? parseFloat(variant.oldPriceIncl) : null,
+      stock: variant.stockLevel || 0,
       stockSold: variant.stockSold || 0
     });
   }
@@ -164,7 +165,7 @@ async function processBatch(batch, batchNum, totalBatches) {
     for (let i = 0; i < batch.length; i++) {
       const product = batch[i];
       const embedding = embeddings[i];
-      const variant = variantMap.get(product.id) || { priceExcl: 0, oldPriceExcl: null, stockSold: 0 };
+      const variant = variantMap.get(product.id) || { priceIncl: 0, oldPriceIncl: null, stock: 0, stockSold: 0 };
       const productType = detectType(product);
       const artist = getArtist(product);
       const dimensions = extractDimensions(product);
@@ -185,8 +186,9 @@ async function processBatch(batch, batchNum, totalBatches) {
             brand = ${product.brand?.title || null},
             artist = ${artist},
             dimensions = ${dimensions},
-            price = ${variant.priceExcl},
-            old_price = ${variant.oldPriceExcl},
+            price = ${variant.priceIncl},
+            old_price = ${variant.oldPriceIncl},
+            stock = ${variant.stock},
             is_visible = ${product.isVisible},
             image = ${product.image?.src || null},
             stock_sold = ${variant.stockSold},
@@ -201,7 +203,7 @@ async function processBatch(batch, batchNum, totalBatches) {
         await sql`
           INSERT INTO products (
             id, title, full_title, description, content, url, 
-            brand, artist, dimensions, price, old_price, is_visible, image, stock_sold, type,
+            brand, artist, dimensions, price, old_price, stock, is_visible, image, stock_sold, type,
             embedding
           )
           VALUES (
@@ -214,8 +216,9 @@ async function processBatch(batch, batchNum, totalBatches) {
             ${product.brand?.title || null},
             ${artist},
             ${dimensions},
-            ${variant.priceExcl},
-            ${variant.oldPriceExcl},
+            ${variant.priceIncl},
+            ${variant.oldPriceIncl},
+            ${variant.stock},
             ${product.isVisible},
             ${product.image?.src || null},
             ${variant.stockSold},
