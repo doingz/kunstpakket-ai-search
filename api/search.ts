@@ -162,9 +162,15 @@ CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur/keramiek, vaas, mok, schaal, wandbord, onderzetters, theelicht
 - IMPORTANT: "keramiek", "keramieken beeld", "ballonhond" → productType: "Beeld" (ceramics are sculptures)
 - DO NOT add product types as keywords
-- For artist names: extract both full name AND last name (e.g. "Van Gogh" → ["van gogh", "gogh"])
+- For artist/designer names: extract artist name as keyword (see list below). Add both full name AND variants (e.g. "Van Gogh" → ["van gogh", "gogh", "vincent van gogh"])
 - For animals: add common synonyms AND English translations (e.g. "kat" → ["kat", "poes", "cat"], "hond" → ["hond", "honden", "dog"], "paard" → ["paard", "paarden", "horse"])
 - For occasions: use broader terms (e.g. "huwelijkscadeau" → ["huwelijk", "trouwen"], "bedankje" → ["bedanken", "dank"])
+- IMPORTANT ARTISTS IN CATALOG (recognize these names):
+  Famous Artists: Van Gogh, Klimt, Monet, Dali, Vermeer, Rembrandt, Mondriaan, Rodin, Modigliani, Magritte, Escher, Michelangelo, Da Vinci, Egon Schiele, Camille Claudel, Botticelli, Paul Gauguin, Jeroen Bosch, Kandinsky
+  Contemporary Artists: Jeff Koons, Herman Brood, Banksy
+  Dutch Artists: Corry Ammerlaan, Ger van Tankeren, Peter Donkersloot, Klaas Gubbels, Jacky Zegers, Jack Liemburg, Harrie Gerritz, Tos Kostermans, Bram Reijnders, Jeroen Krabb, Mark Jurriens
+  Designers/Brands: Kokeshi (Lucie Kaas designer dolls), Forchino/Guillermo Forchino, Selwyn Senatori, Richard Orlinski, Guido Deleu, Elephant Parade, Becky Kemp
+  * When user searches "kokeshi" → add "kokeshi" as keyword AND recognize it's a designer brand
 - For categories (important!): extract relevant keywords based on these popular categories:
   * Sport/Fitness → ["sport", "fitness", "atleet", "voetbal", "golf"]
   * Zorg/Verpleging → ["zorg", "verpleging", "care", "dokter", "nurse"]
@@ -191,8 +197,12 @@ Examples:
 "sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
 "kat" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
 "poes" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
+"kokeshi" → {"keywords": ["kokeshi"], "requiresExactMatch": true} (designer brand - MUST be in title!)
+"kokeshi beeld" → {"productType": "Beeld", "keywords": ["kokeshi"], "requiresExactMatch": true}
 "Beeld max 200 euro" → {"productType": "Beeld", "priceMax": 200}
 "Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
+"klimt" → {"keywords": ["klimt", "gustav klimt"], "requiresExactMatch": true}
+"jeff koons" → {"keywords": ["jeff koons", "koons"], "requiresExactMatch": true}
 "een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond", "honden", "dog"], "requiresExactMatch": false}
 "schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
 "niet te duur" → {"priceMax": null}
