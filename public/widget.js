@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.5.0';
+  const VERSION = '4.5.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -390,17 +390,12 @@
   function renderResults(data) {
     const container = document.getElementById('kp-search-results-overlay');
     
-    // No results - show helpful message
+    // No results - show helpful message in same style as AI intro
     if (!data.success || !data.results?.items || data.results.items.length === 0) {
       container.innerHTML = `
-        <div class="kp-empty-state">
-          <div class="kp-empty-icon">🔍</div>
-          <h3>Geen producten gevonden</h3>
-          <p>Probeer specifieker te zoeken, bijvoorbeeld:</p>
-          <div class="kp-empty-examples">
-            "kat beeld onder 50 euro"<br>
-            "sportbeeld max 100 euro"<br>
-            "bloemen vaas onder 80 euro"
+        <div class="kp-ai-intro">
+          <div class="kp-ai-intro-text">
+            💡 Geen producten gevonden. Probeer specifieker te zoeken, bijvoorbeeld: "kat beeld onder 50 euro", "sportbeeld max 100 euro", of "bloemen vaas onder 80 euro".
           </div>
         </div>
       `;
@@ -821,36 +816,6 @@
         30% {
           opacity: 1;
         }
-      }
-      
-      /* Empty state */
-      .kp-empty-state {
-        text-align: center;
-        padding: 80px 24px;
-        color: #64748b;
-      }
-      
-      .kp-empty-icon {
-        font-size: 64px;
-        margin-bottom: 24px;
-      }
-      
-      .kp-empty-state h3 {
-        font-size: 24px;
-        color: #1e293b;
-        margin-bottom: 16px;
-      }
-      
-      .kp-empty-state p {
-        font-size: 16px;
-        margin-bottom: 16px;
-      }
-      
-      .kp-empty-examples {
-        font-size: 14px;
-        color: #94a3b8;
-        font-style: italic;
-        line-height: 1.8;
       }
       
       .kp-error {
