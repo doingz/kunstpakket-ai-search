@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.1.0';
+  const VERSION = '5.2.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -432,6 +432,15 @@
       html += `
         <div class="kp-ai-intro">
           <div class="kp-ai-intro-text">${escapeHtml(data.results.advice)}</div>
+          ${data.results.discountCode ? `
+            <div class="kp-discount-code">
+              <div class="kp-discount-label">🍂 Herfstkorting:</div>
+              <div class="kp-discount-code-box">
+                <span class="kp-code">${data.results.discountCode.code}</span>
+                <span class="kp-discount-amount">${data.results.discountCode.amount} ${data.results.discountCode.description}</span>
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
     }
@@ -876,7 +885,48 @@
         font-size: 16px;
         line-height: 1.8;
         color: #475569;
-        margin-bottom: 20px;
+        margin-bottom: 0;
+      }
+      
+      .kp-discount-code {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px dashed #d4af37;
+      }
+      
+      .kp-discount-label {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 12px;
+        font-weight: 500;
+      }
+      
+      .kp-discount-code-box {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #fff;
+        padding: 16px 20px;
+        border-radius: 8px;
+        border: 2px dashed #d4af37;
+      }
+      
+      .kp-code {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: 2px;
+        background: #f8fafc;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+      }
+      
+      .kp-discount-amount {
+        font-size: 14px;
+        color: #64748b;
+        line-height: 1.6;
       }
       
       .kp-search-again-btn {

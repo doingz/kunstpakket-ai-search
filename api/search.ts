@@ -470,7 +470,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       advice = await generateAdviceMessage(query, total, filters);
     }
 
-    // Step 8: Format and return response
+    // Step 8: Check if discount code should be shown (only for budget searches)
+    const showDiscountCode = !!(filters.priceMax || filters.priceMin);
+    
+    // Step 9: Format and return response
     const response = {
       success: true,
       needsMoreInfo: false,
@@ -483,7 +486,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         total: result.rows.length,
         showing: result.rows.length,
         items: result.rows.map(formatProduct),
-        advice
+        advice,
+        discountCode: showDiscountCode ? { code: '750', amount: '€7,50', description: 'korting op je bestelling' } : null
       }
     };
 
