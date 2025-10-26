@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.0.1';
+  const VERSION = '5.0.2';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -482,7 +482,10 @@
             ${product.dimensions ? `<div class="kp-product-dimensions">Afmetingen: ${escapeHtml(product.dimensions)}</div>` : ''}
             ${product.price ? `
               <div class="kp-product-pricing">
-                <div class="kp-product-price">€${product.price.toFixed(2)}</div>
+                <div class="kp-product-price">
+                  €${product.price.toFixed(2)}
+                  <span class="kp-price-vat">incl. BTW</span>
+                </div>
                 ${product.oldPrice ? `<div class="kp-product-old-price">€${product.oldPrice.toFixed(2)}</div>` : ''}
                 ${product.onSale ? `<span class="kp-sale-tag">-${product.discount}%</span>` : ''}
               </div>
@@ -1032,6 +1035,13 @@
         font-size: 18px;
         font-weight: 700;
         color: #0f172a;
+      }
+      
+      .kp-price-vat {
+        font-size: 10px;
+        font-weight: 400;
+        color: #94a3b8;
+        margin-left: 4px;
       }
       
       .kp-product-old-price {
