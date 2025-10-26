@@ -7,6 +7,11 @@ node_modules/
 
 # Data files (synced from Lightspeed)
 data/
+# BUT: Include catalog metadata files (needed for AI prompts)
+!data/brands.json
+!data/categories.json
+!data/product-types.json
+!data/themes.json
 
 # Logs
 *.log
