@@ -37,6 +37,82 @@ export const config = {
   maxDuration: 30 // text-embedding-3-small (1536 dims)
 };
 
+// Generate friendly advice for search results
+async function generateAdviceMessage(query: string, total: number, filters: any): Promise<string> {
+  try {
+    const { object } = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: z.object({
+        advice: z.string().describe('Friendly, enthusiastic advice message in Dutch about the search results')
+      }),
+      prompt: `Create a warm, personal message about these search results:
+Query: "${query}"
+Results found: ${total}
+Filters: ${JSON.stringify(filters)}
+
+Guidelines:
+- Be conversational and enthusiastic (like a helpful shop assistant!)
+- Use 2-4 sentences
+- Use a relevant emoji (🎨, ✨, 🎁, 💎, 🌟, 💫)
+- Mention what makes these products special
+- For 1 result: "perfect match!"
+- For 2-10: emphasize quality selection
+- For 11-30: mention variety
+- For 31+: encourage browsing to find favorite
+
+Examples:
+- "✨ Wat fijn dat je zoekt naar een kat beeld! Ik heb 8 prachtige beelden voor je gevonden. Van speels tot elegant, er zit vast iets bij dat perfect past bij jouw smaak!"
+- "🎨 Super! Er zijn 23 sportbeelden die aan je wensen voldoen. Van dynamische atleten tot klassieke sporters - neem rustig de tijd om je favoriet uit te kiezen!"
+- "💎 Wow, 1 perfect beeld met een voetballer gevonden! Dit is echt een prachtig sportbeeld dat precies past bij wat je zoekt."
+
+Now create an advice message for this search.`,
+    });
+    
+    return object.advice;
+  } catch (error: any) {
+    console.error('generateAdviceMessage error:', error);
+    // Fallback to simple message
+    if (total === 1) {
+      return '✨ Er is 1 perfect product voor je gevonden!';
+    } else if (total <= 10) {
+      return `🎨 Ik heb ${total} mooie producten voor je gevonden!`;
+    } else {
+      return `✨ Ik heb ${total} producten gevonden! Bekijk ze allemaal en vind jouw favoriet.`;
+    }
+  }
+}
+
+// Generate friendly message for vague/empty queries
+async function generateEmptyStateMessage(query: string): Promise<string> {
+  try {
+    const { object } = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: z.object({
+        advice: z.string().describe('Friendly, helpful message in Dutch to guide the user to search better')
+      }),
+      prompt: `The user searched for: "${query}"
+This query is too vague to find good products (no specific type, theme, or price).
+
+Create a warm, conversational message that:
+- Starts with a friendly emoji (💬, 🤔, 💡, ✨)
+- Acknowledges their search in a positive way
+- Asks 2-3 clarifying questions (product type? theme? budget?)
+- Gives 2-3 concrete search examples
+- Keep it natural and helpful (3-5 sentences max)
+
+Example:
+"💬 Leuk dat je op zoek bent naar een cadeau! Om je beter te kunnen helpen: zoek je een beeld, schilderij, vaas of mok? En waar houdt de persoon van - bijvoorbeeld dieren, sport of bloemen? Ook handig om te weten: heb je een budget in gedachten? Probeer bijvoorbeeld 'kat beeld onder 50 euro' of 'sportbeeld max 100 euro'!"
+
+Now create a message for: "${query}"`,
+    });
+    
+    return object.advice;
+  } catch (error: any) {
+    console.error('generateEmptyStateMessage error:', error);
+    return '💡 Geen producten gevonden. Probeer specifieker te zoeken, bijvoorbeeld: "kat beeld onder 50 euro", "sportbeeld max 100 euro", of "bloemen vaas onder 80 euro".';
+  }
+}
+
 // AI-powered filter extraction using generateObject
 async function parseFilters(query: string) {
   try {
@@ -55,7 +131,9 @@ Extract:
 1. priceMin/priceMax: Concrete numbers ONLY. For "niet te duur", "goedkoop", "luxe" → return null (not enough info)
 2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder
    IMPORTANT: "Keramiek" should map to "Beeld" (ceramic items are sculptures/beelden)
-3. keywords: Specific subjects (animals, artists, objects). Split artist names (e.g. "van gogh" → ["van gogh", "gogh"])
+3. keywords: ONLY specific, searchable subjects (animals, artists, colors, themes, objects)
+   DO NOT extract generic words like: cadeau, geschenk, present, gift, iets, mooi, leuk, origineel, bijzonder, speciaal, voor, mijn, vader, moeder, zus, broer, vriend, vriendin, oma, opa, etc.
+   ONLY extract: specific animals, artists, colors, materials, themes, occasions (huwelijk, jubileum, etc.)
 4. requiresExactMatch: true if keywords MUST appear in title/description
 
 CRITICAL RULES:
@@ -80,6 +158,9 @@ CRITICAL RULES:
 - Use requiresExactMatch=false for category/occasion searches (broader matching)
 
 Examples:
+"cadeau voor mijn zus" → {"keywords": []} (too vague - no specific subject!)
+"iets moois" → {"keywords": []} (too vague!)
+"geschenk voor mijn vader" → {"keywords": []} (too vague!)
 "onder 100 euro" → {"priceMax": 100}
 "sportbeeld" → {"productType": "Beeld", "keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
 "mok" → {"productType": "Mok"}
@@ -292,22 +373,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       result = await sql.query(fallbackQuery, fallbackParams);
     }
 
-    // Simple, honest advice based on results
+    // Generate AI-powered advice messages
     const total = result.rows.length;
     let advice = '';
     
     if (total === 0) {
-      advice = '💡 Geen producten gevonden. Probeer specifieker te zoeken, bijvoorbeeld: "kat beeld onder 50 euro" of "sportbeeld max 100 euro".';
-    } else if (total === 1) {
-      advice = '✨ Er is 1 perfect product voor je gevonden!';
-    } else if (total <= 5) {
-      advice = `🎨 Ik heb ${total} mooie producten voor je gevonden!`;
-    } else if (total <= 20) {
-      advice = `✨ Er zijn ${total} prachtige producten die aan je wensen voldoen!`;
+      // No results - check if query was too vague
+      const hasNoFilters = !filters.productType && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
+      
+      if (hasNoFilters) {
+        // Too vague - generate friendly help message
+        advice = await generateEmptyStateMessage(query);
+      } else {
+        // Valid query, just no matches
+        advice = '💡 Geen producten gevonden met deze specifieke zoekopdracht. Probeer iets breder te zoeken of pas je filters aan!';
+      }
     } else {
-      const emojis = ['🎨', '✨', '🎁', '💎', '🌟'];
-      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-      advice = `${emoji} Ik heb ${total} producten gevonden! Bekijk ze allemaal en vind jouw favoriet.`;
+      // Results found - generate enthusiastic message
+      advice = await generateAdviceMessage(query, total, filters);
     }
 
     const response = {
