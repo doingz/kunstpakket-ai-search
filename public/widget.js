@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.6.0';
+  const VERSION = '4.7.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -554,6 +554,7 @@
       }
       
       /* Fix sidebar z-index */
+      #wwkSidebar,
       #wwkSidebarMobile {
         z-index: 800 !important;
       }
