@@ -145,6 +145,7 @@ async function parseFilters(query: string) {
         priceMax: z.number().optional().nullable(),
         productType: z.string().optional().nullable().describe('Product type: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek'),
         artist: z.string().optional().nullable().describe('Artist/designer name if explicitly mentioned'),
+        sizeCategory: z.enum(['klein', 'middel', 'groot']).optional().nullable().describe('Size category: klein (<20cm), middel (20-40cm), groot (>40cm)'),
         keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, colors, themes, objects). Empty array if none. DO NOT include artist names here.'),
         requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
       }),
@@ -156,7 +157,11 @@ Extract:
    IMPORTANT: "Keramiek" should map to "Beeld" (ceramic items are sculptures/beelden)
 3. artist: Extract artist/designer name if mentioned (see exact brand list below). Use most specific form.
    IMPORTANT: Extract to 'artist' field, NOT to 'keywords' field!
-4. keywords: ONLY specific, searchable subjects (animals, colors, themes, objects)
+4. sizeCategory: Extract size hints
+   - "klein", "kleine", "mini", "compact", "bureau" → klein (<20cm)
+   - "middel", "gemiddeld", "normaal", "standaard" → middel (20-40cm)
+   - "groot", "grote", "fors", "ruim", "statement" → groot (>40cm)
+5. keywords: ONLY specific, searchable subjects (animals, colors, themes, objects)
    DO NOT extract generic words like: cadeau, geschenk, present, gift, iets, mooi, leuk, origineel, bijzonder, speciaal, voor, mijn, vader, moeder, zus, broer, vriend, vriendin, oma, opa, etc.
    DO NOT extract artist names - those go in the 'artist' field!
    ONLY extract: specific animals, colors, materials, themes, occasions (huwelijk, jubileum, etc.)
@@ -173,6 +178,9 @@ Examples:
 "mok" → {"productType": "Mok"}
 "hond" → {"keywords": ["hond", "honden", "dog"]}
 "dog" → {"keywords": ["hond", "honden", "dog"]}
+"klein beeld met een kat" → {"sizeCategory": "klein", "productType": "Beeld", "keywords": ["kat", "poes", "cat"]}
+"groot bronzen beeld" → {"sizeCategory": "groot", "productType": "Beeld", "keywords": ["bronzen"]}
+"compact bureau beeldje" → {"sizeCategory": "klein", "keywords": ["bureau"]}
 "sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
 "kat" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
 "poes" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
@@ -211,6 +219,7 @@ Examples:
       priceMax: null,
       productType: null,
       artist: null,
+      sizeCategory: null,
       keywords: [],
       requiresExactMatch: false
     };
@@ -323,6 +332,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       params.push(filters.priceMin);
       whereClause += ` AND price >= $${paramIndex++}`;
     }
+    
+    // Size category filter (based on dimensions field)
+    if (filters.sizeCategory) {
+      if (filters.sizeCategory === 'klein') {
+        // Extract any number from dimensions and check if < 20
+        whereClause += ` AND dimensions IS NOT NULL AND CAST(REGEXP_REPLACE(dimensions, '[^0-9]', '', 'g') AS INTEGER) < 20`;
+      } else if (filters.sizeCategory === 'middel') {
+        whereClause += ` AND dimensions IS NOT NULL AND CAST(REGEXP_REPLACE(dimensions, '[^0-9]', '', 'g') AS INTEGER) BETWEEN 20 AND 40`;
+      } else if (filters.sizeCategory === 'groot') {
+        whereClause += ` AND dimensions IS NOT NULL AND CAST(REGEXP_REPLACE(dimensions, '[^0-9]', '', 'g') AS INTEGER) > 40`;
+      }
+    }
 
     // Keyword filters (OR condition across title/description)
     if (filters.keywords && filters.keywords.length > 0) {
@@ -353,9 +374,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     orderBy += ', stock_sold DESC NULLS LAST';
 
     // Step 4: Determine similarity threshold (adaptive based on query specificity)
-    const hasNoFilters = !filters.productType && !filters.artist && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
-    const isTypeOnlyQuery = filters.productType && !filters.artist && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
-    const isKeywordOnlyQuery = !filters.productType && !filters.artist && filters.keywords && filters.keywords.length > 0;
+    const hasNoFilters = !filters.productType && !filters.artist && !filters.sizeCategory && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
+    const isTypeOnlyQuery = filters.productType && !filters.artist && !filters.sizeCategory && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
+    const isKeywordOnlyQuery = !filters.productType && !filters.artist && !filters.sizeCategory && filters.keywords && filters.keywords.length > 0;
     
     let similarityThreshold;
     if (hasNoFilters) {
