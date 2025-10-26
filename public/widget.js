@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.0.0';
+  const VERSION = '5.0.1';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -475,7 +475,7 @@
             ${product.isPopular || product.isScarce ? `
               <div class="kp-product-badges">
                 ${product.isPopular ? `<span class="kp-badge kp-badge-popular">Populair</span>` : ''}
-                ${product.isScarce ? `<span class="kp-badge kp-badge-scarce">Nog maar ${product.stock} op voorraad</span>` : ''}
+                ${product.isScarce ? `<span class="kp-badge kp-badge-scarce">${product.stock} op voorraad</span>` : ''}
               </div>
             ` : ''}
             <div class="kp-product-title">${escapeHtml(product.title)}</div>
@@ -1001,9 +1001,8 @@
       }
       
       .kp-badge-scarce {
-        background: #fef3c7;
-        color: #92400e;
-        border: 1px solid #fbbf24;
+        background: #000;
+        color: #fff;
       }
       
       .kp-sale-tag {
