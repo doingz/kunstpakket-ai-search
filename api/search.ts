@@ -242,6 +242,10 @@ function formatProduct(row: any) {
     name: categoryMap.get(id) || `Unknown (${id})`
   }));
   
+  // Determine if product is popular (top 20% of sales)
+  const stockSold = row.stock_sold ? parseInt(row.stock_sold) : 0;
+  const isPopular = stockSold >= 10; // Products with 10+ sales are considered popular
+  
   return {
     id: row.id,
     title: row.title,
@@ -258,6 +262,8 @@ function formatProduct(row: any) {
     type: row.type,
     artist: row.artist || null,
     dimensions: row.dimensions || null,
+    stockSold: stockSold,
+    isPopular: isPopular,
     categories: categories,  // Now includes {id, name}
     similarity: row.similarity ? parseFloat(row.similarity) : null
   };
@@ -356,7 +362,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const queryText = `
       SELECT 
-        p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions,
+        p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock_sold,
         1 - (p.embedding <=> $1::vector) as similarity,
         ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
       FROM products p
@@ -395,7 +401,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       const fallbackQuery = `
         SELECT 
-          p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions,
+          p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock_sold,
           1 - (p.embedding <=> $1::vector) as similarity,
           ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
         FROM products p

@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.7.1';
+  const VERSION = '4.8.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -473,7 +473,10 @@
           ${product.image ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" loading="lazy" />` : '<div class="kp-no-image"></div>'}
           <div class="kp-product-info">
             ${product.onSale ? `<div class="kp-sale-badge">-${product.discount}%</div>` : ''}
+            ${product.isPopular ? `<div class="kp-popular-badge">⭐ Populair</div>` : ''}
             <div class="kp-product-title">${escapeHtml(product.title)}</div>
+            ${product.artist ? `<div class="kp-product-artist">${escapeHtml(product.artist)}</div>` : ''}
+            ${product.dimensions ? `<div class="kp-product-dimensions">📏 ${escapeHtml(product.dimensions)}</div>` : ''}
             ${product.price ? `
               <div class="kp-product-pricing">
                 <div class="kp-product-price">€${product.price.toFixed(2)}</div>
@@ -976,12 +979,38 @@
         font-weight: 700;
       }
       
+      .kp-popular-badge {
+        position: absolute;
+        top: -12px;
+        left: 16px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      
       .kp-product-title {
         font-size: 15px;
         font-weight: 500;
         color: #1e293b;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         line-height: 1.4;
+      }
+      
+      .kp-product-artist {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 4px;
+        font-style: italic;
+      }
+      
+      .kp-product-dimensions {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-bottom: 8px;
       }
       
       .kp-product-pricing {
