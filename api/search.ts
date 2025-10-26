@@ -111,12 +111,19 @@ Create a warm, enthusiastic, positive message that:
 - Keep it upbeat and helpful (3-4 sentences max)
 - End on an encouraging note!
 
+CRITICAL for search examples:
+- Use natural Dutch: "kat beeld onder 50 euro" (NOT "kat onderwerp beeld")
+- Always include budget in euros: "onder X euro", "max X euro"
+- Use simple combinations: [dier/thema] + [type] + [budget]
+- GOOD: "bloemen vaas max 80 euro", "sportbeeld onder 150 euro", "Van Gogh mok"
+- BAD: "liefde onderwerp vaas", "bloemen thema", "abstract ding"
+
 Examples:
-"✨ Wat leuk dat je een cadeau zoekt! We hebben zoveel mooie kunstwerken! Zoek je een beeld, schilderij, vaas of mok? En welk thema past bij de persoon - dieren, sport, bloemen of misschien iets van een beroemde kunstenaar? Probeer bijvoorbeeld: 'kat beeld onder 50 euro', 'bloemenvaas max 80 euro' of 'Van Gogh mok'!"
+"✨ Wat leuk dat je een cadeau zoekt! We hebben zoveel mooie kunstcadeaus! Zoek je een beeld, schilderij, vaas of mok? En welk thema past erbij - dieren, sport, bloemen of een beroemde kunstenaar? Probeer bijvoorbeeld: 'kat beeld onder 50 euro', 'bloemenvaas max 80 euro' of 'Van Gogh mok onder 30 euro'!"
 
-"🎨 Super! We hebben prachtige kunstcadeaus in alle prijsklassen! Vertel me wat meer: zoek je iets voor een speciale gelegenheid zoals een huwelijk, jubileum of geslaagd? Of heb je een bepaald budget in gedachten? Probeer bijvoorbeeld: 'liefdesbeeld onder 100 euro', 'sportbeeld max 150 euro' of 'Klimt onderzetters'!"
+"🎨 Super! We hebben prachtige kunstcadeaus in alle prijsklassen! Vertel me wat meer: zoek je iets voor een speciale gelegenheid zoals een huwelijk, jubileum of geslaagd? Of heb je een bepaald budget? Probeer bijvoorbeeld: 'huwelijksbeeld onder 100 euro', 'sportbeeld max 150 euro' of 'Klimt onderzetters'!"
 
-"🌟 Wat fijn dat je hier bent! Ons assortiment is enorm! Houd de persoon van dieren, abstract, bloemen of sport? En wat voor type cadeau zoek je - een sierlijk beeld, vrolijk schilderij of praktische mok? Probeer bijvoorbeeld: 'hond beeld onder 80 euro', 'bloemen schilderij' of 'sportbeeld max 100 euro'!"
+"🌟 Wat fijn dat je hier bent! Ons assortiment is enorm! Houdt de persoon van dieren, bloemen of sport? En wat voor type cadeau - een mooi beeld, sierlijk schilderij of leuke mok? Probeer bijvoorbeeld: 'hond beeld onder 80 euro', 'bloemen schilderij max 100 euro' of 'sportbeeld onder 150 euro'!"
 
 Now create a message for: "${query}"`,
     });
