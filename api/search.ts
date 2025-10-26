@@ -1,6 +1,14 @@
 /**
  * AI-powered semantic search with Vercel AI SDK + pgvector
- * Node.js Serverless runtime
+ * 
+ * Features:
+ * - Natural language query parsing with AI
+ * - Vector similarity search for semantic matching
+ * - Dynamic catalog metadata (brands, types, themes)
+ * - AI-generated conversational advice messages
+ * - Adaptive similarity thresholds for vague vs specific queries
+ * 
+ * @see lib/catalog-metadata.ts for dynamic catalog data
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { embed, generateObject } from 'ai';
@@ -8,8 +16,16 @@ import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
 import { buildPromptInstructions, getCatalogSummary } from '../lib/catalog-metadata';
-// Category map for ID->name lookup (hardcoded for performance - update when categories change)
-const categoryMap = new Map([
+
+// Vercel serverless config
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 30
+};
+
+// Category map for ID->name lookup (hardcoded for performance)
+// TODO: Consider moving to catalog-metadata.ts if this grows
+const CATEGORY_MAP = new Map([
   [8159306, "Liefde & Huwelijk"],
   [8159309, "Relatiegeschenken & Eindejaarsgeschenken"],
   [8159312, "Zakelijke Geschenken"],
@@ -32,13 +48,16 @@ const categoryMap = new Map([
   [29386437, "Nieuw"]
 ]);
 
-// Explicit Node.js runtime
-export const config = {
-  runtime: 'nodejs',
-  maxDuration: 30 // text-embedding-3-small (1536 dims)
-};
+// Constants
+const SIMILARITY_THRESHOLD_VAGUE = 0.70;  // High threshold for vague queries → 0 results
+const SIMILARITY_THRESHOLD_SPECIFIC = 0.35; // Lower threshold for specific queries → semantic matches
+const POPULAR_SALES_THRESHOLD = 10; // Products with 10+ sales are popular
+const MAX_RESULTS = 50;
 
-// Generate friendly advice for search results
+/**
+ * Generate AI-powered conversational advice for search results
+ * Uses GPT-4o-mini to create warm, enthusiastic messages
+ */
 async function generateAdviceMessage(query: string, total: number, filters: any): Promise<string> {
   try {
     const { object } = await generateObject({
@@ -85,7 +104,10 @@ Now create an advice message for this search.`,
   }
 }
 
-// Generate friendly message for vague/empty queries
+/**
+ * Generate AI-powered helpful message for vague/empty queries
+ * Guides users to provide more specific search terms
+ */
 async function generateEmptyStateMessage(query: string): Promise<string> {
   try {
     const { object } = await generateObject({
@@ -131,7 +153,11 @@ Now create a message for: "${query}"`,
   }
 }
 
-// AI-powered filter extraction using generateObject
+/**
+ * Parse natural language query into structured filters using AI
+ * Extracts: price range, product type, artist, keywords, match type
+ * Uses dynamic catalog metadata for accurate brand/type matching
+ */
 async function parseFilters(query: string) {
   try {
     const { object } = await generateObject({
@@ -213,17 +239,19 @@ Examples:
   }
 }
 
-// Format product for response
+/**
+ * Format database row into clean product object for API response
+ * Includes categories, popularity, sale status, dimensions, artist
+ */
 function formatProduct(row: any) {
   const categoryIds = row.category_ids || [];
   const categories = categoryIds.map((id: number) => ({
     id,
-    name: categoryMap.get(id) || `Unknown (${id})`
+    name: CATEGORY_MAP.get(id) || `Unknown (${id})`
   }));
   
-  // Determine if product is popular (top 20% of sales)
   const stockSold = row.stock_sold ? parseInt(row.stock_sold) : 0;
-  const isPopular = stockSold >= 10; // Products with 10+ sales are considered popular
+  const isPopular = stockSold >= POPULAR_SALES_THRESHOLD;
   
   return {
     id: row.id,
@@ -241,15 +269,19 @@ function formatProduct(row: any) {
     type: row.type,
     artist: row.artist || null,
     dimensions: row.dimensions || null,
-    stockSold: stockSold,
-    isPopular: isPopular,
-    categories: categories,  // Now includes {id, name}
+    stockSold,
+    isPopular,
+    categories,
     similarity: row.similarity ? parseFloat(row.similarity) : null
   };
 }
 
+/**
+ * Main search handler
+ * POST /api/search with body: { query: string }
+ */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -274,7 +306,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const start = Date.now();
 
-    // Parallel: AI filter parsing + embedding generation (fastest!)
+    // Step 1: Parallel AI processing (filter parsing + embedding generation)
     const [filters, { embedding }] = await Promise.all([
       parseFilters(query),
       embed({
@@ -283,32 +315,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     ]);
 
-    // Build WHERE clause with filters
+    // Step 2: Build SQL WHERE clause based on extracted filters
     let whereClause = 'is_visible = true AND embedding IS NOT NULL';
     const params: any[] = [JSON.stringify(embedding)];
     let paramIndex = 2;
 
+    // Product type filter
     if (filters.productType) {
       params.push(filters.productType);
       whereClause += ` AND type = $${paramIndex++}`;
     }
     
+    // Artist filter (matches both artist field and title)
     if (filters.artist) {
       params.push(`%${filters.artist}%`);
       whereClause += ` AND (artist ILIKE $${paramIndex++} OR title ILIKE $${paramIndex - 1})`;
     }
 
+    // Price range filters
     if (filters.priceMax) {
       params.push(filters.priceMax);
       whereClause += ` AND price <= $${paramIndex++}`;
     }
-
     if (filters.priceMin) {
       params.push(filters.priceMin);
       whereClause += ` AND price >= $${paramIndex++}`;
     }
 
-    // Add keyword filtering if keywords are provided
+    // Keyword filters (OR condition across title/description)
     if (filters.keywords && filters.keywords.length > 0) {
       const keywordConditions = filters.keywords.map(keyword => {
         params.push(`%${keyword}%`);
@@ -318,33 +352,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       whereClause += ` AND (${keywordConditions})`;
     }
 
-    // Build ORDER BY clause - prioritize exact keyword matches
+    // Step 3: Build ORDER BY clause (prioritize exact keyword matches, then similarity, then popularity)
     let orderBy = 'embedding <=> $1::vector';
     
     if (filters.requiresExactMatch && filters.keywords && filters.keywords.length > 0) {
-      // Calculate starting index for keyword parameters
       let keywordParamStartIndex = 2;
       if (filters.productType) keywordParamStartIndex++;
       if (filters.artist) keywordParamStartIndex++;
       if (filters.priceMax) keywordParamStartIndex++;
       if (filters.priceMin) keywordParamStartIndex++;
       
-      // Boost products with keywords in title
       const keywordBoost = filters.keywords.map((_, idx) => 
         `CASE WHEN title ILIKE $${keywordParamStartIndex + idx} THEN 0 ELSE 1 END`
       ).join(' + ');
       
       orderBy = `(${keywordBoost}), ${orderBy}`;
     }
-    
     orderBy += ', stock_sold DESC NULLS LAST';
 
-    // Adaptive similarity threshold based on query specificity
+    // Step 4: Determine similarity threshold (adaptive based on query specificity)
     const hasNoFilters = !filters.productType && !filters.artist && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
     const similarityThreshold = hasNoFilters 
-      ? 0.70  // Very high threshold for vague queries → likely 0 results
-      : 0.35; // Normal threshold for specific queries → find semantic matches
+      ? SIMILARITY_THRESHOLD_VAGUE     // High threshold for vague queries
+      : SIMILARITY_THRESHOLD_SPECIFIC; // Lower threshold for specific queries
     
+    // Step 5: Execute main vector search query
     const queryText = `
       SELECT 
         p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock_sold,
@@ -356,14 +388,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
       GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.embedding, p.stock_sold
       ORDER BY ${orderBy.replace(/\b(title|embedding|stock_sold)\b/g, 'p.$1')}
-      LIMIT 50
+      LIMIT ${MAX_RESULTS}
     `;
 
     let result = await sql.query(queryText, params);
 
-    // Fallback: if 0 results with keywords, retry without keyword filter (semantic search only)
+    // Step 6: Fallback query (if 0 results with keywords, retry without keyword filter)
     if (result.rows.length === 0 && filters.keywords && filters.keywords.length > 0) {
-      console.log('Fallback: 0 results with keywords, retrying without keyword filter');
+      console.log('[Fallback] Retrying without keyword filter for broader semantic search');
       
       let fallbackWhereClause = 'is_visible = true AND embedding IS NOT NULL';
       const fallbackParams: any[] = [JSON.stringify(embedding)];
@@ -400,52 +432,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
         GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.embedding, p.stock_sold
         ORDER BY p.embedding <=> $1::vector, p.stock_sold DESC NULLS LAST
-        LIMIT 50
+        LIMIT ${MAX_RESULTS}
       `;
       
       result = await sql.query(fallbackQuery, fallbackParams);
     }
 
-    // Generate AI-powered advice messages
+    // Step 7: Generate AI-powered conversational advice
     const total = result.rows.length;
     let advice = '';
     
     if (total === 0) {
-      // No results - check if query was too vague
       const hasNoFilters = !filters.productType && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
       
       if (hasNoFilters) {
-        // Too vague - generate friendly help message
+        // Vague query → guide user to be more specific
         advice = await generateEmptyStateMessage(query);
       } else {
-        // Valid query, just no matches - stay positive!
+        // Valid query with no matches → encourage to adjust
         advice = '✨ Laten we je zoekopdracht iets aanpassen om betere resultaten te vinden! Probeer het iets breder of verander je filters.';
       }
     } else {
-      // Results found - generate enthusiastic message
+      // Results found → generate enthusiastic message
       advice = await generateAdviceMessage(query, total, filters);
     }
 
+    // Step 8: Format and return response
     const response = {
       success: true,
       needsMoreInfo: false,
       query: {
         original: query,
-        filters: filters,
+        filters,
         took_ms: Date.now() - start
       },
       results: {
         total: result.rows.length,
         showing: result.rows.length,
         items: result.rows.map(formatProduct),
-        advice: advice
+        advice
       }
     };
 
     return res.status(200).json(response);
 
   } catch (error: any) {
-    console.error('Search error:', error);
+    console.error('[Search Error]', error);
     
     return res.status(500).json({
       success: false,
