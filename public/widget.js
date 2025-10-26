@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.8.0';
+  const VERSION = '4.9.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -472,15 +472,16 @@
            data-product-url="${product.url}">
           ${product.image ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" loading="lazy" />` : '<div class="kp-no-image"></div>'}
           <div class="kp-product-info">
-            ${product.onSale ? `<div class="kp-sale-badge">-${product.discount}%</div>` : ''}
-            ${product.isPopular ? `<div class="kp-popular-badge">⭐ Populair</div>` : ''}
-            <div class="kp-product-title">${escapeHtml(product.title)}</div>
-            ${product.artist ? `<div class="kp-product-artist">${escapeHtml(product.artist)}</div>` : ''}
-            ${product.dimensions ? `<div class="kp-product-dimensions">📏 ${escapeHtml(product.dimensions)}</div>` : ''}
+            <div class="kp-product-title">
+              ${escapeHtml(product.title)}
+              ${product.isPopular ? `<span class="kp-popular-tag">Populair</span>` : ''}
+            </div>
+            ${product.dimensions ? `<div class="kp-product-dimensions">Afmetingen: ${escapeHtml(product.dimensions)}</div>` : ''}
             ${product.price ? `
               <div class="kp-product-pricing">
                 <div class="kp-product-price">€${product.price.toFixed(2)}</div>
                 ${product.oldPrice ? `<div class="kp-product-old-price">€${product.oldPrice.toFixed(2)}</div>` : ''}
+                ${product.onSale ? `<span class="kp-sale-tag">-${product.discount}%</span>` : ''}
               </div>
             ` : ''}
           </div>
@@ -967,44 +968,35 @@
         position: relative;
       }
       
-      .kp-sale-badge {
-        position: absolute;
-        top: -12px;
-        right: 16px;
-        background: #ef4444;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 700;
-      }
-      
-      .kp-popular-badge {
-        position: absolute;
-        top: -12px;
-        left: 16px;
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 700;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      
       .kp-product-title {
         font-size: 15px;
         font-weight: 500;
         color: #1e293b;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         line-height: 1.4;
       }
       
-      .kp-product-artist {
-        font-size: 13px;
-        color: #64748b;
-        margin-bottom: 4px;
-        font-style: italic;
+      .kp-popular-tag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        background: #fbbf24;
+        color: white;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        vertical-align: middle;
+      }
+      
+      .kp-sale-tag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        background: #ef4444;
+        color: white;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
       }
       
       .kp-product-dimensions {
