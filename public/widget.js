@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.0.2';
+  const VERSION = '5.0.3';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -225,6 +225,8 @@
     const handleSearch = () => {
       const query = input.value.trim();
       if (query) {
+        // Blur inline input to close mobile keyboard before opening overlay
+        input.blur();
         openOverlay(query);
       }
     };
