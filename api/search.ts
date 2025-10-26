@@ -50,6 +50,10 @@ Query: "${query}"
 Results found: ${total}
 Filters: ${JSON.stringify(filters)}
 
+Our product catalog:
+- Types: Beeld, Schilderij, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder
+- Popular themes: Sport, Liefde, Dieren (katten, honden, vogels, olifanten), Bloemen, Kunst (Van Gogh, Klimt, etc.), Zakelijk, Gezin, Huwelijk, Jubileum, Geslaagd, Bedanken, Zorg
+
 Guidelines:
 - Be conversational and enthusiastic (like a helpful shop assistant!)
 - Use 2-4 sentences
@@ -93,15 +97,22 @@ async function generateEmptyStateMessage(query: string): Promise<string> {
       prompt: `The user searched for: "${query}"
 This query is too vague to find good products (no specific type, theme, or price).
 
+Our product catalog:
+- Types: Beeld (733), Schilderij (25), Vaas (39), Mok (25), Schaal (15), Wandbord (31), Onderzetters (15), Theelichthouder (13)
+- Popular themes: Sport, Liefde & Romantiek, Dieren (katten, honden, vogels, olifanten), Bloemen, Beroemde Kunstenaars (Van Gogh, Klimt, Monet, Escher), Zakelijk, Gezin, Huwelijk, Jubileum, Geslaagd, Bedanken, Zorg
+- Price range: €20 - €500
+
 Create a warm, conversational message that:
 - Starts with a friendly emoji (💬, 🤔, 💡, ✨)
 - Acknowledges their search in a positive way
 - Asks 2-3 clarifying questions (product type? theme? budget?)
-- Gives 2-3 concrete search examples
+- Gives 2-3 concrete search examples using REAL types and themes from our catalog
 - Keep it natural and helpful (3-5 sentences max)
 
-Example:
+Examples:
 "💬 Leuk dat je op zoek bent naar een cadeau! Om je beter te kunnen helpen: zoek je een beeld, schilderij, vaas of mok? En waar houdt de persoon van - bijvoorbeeld dieren, sport of bloemen? Ook handig om te weten: heb je een budget in gedachten? Probeer bijvoorbeeld 'kat beeld onder 50 euro' of 'sportbeeld max 100 euro'!"
+
+"✨ Wat leuk! We hebben heel veel mooie kunstcadeaus. Zoek je bijvoorbeeld een liefdesbeeld voor een huwelijk, een sportbeeld voor een collega, of juist iets met bloemen? En wat is je budget? Probeer bijvoorbeeld 'huwelijksbeeld onder 150 euro' of 'Van Gogh mok max 30 euro'!"
 
 Now create a message for: "${query}"`,
     });
