@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.0.5';
+  const VERSION = '5.1.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -848,10 +848,12 @@
       }
       
       @keyframes kp-dot-pulse {
-        0%, 60%, 100% {
+        0%, 80%, 100% {
+          transform: scale(0);
           opacity: 0;
         }
-        30% {
+        40% {
+          transform: scale(1);
           opacity: 1;
         }
       }
