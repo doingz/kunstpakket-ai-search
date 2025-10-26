@@ -24,10 +24,11 @@ export const config = {
 };
 
 // Constants
-const SIMILARITY_THRESHOLD_VAGUE = 0.70;     // High threshold for vague queries → 0 results
-const SIMILARITY_THRESHOLD_SPECIFIC = 0.25;  // Lower threshold for specific queries → semantic matches
-const SIMILARITY_THRESHOLD_TYPE_ONLY = 0.20; // Even lower for type-only queries (e.g., "mok", "vaas")
-const POPULAR_SALES_THRESHOLD = 10;          // Products with 10+ sales are popular
+const SIMILARITY_THRESHOLD_VAGUE = 0.70;      // High threshold for vague queries → 0 results
+const SIMILARITY_THRESHOLD_SPECIFIC = 0.25;   // Lower threshold for specific queries → semantic matches
+const SIMILARITY_THRESHOLD_TYPE_ONLY = 0.20;  // Even lower for type-only queries (e.g., "mok", "vaas")
+const SIMILARITY_THRESHOLD_KEYWORDS = 0.15;   // Lowest for keyword searches (e.g., "dog", "kat")
+const POPULAR_SALES_THRESHOLD = 10;           // Products with 10+ sales are popular
 const MAX_RESULTS = 50;
 
 /**
@@ -349,14 +350,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Step 4: Determine similarity threshold (adaptive based on query specificity)
     const hasNoFilters = !filters.productType && !filters.artist && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
     const isTypeOnlyQuery = filters.productType && !filters.artist && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
+    const isKeywordOnlyQuery = !filters.productType && !filters.artist && filters.keywords && filters.keywords.length > 0;
     
     let similarityThreshold;
     if (hasNoFilters) {
-      similarityThreshold = SIMILARITY_THRESHOLD_VAGUE;     // Vague query: high threshold → 0 results
+      similarityThreshold = SIMILARITY_THRESHOLD_VAGUE;      // Vague query: high threshold → 0 results
     } else if (isTypeOnlyQuery) {
-      similarityThreshold = SIMILARITY_THRESHOLD_TYPE_ONLY; // Type-only: very low threshold (e.g., "mok")
+      similarityThreshold = SIMILARITY_THRESHOLD_TYPE_ONLY;  // Type-only: very low threshold (e.g., "mok")
+    } else if (isKeywordOnlyQuery) {
+      similarityThreshold = SIMILARITY_THRESHOLD_KEYWORDS;   // Keyword-only: lowest threshold (e.g., "dog", "kat")
     } else {
-      similarityThreshold = SIMILARITY_THRESHOLD_SPECIFIC;  // Specific query: normal threshold
+      similarityThreshold = SIMILARITY_THRESHOLD_SPECIFIC;   // Specific query: normal threshold
     }
     
     // Step 5: Execute main vector search query
