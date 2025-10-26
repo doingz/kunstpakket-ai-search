@@ -144,7 +144,8 @@ async function parseFilters(query: string) {
         priceMin: z.number().optional().nullable(),
         priceMax: z.number().optional().nullable(),
         productType: z.string().optional().nullable().describe('Product type: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder, Keramiek'),
-        keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, artists, objects). Empty array if none.'),
+        artist: z.string().optional().nullable().describe('Artist/designer name if explicitly mentioned'),
+        keywords: z.array(z.string()).default([]).describe('Specific search terms (animals, colors, themes, objects). Empty array if none. DO NOT include artist names here.'),
         requiresExactMatch: z.boolean().default(false).describe('True if searching for specific things that MUST be in title/description')
       }),
       prompt: `Analyze this Dutch product search query and extract filters: "${query}"
@@ -153,24 +154,27 @@ Extract:
 1. priceMin/priceMax: Concrete numbers ONLY. For "niet te duur", "goedkoop", "luxe" → return null (not enough info)
 2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder
    IMPORTANT: "Keramiek" should map to "Beeld" (ceramic items are sculptures/beelden)
-3. keywords: ONLY specific, searchable subjects (animals, artists, colors, themes, objects)
+3. artist: Extract artist/designer name if mentioned (see list below). Use most specific form (e.g., "Vincent van Gogh" not just "Van Gogh")
+   IMPORTANT: Extract to 'artist' field, NOT to 'keywords' field!
+4. keywords: ONLY specific, searchable subjects (animals, colors, themes, objects)
    DO NOT extract generic words like: cadeau, geschenk, present, gift, iets, mooi, leuk, origineel, bijzonder, speciaal, voor, mijn, vader, moeder, zus, broer, vriend, vriendin, oma, opa, etc.
-   ONLY extract: specific animals, artists, colors, materials, themes, occasions (huwelijk, jubileum, etc.)
-4. requiresExactMatch: true if keywords MUST appear in title/description
+   DO NOT extract artist names - those go in the 'artist' field!
+   ONLY extract: specific animals, colors, materials, themes, occasions (huwelijk, jubileum, etc.)
+5. requiresExactMatch: true if keywords MUST appear in title/description
 
 CRITICAL RULES:
 - Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur/keramiek, vaas, mok, schaal, wandbord, onderzetters, theelicht
 - IMPORTANT: "keramiek", "keramieken beeld", "ballonhond" → productType: "Beeld" (ceramics are sculptures)
 - DO NOT add product types as keywords
-- For artist/designer names: extract artist name as keyword (see list below). Add both full name AND variants (e.g. "Van Gogh" → ["van gogh", "gogh", "vincent van gogh"])
+- For artist/designer names: extract to 'artist' field (NOT keywords!). Use full normalized name.
 - For animals: add common synonyms AND English translations (e.g. "kat" → ["kat", "poes", "cat"], "hond" → ["hond", "honden", "dog"], "paard" → ["paard", "paarden", "horse"])
 - For occasions: use broader terms (e.g. "huwelijkscadeau" → ["huwelijk", "trouwen"], "bedankje" → ["bedanken", "dank"])
-- IMPORTANT ARTISTS IN CATALOG (recognize these names):
-  Famous Artists: Van Gogh, Klimt, Monet, Dali, Vermeer, Rembrandt, Mondriaan, Rodin, Modigliani, Magritte, Escher, Michelangelo, Da Vinci, Egon Schiele, Camille Claudel, Botticelli, Paul Gauguin, Jeroen Bosch, Kandinsky
+- IMPORTANT ARTISTS IN CATALOG (extract to 'artist' field when mentioned):
+  Famous Artists: Vincent van Gogh, Gustav Klimt, Claude Monet, Salvador Dali, Johannes Vermeer, Rembrandt, Piet Mondriaan, Auguste Rodin, Amedeo Modigliani, René Magritte, M.C. Escher, Michelangelo, Leonardo da Vinci, Egon Schiele, Camille Claudel, Sandro Botticelli, Paul Gauguin, Jeroen Bosch, Wassily Kandinsky
   Contemporary Artists: Jeff Koons, Herman Brood, Banksy
   Dutch Artists: Corry Ammerlaan, Ger van Tankeren, Peter Donkersloot, Klaas Gubbels, Jacky Zegers, Jack Liemburg, Harrie Gerritz, Tos Kostermans, Bram Reijnders, Jeroen Krabb, Mark Jurriens
-  Designers/Brands: Kokeshi (Lucie Kaas designer dolls), Forchino/Guillermo Forchino, Selwyn Senatori, Richard Orlinski, Guido Deleu, Elephant Parade, Becky Kemp
-  * When user searches "kokeshi" → add "kokeshi" as keyword AND recognize it's a designer brand
+  Designers/Brands: Kokeshi, Lucie Kaas, Guillermo Forchino, Forchino, Selwyn Senatori, Richard Orlinski, Guido Deleu, Elephant Parade, Becky Kemp
+  * Normalize names: "klimt" → "Gustav Klimt", "van gogh" → "Vincent van Gogh", "forchino" → "Guillermo Forchino", "kokeshi" → "Kokeshi"
 - For categories (important!): extract relevant keywords based on these popular categories:
   * Sport/Fitness → ["sport", "fitness", "atleet", "voetbal", "golf"]
   * Zorg/Verpleging → ["zorg", "verpleging", "care", "dokter", "nurse"]
@@ -197,12 +201,15 @@ Examples:
 "sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
 "kat" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
 "poes" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
-"kokeshi" → {"keywords": ["kokeshi"], "requiresExactMatch": true} (designer brand - MUST be in title!)
-"kokeshi beeld" → {"productType": "Beeld", "keywords": ["kokeshi"], "requiresExactMatch": true}
+"kokeshi" → {"artist": "Kokeshi"} (artist filter - NOT keywords!)
+"kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi"}
+"een kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi"}
 "Beeld max 200 euro" → {"productType": "Beeld", "priceMax": 200}
-"Van Gogh schilderij" → {"productType": "Schilderij", "keywords": ["van gogh", "gogh"], "requiresExactMatch": true}
-"klimt" → {"keywords": ["klimt", "gustav klimt"], "requiresExactMatch": true}
-"jeff koons" → {"keywords": ["jeff koons", "koons"], "requiresExactMatch": true}
+"Van Gogh schilderij" → {"productType": "Schilderij", "artist": "Vincent van Gogh"} (artist filter!)
+"klimt" → {"artist": "Gustav Klimt"} (artist filter!)
+"jeff koons" → {"artist": "Jeff Koons"} (artist filter!)
+"van gogh" → {"artist": "Vincent van Gogh"}
+"forchino" → {"artist": "Guillermo Forchino"}
 "een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond", "honden", "dog"], "requiresExactMatch": false}
 "schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
 "niet te duur" → {"priceMax": null}
@@ -228,6 +235,7 @@ Examples:
       priceMin: null,
       priceMax: null,
       productType: null,
+      artist: null,
       keywords: [],
       requiresExactMatch: false
     };
@@ -313,6 +321,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       params.push(filters.productType);
       whereClause += ` AND type = $${paramIndex++}`;
     }
+    
+    if (filters.artist) {
+      params.push(filters.artist);
+      whereClause += ` AND artist = $${paramIndex++}`;
+    }
 
     if (filters.priceMax) {
       params.push(filters.priceMax);
@@ -341,6 +354,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Calculate starting index for keyword parameters
       let keywordParamStartIndex = 2;
       if (filters.productType) keywordParamStartIndex++;
+      if (filters.artist) keywordParamStartIndex++;
       if (filters.priceMax) keywordParamStartIndex++;
       if (filters.priceMin) keywordParamStartIndex++;
       
@@ -355,7 +369,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     orderBy += ', stock_sold DESC NULLS LAST';
 
     // Adaptive similarity threshold based on query specificity
-    const hasNoFilters = !filters.productType && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
+    const hasNoFilters = !filters.productType && !filters.artist && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
     const similarityThreshold = hasNoFilters 
       ? 0.70  // Very high threshold for vague queries → likely 0 results
       : 0.35; // Normal threshold for specific queries → find semantic matches
@@ -387,6 +401,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (filters.productType) {
         fallbackParams.push(filters.productType);
         fallbackWhereClause += ` AND type = $${fallbackParamIndex++}`;
+      }
+      
+      if (filters.artist) {
+        fallbackParams.push(filters.artist);
+        fallbackWhereClause += ` AND artist = $${fallbackParamIndex++}`;
       }
       
       if (filters.priceMax) {
