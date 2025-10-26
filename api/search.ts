@@ -15,38 +15,13 @@ import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
-import { buildPromptInstructions, getCatalogSummary } from '../lib/catalog-metadata';
+import { buildPromptInstructions, getCatalogSummary, getCategoryName } from '../lib/catalog-metadata';
 
 // Vercel serverless config
 export const config = {
   runtime: 'nodejs',
   maxDuration: 30
 };
-
-// Category map for ID->name lookup (hardcoded for performance)
-// TODO: Consider moving to catalog-metadata.ts if this grows
-const CATEGORY_MAP = new Map([
-  [8159306, "Liefde & Huwelijk"],
-  [8159309, "Relatiegeschenken & Eindejaarsgeschenken"],
-  [8159312, "Zakelijke Geschenken"],
-  [8159321, "Moderne Kunstcadeaus"],
-  [8159330, "Bedankbeelden"],
-  [10284228, "Sportbeelden"],
-  [10870334, "Jubileum & Afscheid"],
-  [11492653, "Geslaagd & Examen"],
-  [12363590, "Alle Bronzen & Moderne Beelden"],
-  [12702320, "Schalen & Vazen"],
-  [29063882, "Keramiek & Beelden"],
-  [29063885, "Schilderijen"],
-  [29063888, "Zorg & Verpleging"],
-  [29063891, "Gezinsbeelden"],
-  [29063909, "Wandborden"],
-  [29063912, "Museum Kunstcadeaus"],
-  [29063915, "Exclusief Brons"],
-  [29064002, "Samenwerking & Teambuilding"],
-  [29064053, "Frontpagina producten"],
-  [29386437, "Nieuw"]
-]);
 
 // Constants
 const SIMILARITY_THRESHOLD_VAGUE = 0.70;  // High threshold for vague queries → 0 results
@@ -247,7 +222,7 @@ function formatProduct(row: any) {
   const categoryIds = row.category_ids || [];
   const categories = categoryIds.map((id: number) => ({
     id,
-    name: CATEGORY_MAP.get(id) || `Unknown (${id})`
+    name: getCategoryName(id)
   }));
   
   const stockSold = row.stock_sold ? parseInt(row.stock_sold) : 0;

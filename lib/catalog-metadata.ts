@@ -12,11 +12,17 @@ interface Brand {
   title: string;
 }
 
+interface Category {
+  id: number;
+  title: string;
+}
+
 interface CatalogMetadata {
   brands: string[];
   productTypes: string[];
   categories: string[];
   popularThemes: string[];
+  categoryMap: Map<number, string>;
 }
 
 let cachedMetadata: CatalogMetadata | null = null;
@@ -34,75 +40,132 @@ export function getCatalogMetadata(): CatalogMetadata {
   const brands: Brand[] = JSON.parse(fs.readFileSync(brandsPath, 'utf-8'));
   const brandNames = brands.map(b => b.title).sort();
 
-  // Product types (from type-detector.js)
-  const productTypes = [
-    'Beeld',
-    'Schilderij',
-    'Vaas',
-    'Mok',
-    'Onderzetters',
-    'Schaal',
-    'Overig'
-  ];
+  // Load categories from data/categories.json
+  const categoriesPath = path.join(process.cwd(), 'data', 'categories.json');
+  const categoriesData: Category[] = JSON.parse(fs.readFileSync(categoriesPath, 'utf-8'));
+  const categoryNames = categoriesData.map(c => c.title).sort();
+  const categoryMap = new Map(categoriesData.map(c => [c.id, c.title]));
 
-  // Top categories (manually curated based on importance)
-  const categories = [
-    'Moderne Kunstcadeaus',
-    'Sportbeelden',
-    'Zakelijke Geschenken',
-    'Liefde & Huwelijk',
-    'Bedankbeelden',
-    'Jubileum & Afscheid',
-    'Geslaagd & Examen',
-    'Relatiegeschenken & Eindejaarsgeschenken',
-    'Alle Bronzen & Moderne Beelden'
-  ];
+  // Load product types from data/product-types.json (generated from database)
+  const typesPath = path.join(process.cwd(), 'data', 'product-types.json');
+  const productTypes: string[] = JSON.parse(fs.readFileSync(typesPath, 'utf-8'));
 
-  // Popular themes (extracted from actual product catalog)
-  const popularThemes = [
-    'dieren', 'liefde', 'sport', 'muziek', 'bloemen', 'abstract',
-    'natuur', 'gezin', 'familie', 'vriendschap', 'hart', 'boom',
-    'vogel', 'kat', 'hond', 'olifant', 'paard', 'vis',
-    'voetbal', 'golf', 'tennis', 'wielrennen', 'hardlopen',
-    'zorg', 'verpleging', 'dokter', 'leraar', 'onderwijs',
-    'zakelijk', 'team', 'samenwerking', 'succes', 'innovatie',
-    'kunst', 'modern', 'klassiek', 'vintage', 'design'
-  ];
+  // Load popular themes from data/themes.json (curated list for search)
+  const themesPath = path.join(process.cwd(), 'data', 'themes.json');
+  const popularThemes: string[] = JSON.parse(fs.readFileSync(themesPath, 'utf-8'));
 
   cachedMetadata = {
     brands: brandNames,
     productTypes,
-    categories,
-    popularThemes
+    categories: categoryNames,
+    popularThemes,
+    categoryMap
   };
 
   return cachedMetadata;
 }
 
 /**
+ * Get category name by ID
+ * Returns the category title or "Unknown (ID)" if not found
+ */
+export function getCategoryName(id: number): string {
+  const metadata = getCatalogMetadata();
+  return metadata.categoryMap.get(id) || `Unknown (${id})`;
+}
+
+/**
+ * Brand normalization map for common search variations
+ * Maps lowercase search terms to exact brand names
+ */
+const BRAND_NORMALIZATIONS: Record<string, string> = {
+  // Artists with multiple name variations
+  'klimt': 'Gustav Klimt',
+  'van gogh': 'Vincent van Gogh',
+  'gogh': 'Vincent van Gogh',
+  'monet': 'Claude Monet',
+  'rodin': 'Auguste Rodin',
+  'modigliani': 'Amedeo Clemente Modigliani',
+  'escher': 'Escher',
+  'dali': 'Salvador Dali',
+  'vermeer': 'Johannes Vermeer',
+  'mondriaan': 'Piet Mondriaan',
+  'bosch': 'Jheronimus Bosch',
+  'jeroen bosch': 'Jheronimus Bosch',
+  'degas': 'Edgar Degas',
+  'renoir': 'Pierre-Auguste Renoir',
+  'hokusai': 'Katsushika Hokusai',
+  'corneille': 'Corneille',
+  'claudel': 'Camille Claudel',
+  'pompon': 'François Pompon',
+  
+  // Contemporary artists/designers
+  'jeff koons': 'Jeff Koons',
+  'koons': 'Jeff Koons',
+  'herman brood': 'Herman Brood',
+  'brood': 'Herman Brood',
+  'orlinski': 'Richard Orlinski',
+  'forchino': 'Guillermo Forchino beelden',
+  'kokeshi': 'Kokeshi dolls',
+  'senatori': 'Selwyn Senatori',
+  
+  // Dutch artists
+  'ammerlaan': 'Corry Ammerlaan',
+  'corry ammerlaan': 'Corry Ammerlaan',
+  'tankeren': 'Ger van Tankeren',
+  'van tankeren': 'Ger van Tankeren',
+  'donkersloot': 'Peter Donkersloot',
+  'gubbels': 'Klaas Gubbels',
+  'klaas gubbels': 'Klaas Gubbels',
+  'zegers': 'Jacky Zegers',
+  'liemburg': 'Jack Liemburg',
+  'gerritz': 'Harrie Gerritz',
+  'kostermans': 'Tos Kostermans',
+  'krabbé': 'Jeroen Krabbé',
+  'krabbe': 'Jeroen Krabbé',
+  
+  // Brands
+  'bosa': 'Bosa keramiek',
+  'elephant parade': 'Elephant Parade'
+};
+
+/**
  * Generate brand normalization rules for AI prompt
+ * Dynamically creates rules from the normalization map
  */
 export function getBrandNormalizationRules(): string {
-  const metadata = getCatalogMetadata();
+  const rules: string[] = [];
+  const processed = new Set<string>();
   
-  const rules = [
-    '"klimt" → "Gustav Klimt"',
-    '"van gogh" / "gogh" → "Vincent van Gogh"',
-    '"forchino" → "Guillermo Forchino beelden"',
-    '"kokeshi" → "Kokeshi dolls"',
-    '"monet" → "Claude Monet"',
-    '"rodin" → "Auguste Rodin"',
-    '"modigliani" → "Amedeo Clemente Modigliani"',
-    '"escher" → "Escher"',
-    '"dali" → "Salvador Dali"',
-    '"vermeer" → "Johannes Vermeer"',
-    '"mondriaan" → "Piet Mondriaan"',
-    '"jeff koons" / "koons" → "Jeff Koons"',
-    '"herman brood" / "brood" → "Herman Brood"',
-    '"bosch" / "jeroen bosch" → "Jheronimus Bosch"'
-  ];
-
+  // Group variations by target brand
+  const brandGroups = new Map<string, string[]>();
+  
+  for (const [key, value] of Object.entries(BRAND_NORMALIZATIONS)) {
+    if (!brandGroups.has(value)) {
+      brandGroups.set(value, []);
+    }
+    brandGroups.get(value)!.push(`"${key}"`);
+  }
+  
+  // Format as AI prompt rules
+  for (const [brand, variations] of brandGroups) {
+    if (variations.length === 1) {
+      rules.push(`${variations[0]} → "${brand}"`);
+    } else {
+      rules.push(`${variations.join(' / ')} → "${brand}"`);
+    }
+  }
+  
   return rules.join('\n  ');
+}
+
+/**
+ * Normalize a brand name for search
+ * Returns the exact brand name if a normalization exists, otherwise returns the input
+ */
+export function normalizeBrand(input: string): string {
+  const normalized = BRAND_NORMALIZATIONS[input.toLowerCase().trim()];
+  return normalized || input;
 }
 
 /**
