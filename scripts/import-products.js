@@ -113,6 +113,42 @@ function extractArtist(product) {
   return null;
 }
 
+// Extract dimensions from product data
+function extractDimensions(product) {
+  const text = [
+    product.description?.replace(/<[^>]*>/g, ''),
+    product.content?.replace(/<[^>]*>/g, '')
+  ].filter(Boolean).join(' ');
+  
+  // Common dimension patterns (Dutch)
+  const patterns = [
+    // "160 x 120 cm", "100 x 100 x 50 cm"
+    /\b(\d+\s*x\s*\d+(?:\s*x\s*\d+)?)\s*cm\b/i,
+    // "Hoogte 24 cm", "Diameter 30 cm", "Breedte 50 cm"
+    /(?:hoogte|diameter|breedte|lengte|afmeting)[:\s]*(\d+(?:,\d+)?)\s*cm/i,
+    // "Afmetingen: 100 x 100 cm"
+    /afmetingen?[:\s]*(\d+\s*x\s*\d+(?:\s*x\s*\d+)?)\s*cm/i,
+    // Just "24 cm" or "24,5 cm" (with some context)
+    /(?:circa|ca\.?|ongeveer)?\s*(\d+(?:,\d+)?)\s*cm(?:\s+hoog)?/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      let dimension = match[1].trim();
+      // Normalize: replace comma with dot, ensure "cm" suffix
+      dimension = dimension.replace(',', '.');
+      // If it's just a number, add " cm" (for consistency)
+      if (!/\d\s*x\s*\d/.test(dimension) && !dimension.endsWith('cm')) {
+        dimension = dimension + ' cm';
+      }
+      return dimension;
+    }
+  }
+  
+  return null;
+}
+
 // Get categories for a product
 function getProductCategories(productId) {
   return categoriesProducts
@@ -147,6 +183,7 @@ async function processBatch(batch, batchNum, totalBatches) {
       const variant = variantMap.get(product.id) || { priceExcl: 0, oldPriceExcl: null, stockSold: 0 };
       const productType = detectType(product);
       const artist = extractArtist(product);
+      const dimensions = extractDimensions(product);
       
       // Check if product exists
       const existing = await sql`SELECT id FROM products WHERE id = ${product.id}`;
@@ -163,6 +200,7 @@ async function processBatch(batch, batchNum, totalBatches) {
             url = ${product.url},
             brand = ${product.brand?.title || null},
             artist = ${artist},
+            dimensions = ${dimensions},
             price = ${variant.priceExcl},
             old_price = ${variant.oldPriceExcl},
             is_visible = ${product.isVisible},
@@ -179,7 +217,7 @@ async function processBatch(batch, batchNum, totalBatches) {
         await sql`
           INSERT INTO products (
             id, title, full_title, description, content, url, 
-            brand, artist, price, old_price, is_visible, image, stock_sold, type,
+            brand, artist, dimensions, price, old_price, is_visible, image, stock_sold, type,
             embedding
           )
           VALUES (
@@ -191,6 +229,7 @@ async function processBatch(batch, batchNum, totalBatches) {
             ${product.url},
             ${product.brand?.title || null},
             ${artist},
+            ${dimensions},
             ${variant.priceExcl},
             ${variant.oldPriceExcl},
             ${product.isVisible},
