@@ -173,15 +173,15 @@ Examples:
 "sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
 "kat" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
 "poes" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
-"kokeshi" → {"artist": "Kokeshi"} (artist filter - NOT keywords!)
-"kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi"}
-"een kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi"}
+"kokeshi" → {"artist": "Kokeshi dolls"} (artist filter - NOT keywords!)
+"kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi dolls"}
+"een kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi dolls"}
 "Beeld max 200 euro" → {"productType": "Beeld", "priceMax": 200}
 "Van Gogh schilderij" → {"productType": "Schilderij", "artist": "Vincent van Gogh"} (artist filter!)
 "klimt" → {"artist": "Gustav Klimt"} (artist filter!)
 "jeff koons" → {"artist": "Jeff Koons"} (artist filter!)
 "van gogh" → {"artist": "Vincent van Gogh"}
-"forchino" → {"artist": "Guillermo Forchino"}
+"forchino" → {"artist": "Guillermo Forchino beelden"}
 "een beeldje met een hond, max 80 euro" → {"priceMax": 80, "productType": "Beeld", "keywords": ["hond", "honden", "dog"], "requiresExactMatch": false}
 "schilderij max 300 euro" → {"priceMax": 300, "productType": "Schilderij"}
 "niet te duur" → {"priceMax": null}
