@@ -50,6 +50,15 @@ categories.forEach(cat => {
 console.log(`✅ Mapped ${categoryMap.size} categories`);
 console.log('');
 
+// Load brands data
+const brandsData = JSON.parse(fs.readFileSync('data/brands.json', 'utf-8'));
+const brandMap = new Map();
+brandsData.forEach(brand => {
+  brandMap.set(brand.id, brand.title);
+});
+console.log(`✅ Mapped ${brandMap.size} brands`);
+console.log('');
+
 // Build embedding text from product data
 function buildEmbeddingText(product) {
   // Get category names for this product
@@ -61,56 +70,31 @@ function buildEmbeddingText(product) {
     .map(id => categoryMap.get(id))
     .filter(Boolean);
   
+  // Get brand name from brand map
+  const brandName = product.brand?.resource?.id 
+    ? brandMap.get(product.brand.resource.id)
+    : null;
+  
   const parts = [
     product.title,
     product.fulltitle,
     product.description?.replace(/<[^>]*>/g, ''), // Strip HTML
     product.content?.replace(/<[^>]*>/g, ''), // Include content for artist info!
-    product.brand?.title,
+    brandName, // Use real brand name from Lightspeed!
     ...categoryNames // Add category names to embedding!
   ].filter(Boolean);
   
   return parts.join(' ').trim();
 }
 
-// Extract artist/designer name from product data
-function extractArtist(product) {
-  const text = [
-    product.title,
-    product.fulltitle,
-    product.content?.replace(/<[^>]*>/g, ''),
-    product.description?.replace(/<[^>]*>/g, '')
-  ].filter(Boolean).join(' ');
-  
-  // Common patterns to find artist names
-  const patterns = [
-    /(?:van|naar|ontwerp:|design:|kunstenaar:|artist:)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/gi,
-    /([A-Z][a-z]+\s+[A-Z][a-z]+)\s+(?:beeld|schilderij|sculptuur|design)/gi,
-    /(Jeff Koons|Van Gogh|Vincent van Gogh|Klimt|Gustav Klimt|Monet|Dali|Salvador Dali|Escher|M\.C\. Escher|Vermeer|Johannes Vermeer|Rodin|Auguste Rodin|Modigliani|Rembrandt|Mondriaan|Magritte|René Magritte|Picasso|Da Vinci|Leonardo da Vinci|Michelangelo|Botticelli|Paul Gauguin|Jeroen Bosch|Kandinsky|Camille Claudel|Egon Schiele|Herman Brood|Corry Ammerlaan|Ger van Tankeren|Peter Donkersloot|Klaas Gubbels|Jacky Zegers|Jack Liemburg|Selwyn Senatori|Forchino|Guillermo Forchino|Richard Orlinski|Guido Deleu|Kokeshi|Lucie Kaas|Becky Kemp|Elephant Parade|Francois Pompon|Pompon)/gi
-  ];
-  
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match) {
-      let artist = match[0];
-      // Clean up
-      artist = artist.replace(/^(?:van|naar|ontwerp:|design:|kunstenaar:|artist:)\s+/gi, '').trim();
-      artist = artist.replace(/\s+(?:beeld|schilderij|sculptuur|design)$/gi, '').trim();
-      // Normalize common names
-      if (artist.toLowerCase().includes('van gogh')) return 'Vincent van Gogh';
-      if (artist.toLowerCase() === 'klimt') return 'Gustav Klimt';
-      if (artist.toLowerCase() === 'escher') return 'M.C. Escher';
-      if (artist.toLowerCase() === 'vermeer') return 'Johannes Vermeer';
-      if (artist.toLowerCase() === 'rodin') return 'Auguste Rodin';
-      if (artist.toLowerCase() === 'dali') return 'Salvador Dali';
-      if (artist.toLowerCase() === 'magritte') return 'René Magritte';
-      if (artist.toLowerCase().includes('forchino')) return 'Guillermo Forchino';
-      if (artist.toLowerCase() === 'pompon') return 'François Pompon';
-      return artist;
-    }
+// Get artist/brand name from Lightspeed brand data
+function getArtist(product) {
+  if (!product.brand?.resource?.id) {
+    return null;
   }
   
-  return null;
+  // Look up brand name in brand map
+  return brandMap.get(product.brand.resource.id) || null;
 }
 
 // Extract dimensions from product data
@@ -182,7 +166,7 @@ async function processBatch(batch, batchNum, totalBatches) {
       const embedding = embeddings[i];
       const variant = variantMap.get(product.id) || { priceExcl: 0, oldPriceExcl: null, stockSold: 0 };
       const productType = detectType(product);
-      const artist = extractArtist(product);
+      const artist = getArtist(product);
       const dimensions = extractDimensions(product);
       
       // Check if product exists
