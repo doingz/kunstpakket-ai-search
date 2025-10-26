@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.0.3';
+  const VERSION = '5.0.4';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -351,7 +351,7 @@
     const button = document.getElementById('kp-search-button-overlay');
     
     button.disabled = true;
-    resultsContainer.innerHTML = '<div class="kp-loading">Zoeken<span class="kp-dots"><span>.</span><span>.</span><span>.</span></span></div>';
+    resultsContainer.innerHTML = '<div class="kp-loading"><span class="kp-dots"><span>.</span><span>.</span><span>.</span></span></div>';
     
     // Generate search_id BEFORE search (so it's available for URL generation)
     const searchId = crypto.randomUUID();
@@ -821,6 +821,9 @@
       
       .kp-dots {
         display: inline-block;
+        font-size: 48px;
+        line-height: 1;
+        letter-spacing: 8px;
       }
       
       .kp-dots span {
