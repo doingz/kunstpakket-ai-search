@@ -325,8 +325,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     orderBy += ', stock_sold DESC NULLS LAST';
 
-    // Vector similarity search with SQL filters, keyword boosting, and similarity threshold
-    const similarityThreshold = 0.35; // Low enough to find semantic matches, high enough to filter noise
+    // Adaptive similarity threshold based on query specificity
+    const hasNoFilters = !filters.productType && (!filters.keywords || filters.keywords.length === 0) && !filters.priceMax && !filters.priceMin;
+    const similarityThreshold = hasNoFilters 
+      ? 0.70  // Very high threshold for vague queries → likely 0 results
+      : 0.35; // Normal threshold for specific queries → find semantic matches
     
     const queryText = `
       SELECT 
