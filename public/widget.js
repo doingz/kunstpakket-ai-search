@@ -439,6 +439,7 @@
                 <span class="kp-code">${data.results.discountCode.code}</span>
                 <span class="kp-discount-amount">${data.results.discountCode.amount} ${data.results.discountCode.description}</span>
               </div>
+              <div class="kp-discount-instruction">Gebruik deze code (750) bij het afrekenen.</div>
             </div>
           ` : ''}
         </div>
@@ -927,6 +928,13 @@
         font-size: 14px;
         color: #64748b;
         line-height: 1.6;
+      }
+      
+      .kp-discount-instruction {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 8px;
+        font-style: italic;
       }
       
       .kp-search-again-btn {
