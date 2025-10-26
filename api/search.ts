@@ -29,6 +29,7 @@ const SIMILARITY_THRESHOLD_SPECIFIC = 0.25;   // Lower threshold for specific qu
 const SIMILARITY_THRESHOLD_TYPE_ONLY = 0.20;  // Even lower for type-only queries (e.g., "mok", "vaas")
 const SIMILARITY_THRESHOLD_KEYWORDS = 0.15;   // Lowest for keyword searches (e.g., "dog", "kat")
 const POPULAR_SALES_THRESHOLD = 10;           // Products with 10+ sales are popular
+const SCARCE_STOCK_THRESHOLD = 5;             // Products with stock <= 5 are scarce
 const MAX_RESULTS = 50;
 
 /**
@@ -228,7 +229,9 @@ function formatProduct(row: any) {
   }));
   
   const stockSold = row.stock_sold ? parseInt(row.stock_sold) : 0;
+  const stock = row.stock ? parseInt(row.stock) : null;
   const isPopular = stockSold >= POPULAR_SALES_THRESHOLD;
+  const isScarce = stock !== null && stock > 0 && stock <= SCARCE_STOCK_THRESHOLD;
   
   return {
     id: row.id,
@@ -246,8 +249,10 @@ function formatProduct(row: any) {
     type: row.type,
     artist: row.artist || null,
     dimensions: row.dimensions || null,
+    stock,
     stockSold,
     isPopular,
+    isScarce,
     categories,
     similarity: row.similarity ? parseFloat(row.similarity) : null
   };
@@ -366,14 +371,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Step 5: Execute main vector search query
     const queryText = `
       SELECT 
-        p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock_sold,
+        p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock, p.stock_sold,
         1 - (p.embedding <=> $1::vector) as similarity,
         ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
       FROM products p
       LEFT JOIN product_categories pc ON p.id = pc.product_id
-      WHERE ${whereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|artist|dimensions|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+      WHERE ${whereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|artist|dimensions|embedding|is_visible|stock|stock_sold)\b/g, 'p.$1')}
         AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
-      GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.embedding, p.stock_sold
+      GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock, p.embedding, p.stock_sold
       ORDER BY ${orderBy.replace(/\b(title|embedding|stock_sold)\b/g, 'p.$1')}
       LIMIT ${MAX_RESULTS}
     `;
@@ -410,14 +415,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       const fallbackQuery = `
         SELECT 
-          p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock_sold,
+          p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock, p.stock_sold,
           1 - (p.embedding <=> $1::vector) as similarity,
           ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
         FROM products p
         LEFT JOIN product_categories pc ON p.id = pc.product_id
-        WHERE ${fallbackWhereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|artist|dimensions|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+        WHERE ${fallbackWhereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|artist|dimensions|embedding|is_visible|stock|stock_sold)\b/g, 'p.$1')}
           AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
-        GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.embedding, p.stock_sold
+        GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.dimensions, p.stock, p.embedding, p.stock_sold
         ORDER BY p.embedding <=> $1::vector, p.stock_sold DESC NULLS LAST
         LIMIT ${MAX_RESULTS}
       `;

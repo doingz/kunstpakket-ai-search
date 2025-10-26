@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '4.9.0';
+  const VERSION = '5.0.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -472,10 +472,13 @@
            data-product-url="${product.url}">
           ${product.image ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" loading="lazy" />` : '<div class="kp-no-image"></div>'}
           <div class="kp-product-info">
-            <div class="kp-product-title">
-              ${escapeHtml(product.title)}
-              ${product.isPopular ? `<span class="kp-popular-tag">Populair</span>` : ''}
-            </div>
+            ${product.isPopular || product.isScarce ? `
+              <div class="kp-product-badges">
+                ${product.isPopular ? `<span class="kp-badge kp-badge-popular">Populair</span>` : ''}
+                ${product.isScarce ? `<span class="kp-badge kp-badge-scarce">Nog maar ${product.stock} op voorraad</span>` : ''}
+              </div>
+            ` : ''}
+            <div class="kp-product-title">${escapeHtml(product.title)}</div>
             ${product.dimensions ? `<div class="kp-product-dimensions">Afmetingen: ${escapeHtml(product.dimensions)}</div>` : ''}
             ${product.price ? `
               <div class="kp-product-pricing">
@@ -976,16 +979,31 @@
         line-height: 1.4;
       }
       
-      .kp-popular-tag {
+      .kp-product-badges {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      
+      .kp-badge {
         display: inline-block;
-        margin-left: 6px;
-        padding: 2px 8px;
-        background: #fbbf24;
-        color: white;
-        border-radius: 4px;
+        padding: 3px 8px;
         font-size: 11px;
-        font-weight: 600;
-        vertical-align: middle;
+        font-weight: 500;
+        border-radius: 3px;
+        line-height: 1.2;
+      }
+      
+      .kp-badge-popular {
+        background: #000;
+        color: #fff;
+      }
+      
+      .kp-badge-scarce {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fbbf24;
       }
       
       .kp-sale-tag {
