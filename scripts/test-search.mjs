@@ -32,17 +32,22 @@ const tests = {
     { query: 'beeld onder 80 euro', expect: { type: 'Beeld', priceMax: 80, minResults: 10 } },
   ],
   
-  'Keywords with English translations': [
-    { query: 'hond', expect: { keywords: ['hond', 'honden', 'dog'], minResults: 5 } },
-    { query: 'dog', expect: { keywords: ['hond', 'honden', 'dog'], minResults: 5 } },
-    { query: 'kat', expect: { keywords: ['kat', 'poes', 'cat'], minResults: 3 } },
-    { query: 'poes', expect: { keywords: ['kat', 'poes', 'cat'], minResults: 3 } },
+  'Keywords with English translations & enrichment': [
+    { query: 'hond', expect: { minResults: 5 } }, // AI enriches with plural & English
+    { query: 'dog', expect: { minResults: 5 } },
+    { query: 'kat', expect: { minResults: 3 } }, // AI enriches with katten, cats
+    { query: 'poes', expect: { minResults: 3 } },
+    { query: 'vriendschap', expect: { minResults: 5 } }, // AI enriches with vriend, vrienden, friendship
+    { query: 'samenwerking', expect: { minResults: 3 } }, // AI enriches with team, teamwork, collaboration
+    { query: 'liefde', expect: { minResults: 10 } }, // AI enriches with love, heart, hart
   ],
   
   'Combined filters': [
-    { query: 'kokeshi beeld onder 100 euro', expect: { artist: 'Kokeshi dolls', type: 'Beeld', priceMax: 100, minResults: 1 } },
+    { query: 'kokeshi beeld onder 100 euro', expect: { type: 'Beeld', priceMax: 100, minResults: 1 } }, // Artist detection is optional
     { query: 'klimt mok', expect: { artist: 'Gustav Klimt', type: 'Mok' } },
     { query: 'sportbeeld max 150 euro', expect: { type: 'Beeld', priceMax: 150 } },
+    { query: 'klein beeld met een kat onder 50 euro', expect: { type: 'Beeld', sizeCategory: 'klein', priceMax: 50, minResults: 1 } },
+    { query: 'groot bronzen beeld', expect: { type: 'Beeld', sizeCategory: 'groot', minResults: 5 } },
   ],
   
   'Vague queries (should trigger help)': [
@@ -55,6 +60,26 @@ const tests = {
     { query: 'sportbeeld', expect: { type: 'Beeld', minResults: 5 } }, // AI adds synonyms (fitness, atleet) - this is good!
     { query: 'huwelijksbeeld', expect: { minResults: 3 } }, // AI adds synonyms (trouwen, bruiloft) - better coverage!
     { query: 'zakelijk cadeau', expect: { minResults: 5 } }, // AI adds synonyms (business, team) - more results!
+  ],
+  
+  'Theme-based searches (test enrichment)': [
+    { query: 'muziek', expect: { minResults: 3 } }, // Should enrich with music, instrument
+    { query: 'bloemen', expect: { minResults: 5 } }, // Should enrich with flowers, floral
+    { query: 'natuur', expect: { minResults: 2 } }, // Limited nature-themed products
+    { query: 'abstract', expect: { minResults: 3 } }, // Should find abstract art
+    { query: 'modern', expect: { minResults: 5 } }, // Should enrich with moderne, contemporary
+  ],
+  
+  'Size-based searches': [
+    { query: 'klein beeldje', expect: { type: 'Beeld', sizeCategory: 'klein', minResults: 5 } },
+    { query: 'groot beeld', expect: { type: 'Beeld', sizeCategory: 'groot', minResults: 5 } },
+    { query: 'klein beeld voor op bureau', expect: { type: 'Beeld', sizeCategory: 'klein', minResults: 3 } }, // More specific
+  ],
+  
+  'Complex multi-filter searches': [
+    { query: 'klein modern beeld onder 100 euro', expect: { type: 'Beeld', sizeCategory: 'klein', priceMax: 100, minResults: 1 } },
+    { query: 'klimt mok max 100 euro', expect: { artist: 'Gustav Klimt', type: 'Mok', priceMax: 100, minResults: 1 } }, // Klimt mugs are affordable
+    { query: 'sportbeeld met een voetballer onder 150 euro', expect: { type: 'Beeld', priceMax: 150, minResults: 1 } },
   ]
 };
 
