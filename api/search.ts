@@ -256,6 +256,7 @@ function formatProduct(row: any) {
       : 0,
     image: row.image,
     type: row.type,
+    artist: row.artist || null,
     categories: categories,  // Now includes {id, name}
     similarity: row.similarity ? parseFloat(row.similarity) : null
   };
@@ -354,14 +355,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const queryText = `
       SELECT 
-        p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type,
+        p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist,
         1 - (p.embedding <=> $1::vector) as similarity,
         ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
       FROM products p
       LEFT JOIN product_categories pc ON p.id = pc.product_id
-      WHERE ${whereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+      WHERE ${whereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|artist|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
         AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
-      GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.embedding, p.stock_sold
+      GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.embedding, p.stock_sold
       ORDER BY ${orderBy.replace(/\b(title|embedding|stock_sold)\b/g, 'p.$1')}
       LIMIT 50
     `;
@@ -393,14 +394,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       const fallbackQuery = `
         SELECT 
-          p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type,
+          p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist,
           1 - (p.embedding <=> $1::vector) as similarity,
           ARRAY_AGG(DISTINCT pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL) as category_ids
         FROM products p
         LEFT JOIN product_categories pc ON p.id = pc.product_id
-        WHERE ${fallbackWhereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
+        WHERE ${fallbackWhereClause.replace(/\b(id|title|full_title|description|url|price|old_price|image|type|artist|embedding|is_visible|stock_sold)\b/g, 'p.$1')}
           AND (1 - (p.embedding <=> $1::vector)) >= ${similarityThreshold}
-        GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.embedding, p.stock_sold
+        GROUP BY p.id, p.title, p.full_title, p.description, p.url, p.price, p.old_price, p.image, p.type, p.artist, p.embedding, p.stock_sold
         ORDER BY p.embedding <=> $1::vector, p.stock_sold DESC NULLS LAST
         LIMIT 50
       `;
