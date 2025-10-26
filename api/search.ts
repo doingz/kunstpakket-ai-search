@@ -165,7 +165,20 @@ Extract:
    DO NOT extract generic words like: cadeau, geschenk, present, gift, iets, mooi, leuk, origineel, bijzonder, speciaal, voor, mijn, vader, moeder, zus, broer, vriend, vriendin, oma, opa, etc.
    DO NOT extract artist names - those go in the 'artist' field!
    ONLY extract: specific animals, colors, materials, themes, occasions (huwelijk, jubileum, etc.)
-5. requiresExactMatch: true if keywords MUST appear in title/description
+   
+   IMPORTANT - ENRICH keywords with variations:
+   - Add PLURAL forms (samenwerking → samenwerking, samenwerken, team, samen)
+   - Add SYNONYMS (vriendschap → vriendschap, vriend, vrienden, friendship, buddy)
+   - Add ENGLISH translations for common themes (liefde → liefde, love, heart)
+   - Add RELATED concepts (muziek → muziek, music, instrument, noten, melodie)
+   
+   Example enrichment:
+   "hond" → ["hond", "honden", "dog", "dogs"]
+   "vriendschap" → ["vriendschap", "vriend", "vrienden", "friendship", "buddy", "samen"]
+   "samenwerking" → ["samenwerking", "samenwerken", "team", "teamwork", "collaboration", "samen"]
+   "liefde" → ["liefde", "love", "heart", "hart", "romantic"]
+   
+6. requiresExactMatch: true if keywords MUST appear in title/description
 
 ${buildPromptInstructions()}
 
@@ -181,9 +194,11 @@ Examples:
 "klein beeld met een kat" → {"sizeCategory": "klein", "productType": "Beeld", "keywords": ["kat", "poes", "cat"]}
 "groot bronzen beeld" → {"sizeCategory": "groot", "productType": "Beeld", "keywords": ["bronzen"]}
 "compact bureau beeldje" → {"sizeCategory": "klein", "keywords": ["bureau"]}
-"sport" → {"keywords": ["sport", "fitness", "atleet"], "requiresExactMatch": false}
-"kat" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
-"poes" → {"keywords": ["kat", "poes", "cat"], "requiresExactMatch": false}
+"sport" → {"keywords": ["sport", "fitness", "atleet", "sports", "athletic"], "requiresExactMatch": false}
+"kat" → {"keywords": ["kat", "poes", "cat", "katten", "cats"], "requiresExactMatch": false}
+"poes" → {"keywords": ["kat", "poes", "cat", "katten", "cats"], "requiresExactMatch": false}
+"samen er tegenaan" → {"keywords": ["samen", "samenwerking", "team", "teamwork", "collaboration"], "requiresExactMatch": false}
+"vriendschap" → {"keywords": ["vriendschap", "vriend", "vrienden", "friendship", "buddy", "samen"], "requiresExactMatch": false}
 "kokeshi" → {"artist": "Kokeshi dolls"} (artist filter - NOT keywords!)
 "kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi dolls"}
 "een kokeshi beeld" → {"productType": "Beeld", "artist": "Kokeshi dolls"}
