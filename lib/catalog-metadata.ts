@@ -35,34 +35,47 @@ export function getCatalogMetadata(): CatalogMetadata {
     return cachedMetadata;
   }
 
-  // Load brands from data/brands.json
-  const brandsPath = path.join(process.cwd(), 'data', 'brands.json');
-  const brands: Brand[] = JSON.parse(fs.readFileSync(brandsPath, 'utf-8'));
-  const brandNames = brands.map(b => b.title).sort();
+  try {
+    // Load brands from data/brands.json
+    const brandsPath = path.join(process.cwd(), 'data', 'brands.json');
+    console.log(`[Catalog] Loading brands from: ${brandsPath}`);
+    const brands: Brand[] = JSON.parse(fs.readFileSync(brandsPath, 'utf-8'));
+    const brandNames = brands.map(b => b.title).sort();
+    console.log(`[Catalog] Loaded ${brandNames.length} brands`);
 
-  // Load categories from data/categories.json
-  const categoriesPath = path.join(process.cwd(), 'data', 'categories.json');
-  const categoriesData: Category[] = JSON.parse(fs.readFileSync(categoriesPath, 'utf-8'));
-  const categoryNames = categoriesData.map(c => c.title).sort();
-  const categoryMap = new Map(categoriesData.map(c => [c.id, c.title]));
+    // Load categories from data/categories.json
+    const categoriesPath = path.join(process.cwd(), 'data', 'categories.json');
+    const categoriesData: Category[] = JSON.parse(fs.readFileSync(categoriesPath, 'utf-8'));
+    const categoryNames = categoriesData.map(c => c.title).sort();
+    const categoryMap = new Map(categoriesData.map(c => [c.id, c.title]));
+    console.log(`[Catalog] Loaded ${categoryNames.length} categories`);
 
-  // Load product types from data/product-types.json (generated from database)
-  const typesPath = path.join(process.cwd(), 'data', 'product-types.json');
-  const productTypes: string[] = JSON.parse(fs.readFileSync(typesPath, 'utf-8'));
+    // Load product types from data/product-types.json (generated from database)
+    const typesPath = path.join(process.cwd(), 'data', 'product-types.json');
+    const productTypes: string[] = JSON.parse(fs.readFileSync(typesPath, 'utf-8'));
+    console.log(`[Catalog] Loaded ${productTypes.length} product types`);
 
-  // Load popular themes from data/themes.json (curated list for search)
-  const themesPath = path.join(process.cwd(), 'data', 'themes.json');
-  const popularThemes: string[] = JSON.parse(fs.readFileSync(themesPath, 'utf-8'));
+    // Load popular themes from data/themes.json (curated list for search)
+    const themesPath = path.join(process.cwd(), 'data', 'themes.json');
+    const popularThemes: string[] = JSON.parse(fs.readFileSync(themesPath, 'utf-8'));
+    console.log(`[Catalog] Loaded ${popularThemes.length} themes`);
 
-  cachedMetadata = {
-    brands: brandNames,
-    productTypes,
-    categories: categoryNames,
-    popularThemes,
-    categoryMap
-  };
+    cachedMetadata = {
+      brands: brandNames,
+      productTypes,
+      categories: categoryNames,
+      popularThemes,
+      categoryMap
+    };
 
-  return cachedMetadata;
+    console.log(`[Catalog] ✅ All catalog data loaded successfully`);
+    return cachedMetadata;
+    
+  } catch (error: any) {
+    console.error('[Catalog] ❌ Failed to load catalog data:', error.message);
+    console.error('[Catalog] Stack:', error.stack);
+    throw new Error(`Failed to load catalog metadata: ${error.message}`);
+  }
 }
 
 /**
