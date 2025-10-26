@@ -102,17 +102,21 @@ Our product catalog:
 - Popular themes: Sport, Liefde & Romantiek, Dieren (katten, honden, vogels, olifanten), Bloemen, Beroemde Kunstenaars (Van Gogh, Klimt, Monet, Escher), Zakelijk, Gezin, Huwelijk, Jubileum, Geslaagd, Bedanken, Zorg
 - Price range: €20 - €500
 
-Create a warm, conversational message that:
-- Starts with a friendly emoji (💬, 🤔, 💡, ✨)
-- Acknowledges their search in a positive way
-- Asks 2-3 clarifying questions (product type? theme? budget?)
-- Gives 2-3 concrete search examples using REAL types and themes from our catalog
-- Keep it natural and helpful (3-5 sentences max)
+Create a warm, enthusiastic, positive message that:
+- Starts with a cheerful emoji (✨, 🎨, 💫, 🎁, 🌟)
+- Be VERY positive and encouraging (no negative words!)
+- Briefly acknowledge what they're looking for
+- Ask 1-2 clarifying questions about type, theme, or budget
+- Give 2-3 concrete search examples using REAL types and themes from our catalog
+- Keep it upbeat and helpful (3-4 sentences max)
+- End on an encouraging note!
 
 Examples:
-"💬 Leuk dat je op zoek bent naar een cadeau! Om je beter te kunnen helpen: zoek je een beeld, schilderij, vaas of mok? En waar houdt de persoon van - bijvoorbeeld dieren, sport of bloemen? Ook handig om te weten: heb je een budget in gedachten? Probeer bijvoorbeeld 'kat beeld onder 50 euro' of 'sportbeeld max 100 euro'!"
+"✨ Wat leuk dat je een cadeau zoekt! We hebben zoveel mooie kunstwerken! Zoek je een beeld, schilderij, vaas of mok? En welk thema past bij de persoon - dieren, sport, bloemen of misschien iets van een beroemde kunstenaar? Probeer bijvoorbeeld: 'kat beeld onder 50 euro', 'bloemenvaas max 80 euro' of 'Van Gogh mok'!"
 
-"✨ Wat leuk! We hebben heel veel mooie kunstcadeaus. Zoek je bijvoorbeeld een liefdesbeeld voor een huwelijk, een sportbeeld voor een collega, of juist iets met bloemen? En wat is je budget? Probeer bijvoorbeeld 'huwelijksbeeld onder 150 euro' of 'Van Gogh mok max 30 euro'!"
+"🎨 Super! We hebben prachtige kunstcadeaus in alle prijsklassen! Vertel me wat meer: zoek je iets voor een speciale gelegenheid zoals een huwelijk, jubileum of geslaagd? Of heb je een bepaald budget in gedachten? Probeer bijvoorbeeld: 'liefdesbeeld onder 100 euro', 'sportbeeld max 150 euro' of 'Klimt onderzetters'!"
+
+"🌟 Wat fijn dat je hier bent! Ons assortiment is enorm! Houd de persoon van dieren, abstract, bloemen of sport? En wat voor type cadeau zoek je - een sierlijk beeld, vrolijk schilderij of praktische mok? Probeer bijvoorbeeld: 'hond beeld onder 80 euro', 'bloemen schilderij' of 'sportbeeld max 100 euro'!"
 
 Now create a message for: "${query}"`,
     });
@@ -120,7 +124,7 @@ Now create a message for: "${query}"`,
     return object.advice;
   } catch (error: any) {
     console.error('generateEmptyStateMessage error:', error);
-    return '💡 Geen producten gevonden. Probeer specifieker te zoeken, bijvoorbeeld: "kat beeld onder 50 euro", "sportbeeld max 100 euro", of "bloemen vaas onder 80 euro".';
+    return '✨ Wat leuk dat je hier bent! Laten we samen het perfecte kunstcadeau vinden. Vertel me wat meer: zoek je een beeld, schilderij, vaas of mok? Probeer bijvoorbeeld: "kat beeld onder 50 euro", "sportbeeld max 100 euro", of "bloemen vaas onder 80 euro".';
   }
 }
 
@@ -399,8 +403,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Too vague - generate friendly help message
         advice = await generateEmptyStateMessage(query);
       } else {
-        // Valid query, just no matches
-        advice = '💡 Geen producten gevonden met deze specifieke zoekopdracht. Probeer iets breder te zoeken of pas je filters aan!';
+        // Valid query, just no matches - stay positive!
+        advice = '✨ Laten we je zoekopdracht iets aanpassen om betere resultaten te vinden! Probeer het iets breder of verander je filters.';
       }
     } else {
       // Results found - generate enthusiastic message

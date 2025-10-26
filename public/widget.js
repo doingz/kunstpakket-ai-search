@@ -392,13 +392,31 @@
     
     // No results - show helpful message in same style as AI intro
     if (!data.success || !data.results?.items || data.results.items.length === 0) {
+      const adviceText = data.results?.advice || '✨ Laten we je zoekopdracht verfijnen! Probeer bijvoorbeeld: "kat beeld onder 50 euro", "sportbeeld max 100 euro", of "bloemen vaas onder 80 euro".';
+      
       container.innerHTML = `
         <div class="kp-ai-intro">
           <div class="kp-ai-intro-text">
-            💡 Geen producten gevonden. Probeer specifieker te zoeken, bijvoorbeeld: "kat beeld onder 50 euro", "sportbeeld max 100 euro", of "bloemen vaas onder 80 euro".
+            ${escapeHtml(adviceText)}
           </div>
+          <button class="kp-search-again-btn" id="kp-search-again-empty">Zoek opnieuw</button>
         </div>
       `;
+      
+      // Add click handler for search again button
+      setTimeout(() => {
+        const btn = document.getElementById('kp-search-again-empty');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            const input = document.getElementById('kp-search-input-overlay');
+            if (input) {
+              input.value = '';
+              input.focus();
+            }
+          });
+        }
+      }, 100);
+      
       return;
     }
     
@@ -836,6 +854,27 @@
         font-size: 16px;
         line-height: 1.8;
         color: #475569;
+        margin-bottom: 20px;
+      }
+      
+      .kp-search-again-btn {
+        padding: 10px 20px;
+        background: #1e293b;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .kp-search-again-btn:hover {
+        background: #334155;
+      }
+      
+      .kp-search-again-btn:active {
+        background: #0f172a;
       }
       
       .kp-results-content {
