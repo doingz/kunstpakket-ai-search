@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.2.0';
+  const VERSION = '5.3.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -13,10 +13,49 @@
   
   // LIVE MODE - set to true to enable widget for all users
   const LIVE = true;  // Change to false to require ?f=1 parameter
+  const TRACKING_EXPIRY_DAYS = 7;  // Track clicks for 7 days
   
   let isSearching = false;
   let currentResults = null;
   let currentSort = 'popular';
+  
+  /**
+   * LocalStorage helpers with expiry
+   */
+  function setWithExpiry(key, value, days = TRACKING_EXPIRY_DAYS) {
+    const now = new Date();
+    const item = {
+      value: value,
+      expiry: now.getTime() + (days * 24 * 60 * 60 * 1000)
+    };
+    localStorage.setItem(key, JSON.stringify(item));
+  }
+  
+  function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key);
+    if (!itemStr) return null;
+    
+    try {
+      const item = JSON.parse(itemStr);
+      const now = new Date();
+      
+      if (now.getTime() > item.expiry) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      
+      return item.value;
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  function removeTracking() {
+    localStorage.removeItem('kp_search_id');
+    localStorage.removeItem('kp_last_product_id');
+    localStorage.removeItem('kp_last_product_url');
+    localStorage.removeItem('kp_last_query');
+  }
   
   /**
    * Analytics tracking
@@ -42,11 +81,11 @@
   
   function trackProductClick(productId, productUrl) {
     try {
-      const searchId = sessionStorage.getItem('kp_search_id');
+      const searchId = getWithExpiry('kp_search_id');
       if (!searchId) return;
       
-      sessionStorage.setItem('kp_last_product_id', productId);
-      sessionStorage.setItem('kp_last_product_url', productUrl);
+      setWithExpiry('kp_last_product_id', productId);
+      setWithExpiry('kp_last_product_url', productUrl);
       
       const data = JSON.stringify({
         event: 'click',
@@ -76,11 +115,11 @@
   
   function trackPurchase() {
     try {
-      const searchId = sessionStorage.getItem('kp_search_id');
+      const searchId = getWithExpiry('kp_search_id');
       if (!searchId) return;
       
-      const productId = sessionStorage.getItem('kp_last_product_id');
-      const productUrl = sessionStorage.getItem('kp_last_product_url');
+      const productId = getWithExpiry('kp_last_product_id');
+      const productUrl = getWithExpiry('kp_last_product_url');
       
       fetch(ANALYTICS_API, {
         method: 'POST',
@@ -94,10 +133,8 @@
         })
       }).catch(err => console.warn('[Analytics] Purchase tracking failed:', err));
       
-      sessionStorage.removeItem('kp_search_id');
-      sessionStorage.removeItem('kp_last_product_id');
-      sessionStorage.removeItem('kp_last_product_url');
-      sessionStorage.removeItem('kp_last_query');
+      // Clear tracking data after purchase
+      removeTracking();
     } catch (err) {
       console.warn('[Analytics] Error:', err);
     }
@@ -354,9 +391,10 @@
     resultsContainer.innerHTML = '<div class="kp-loading"><span class="kp-dots"><span></span><span></span><span></span></span></div>';
     
     // Generate search_id BEFORE search (so it's available for URL generation)
+    // Store in localStorage with 7-day expiry for cross-session tracking
     const searchId = crypto.randomUUID();
-    sessionStorage.setItem('kp_search_id', searchId);
-    sessionStorage.setItem('kp_last_query', query);
+    setWithExpiry('kp_search_id', searchId);
+    setWithExpiry('kp_last_query', query);
     
     try {
       const response = await fetch(`${API_BASE}/search`, {
@@ -466,7 +504,7 @@
       <div class="kp-products-grid">
     `;
     
-    const searchId = sessionStorage.getItem('kp_search_id') || '';
+    const searchId = getWithExpiry('kp_search_id') || '';
     
     products.forEach(product => {
       const imageUrl = getOptimizedImageUrl(product.image);
