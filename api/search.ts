@@ -323,8 +323,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     
     if (filters.artist) {
-      params.push(filters.artist);
-      whereClause += ` AND artist = $${paramIndex++}`;
+      params.push(`%${filters.artist}%`);
+      whereClause += ` AND (artist ILIKE $${paramIndex++} OR title ILIKE $${paramIndex - 1})`;
     }
 
     if (filters.priceMax) {
@@ -404,8 +404,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       
       if (filters.artist) {
-        fallbackParams.push(filters.artist);
-        fallbackWhereClause += ` AND artist = $${fallbackParamIndex++}`;
+        fallbackParams.push(`%${filters.artist}%`);
+        fallbackWhereClause += ` AND (artist ILIKE $${fallbackParamIndex++} OR title ILIKE $${fallbackParamIndex - 1})`;
       }
       
       if (filters.priceMax) {
