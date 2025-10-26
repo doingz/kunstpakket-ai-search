@@ -7,6 +7,7 @@ import { embed, generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
+import { buildPromptInstructions, getCatalogSummary } from '../lib/catalog-metadata';
 // Category map for ID->name lookup (hardcoded for performance - update when categories change)
 const categoryMap = new Map([
   [8159306, "Liefde & Huwelijk"],
@@ -50,9 +51,7 @@ Query: "${query}"
 Results found: ${total}
 Filters: ${JSON.stringify(filters)}
 
-Our product catalog:
-- Types: Beeld, Schilderij, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder
-- Popular themes: Sport, Liefde, Dieren (katten, honden, vogels, olifanten), Bloemen, Kunst (Van Gogh, Klimt, etc.), Zakelijk, Gezin, Huwelijk, Jubileum, Geslaagd, Bedanken, Zorg
+${getCatalogSummary()}
 
 Guidelines:
 - Be conversational and enthusiastic (like a helpful shop assistant!)
@@ -97,10 +96,7 @@ async function generateEmptyStateMessage(query: string): Promise<string> {
       prompt: `The user searched for: "${query}"
 This query is too vague to find good products (no specific type, theme, or price).
 
-Our product catalog:
-- Types: Beeld (733), Schilderij (25), Vaas (39), Mok (25), Schaal (15), Wandbord (31), Onderzetters (15), Theelichthouder (13)
-- Popular themes: Sport, Liefde & Romantiek, Dieren (katten, honden, vogels, olifanten), Bloemen, Beroemde Kunstenaars (Van Gogh, Klimt, Monet, Escher), Zakelijk, Gezin, Huwelijk, Jubileum, Geslaagd, Bedanken, Zorg
-- Price range: €20 - €500
+${getCatalogSummary()}
 
 Create a warm, enthusiastic, positive message that:
 - Starts with a cheerful emoji (✨, 🎨, 💫, 🎁, 🌟)
@@ -152,9 +148,9 @@ async function parseFilters(query: string) {
 
 Extract:
 1. priceMin/priceMax: Concrete numbers ONLY. For "niet te duur", "goedkoop", "luxe" → return null (not enough info)
-2. productType: ONLY if explicitly mentioned: Schilderij, Beeld, Vaas, Mok, Schaal, Wandbord, Onderzetters, Theelichthouder
+2. productType: ONLY if explicitly mentioned (see valid types below)
    IMPORTANT: "Keramiek" should map to "Beeld" (ceramic items are sculptures/beelden)
-3. artist: Extract artist/designer name if mentioned (see list below). Use most specific form (e.g., "Vincent van Gogh" not just "Van Gogh")
+3. artist: Extract artist/designer name if mentioned (see exact brand list below). Use most specific form.
    IMPORTANT: Extract to 'artist' field, NOT to 'keywords' field!
 4. keywords: ONLY specific, searchable subjects (animals, colors, themes, objects)
    DO NOT extract generic words like: cadeau, geschenk, present, gift, iets, mooi, leuk, origineel, bijzonder, speciaal, voor, mijn, vader, moeder, zus, broer, vriend, vriendin, oma, opa, etc.
@@ -162,32 +158,7 @@ Extract:
    ONLY extract: specific animals, colors, materials, themes, occasions (huwelijk, jubileum, etc.)
 5. requiresExactMatch: true if keywords MUST appear in title/description
 
-CRITICAL RULES:
-- Extract productType if user mentions: schilderij, beeld/beeldje/sculptuur/keramiek, vaas, mok, schaal, wandbord, onderzetters, theelicht
-- IMPORTANT: "keramiek", "keramieken beeld", "ballonhond" → productType: "Beeld" (ceramics are sculptures)
-- DO NOT add product types as keywords
-- For artist/designer names: extract to 'artist' field (NOT keywords!). Use full normalized name.
-- For animals: add common synonyms AND English translations (e.g. "kat" → ["kat", "poes", "cat"], "hond" → ["hond", "honden", "dog"], "paard" → ["paard", "paarden", "horse"])
-- For occasions: use broader terms (e.g. "huwelijkscadeau" → ["huwelijk", "trouwen"], "bedankje" → ["bedanken", "dank"])
-- IMPORTANT ARTISTS IN CATALOG (extract to 'artist' field when mentioned):
-  Famous Artists: Vincent van Gogh, Gustav Klimt, Claude Monet, Salvador Dali, Johannes Vermeer, Rembrandt, Piet Mondriaan, Auguste Rodin, Amedeo Modigliani, René Magritte, M.C. Escher, Michelangelo, Leonardo da Vinci, Egon Schiele, Camille Claudel, Sandro Botticelli, Paul Gauguin, Jeroen Bosch, Wassily Kandinsky
-  Contemporary Artists: Jeff Koons, Herman Brood, Banksy
-  Dutch Artists: Corry Ammerlaan, Ger van Tankeren, Peter Donkersloot, Klaas Gubbels, Jacky Zegers, Jack Liemburg, Harrie Gerritz, Tos Kostermans, Bram Reijnders, Jeroen Krabb, Mark Jurriens
-  Designers/Brands: Kokeshi, Lucie Kaas, Guillermo Forchino, Forchino, Selwyn Senatori, Richard Orlinski, Guido Deleu, Elephant Parade, Becky Kemp
-  * Normalize names: "klimt" → "Gustav Klimt", "van gogh" → "Vincent van Gogh", "forchino" → "Guillermo Forchino", "kokeshi" → "Kokeshi"
-- For categories (important!): extract relevant keywords based on these popular categories:
-  * Sport/Fitness → ["sport", "fitness", "atleet", "voetbal", "golf"]
-  * Zorg/Verpleging → ["zorg", "verpleging", "care", "dokter", "nurse"]
-  * Gezin/Familie → ["gezin", "familie", "kinderen", "vader", "moeder", "baby"]
-  * Zakelijk → ["zakelijk", "business", "corporate", "samenwerking", "team"]
-  * Liefde/Huwelijk → ["liefde", "huwelijk", "love", "trouwen", "kus"]
-  * Jubileum/Afscheid → ["jubileum", "afscheid", "pensioen", "vertrek"]
-  * Geslaagd/Examen → ["geslaagd", "examen", "studie", "diploma", "afstuderen"]
-  * Bedanken → ["bedanken", "dank", "thanks", "waardering"]
-  * Modern → ["modern", "eigentijds", "contemporary"]
-  * Exclusief → ["exclusief", "luxe", "premium", "brons"]
-- For vague price terms ("niet te duur", "goedkoop", "luxe") → return null for price (semantic search will handle it)
-- Use requiresExactMatch=false for category/occasion searches (broader matching)
+${buildPromptInstructions()}
 
 Examples:
 "cadeau voor mijn zus" → {"keywords": []} (too vague - no specific subject!)
