@@ -1,82 +1,842 @@
 [
   {
-    "id": 8159306,
-    "title": "Gezinsbeelden"
-  },
-  {
-    "id": 8159309,
-    "title": "Relatiegeschenken & Eindejaarsgeschenken"
-  },
-  {
-    "id": 8159312,
-    "title": "Zakelijke Geschenken"
-  },
-  {
-    "id": 8159315,
-    "title": "Sportbeelden"
-  },
-  {
-    "id": 8159318,
-    "title": "Beelden Muziek "
-  },
-  {
-    "id": 8159321,
-    "title": "Liefde & Huwelijk"
-  },
-  {
-    "id": 8159330,
-    "title": "Samenwerking & Teambuilding"
-  },
-  {
-    "id": 8159336,
-    "title": "Exclusief Brons"
-  },
-  {
-    "id": 10066384,
-    "title": "Zorg & Verpleging"
-  },
-  {
-    "id": 10284228,
-    "title": "Moderne Kunstcadeaus"
-  },
-  {
-    "id": 10778817,
-    "title": "Museum Kunstcadeaus"
-  },
-  {
-    "id": 10870334,
-    "title": "Jubileum & Afscheid"
-  },
-  {
-    "id": 11453806,
-    "title": "Moederdag Cadeau Beelden"
-  },
-  {
-    "id": 11492653,
-    "title": "Geslaagd & Examen"
-  },
-  {
-    "id": 12008651,
-    "title": "Keramiek & Beelden"
-  },
-  {
-    "id": 12019400,
-    "title": "Wandborden "
-  },
-  {
-    "id": 12067775,
-    "title": "Schalen & Vazen "
-  },
-  {
-    "id": 12363590,
-    "title": "Alle Bronzen & Moderne Beelden"
+    "id": 13271278,
+    "createdAt": "2025-10-19T12:24:25+02:00",
+    "updatedAt": "2025-10-19T13:22:17+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "13271278"
+    ],
+    "type": "category",
+    "sortOrder": 20,
+    "sorting": "popular",
+    "url": "schilderijen",
+    "title": "Schilderijen",
+    "fulltitle": "Kunstwerken van Klaas Gubbels, Jack Liemburg, Tos Kostermans, Herman Brood & Peter Donkersloot",
+    "description": "Overzicht van kunstwerken van Jack Liemburg, Jeroen Krabbe, Bram Reijnders, Hayo Sol, Corneille, Klaas Gubbels, Peter Donkersloot, Herman Brood & Tos Kostermans.",
+    "content": "",
+    "image": {
+      "createdAt": "2025-10-19T13:06:24+02:00",
+      "updatedAt": "2025-10-19T13:06:24+02:00",
+      "extension": "jpg",
+      "size": 1024083,
+      "title": "jack-liemburg-all-of-me-van-jack-liemburg",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486273371/50x50x2/jack-liemburg-all-of-me-van-jack-liemburg.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486273371/jack-liemburg-all-of-me-van-jack-liemburg.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=13271278",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=13271278"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=13271278",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=13271278"
+      }
+    }
   },
   {
     "id": 12702320,
-    "title": "Bedankbeelden"
+    "createdAt": "2025-02-09T00:00:42+01:00",
+    "updatedAt": "2025-10-22T10:56:43+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "12702320"
+    ],
+    "type": "category",
+    "sortOrder": 23,
+    "sorting": "popular",
+    "url": "bedankbeelden",
+    "title": "Bedankbeelden",
+    "fulltitle": "Unieke Bedankbeelden: Het Perfecte Gebaar van Dankbaarheid",
+    "description": "Ontdek unieke bedankbeelden op Kunstpakket.nl! Perfect als dankbetuiging of geschenk. Stijlvolle en symbolische sculpturen met betekenis. Snelle levering!",
+    "content": "<p>Op Kunstpakket.nl vind je een prachtige collectie bedankbeelden die perfect zijn als symbolisch geschenk of gebaar van waardering. Onze handgemaakte beelden zijn ideaal om iemand te bedanken voor een bijzondere prestatie, hulp of liefdevolle steun. Kies uit diverse stijlen en materialen, van klassieke sculpturen tot moderne kunstwerken, die jouw dankbaarheid op een unieke manier uitdrukken. Of je nu op zoek bent naar een persoonlijk bedankcadeau voor een familielid, collega of vriend, onze beelden bieden voor elke gelegenheid de juiste keuze. Laat je inspireren door de kunstwerken op Kunstpakket.nl en geef een bedankbeeld dat een blijvende indruk maakt. Snelle levering en uitstekende klantenservice zorgen ervoor dat je bestelling altijd op tijd en in perfecte staat aankomt.</p>",
+    "image": {
+      "createdAt": "2025-10-22T10:56:43+02:00",
+      "updatedAt": "2025-10-22T10:56:43+02:00",
+      "extension": "jpg",
+      "size": 85816,
+      "title": "bronzen-beeld-kunstpakket-de-handdruk",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486441724/50x50x2/bronzen-beeld-kunstpakket-de-handdruk.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486441724/bronzen-beeld-kunstpakket-de-handdruk.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=12702320",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=12702320"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=12702320",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=12702320"
+      }
+    }
   },
   {
-    "id": 13271278,
-    "title": "Schilderijen"
+    "id": 12363590,
+    "createdAt": "2024-05-16T23:27:41+02:00",
+    "updatedAt": "2025-10-15T14:32:35+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "12363590"
+    ],
+    "type": "category",
+    "sortOrder": 23,
+    "sorting": "popular",
+    "url": "alle-bronzen-moderne-beelden",
+    "title": "Alle Bronzen & Moderne Beelden",
+    "fulltitle": "Alle Beelden van Kunstpakket - Bronzen & Moderne Kunstwerken",
+    "description": "Ontdek meer dan 900 unieke beelden bij Kunstpakket.nl: van exclusieve bronzen en verbronsde sculpturen tot kleurrijke moderne kunstwerken. Onze collectie is ideaal als bijzonder kunstcadeau, relatiegeschenk of als eyecatcher in huis en tuin. Of je nu kies",
+    "content": "<p class=\"\" data-start=\"103\" data-end=\"148\"><strong data-start=\"103\" data-end=\"148\">Ontdek Onze Uitgebreide Collectie Beelden</strong></p>\r\n<p class=\"\" data-start=\"150\" data-end=\"542\">Op Kunstpakket.nl vind je meer dan 900 unieke beelden, variërend van exclusieve bronzen en verbronsde sculpturen tot moderne kunstwerken. Of je nu op zoek bent naar een kunstwerk voor je woonkamer, tuin, of als geschenk, wij bieden een gevarieerde selectie die elke ruimte verfraait. Onze beelden zijn met zorg geselecteerd en vaak handgemaakt, wat zorgt voor hoge kwaliteit en exclusiviteit.</p>\r\n<p class=\"\" data-start=\"544\" data-end=\"590\"><strong data-start=\"544\" data-end=\"590\">Kunstwerken voor Elke Smaak en Gelegenheid</strong></p>\r\n<p class=\"\" data-start=\"592\" data-end=\"967\">Of je nu houdt van klassieke sculpturen of juist de voorkeur geeft aan eigentijdse designstukken, Kunstpakket heeft voor ieder wat wils. Onze collectie bevat beelden van bekende en opkomende kunstenaars, geschikt voor diverse interieurs. Van indrukwekkende bronzen beelden tot verfijnde, moderne stukken, elk kunstwerk vertelt zijn eigen verhaal en brengt sfeer in je ruimte.</p>\r\n<p class=\"\" data-start=\"969\" data-end=\"1004\"><strong data-start=\"969\" data-end=\"1004\">Waarom Kiezen voor Kunstpakket?</strong></p>\r\n<p class=\"\" data-start=\"1006\" data-end=\"1310\">Kunstpakket.nl biedt niet alleen een enorme variëteit aan beelden, maar ook de beste service. Geniet van gratis verzending binnen Nederland en snelle levering, zodat je jouw kunstwerk snel kunt bewonderen. Elk beeld wordt zorgvuldig verpakt en is klaar om direct in jouw huis of tuin geplaatst te worden.</p>\r\n<p class=\"\" data-start=\"1312\" data-end=\"1340\"><strong data-start=\"1312\" data-end=\"1340\">Vind Jouw Perfecte Beeld</strong></p>\r\n<p class=\"\" data-start=\"1342\" data-end=\"1592\">Duik in onze uitgebreide collectie en ontdek het kunstwerk dat jouw ruimte verrijkt. Of het nu gaat om een bronzen beeld voor in de tuin of een moderne sculptuur voor je woonkamer of kantoor, bij Kunstpakket vind je altijd iets dat past bij jouw smaak en stijl.</p>",
+    "image": {
+      "createdAt": "2025-10-15T09:16:31+02:00",
+      "updatedAt": "2025-10-15T09:16:31+02:00",
+      "extension": "jpg",
+      "size": 76949,
+      "title": "stevige handdruk",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486048563/50x50x2/stevige-handdruk.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486048563/stevige-handdruk.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=12363590",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=12363590"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=12363590",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=12363590"
+      }
+    }
+  },
+  {
+    "id": 12067775,
+    "createdAt": "2023-07-23T10:58:30+02:00",
+    "updatedAt": "2025-10-19T11:48:29+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "12067775"
+    ],
+    "type": "category",
+    "sortOrder": 24,
+    "sorting": "popular",
+    "url": "schalen-vazen",
+    "title": "Schalen & Vazen ",
+    "fulltitle": "Bijzondere schalen en vazen koop je bij Kunstpakket",
+    "description": "Een vaas of schaal kopen als cadeau of voor uw interieur?",
+    "content": "<p>In de collectie vazen en schalen van Kunstpakket vindt u verschillende stijlen.</p>\r\n<p>Denk hierbij aan fruitschalen, bonbonschaaltjes of juist decoratieve schalen. Leuk idee is om schaal met een combinatie van losse kaarsen en waxinelichthouders te vullen voor een warm en sfeervol effect.</p>\r\n<p><img src=\"https://cdn.webshopapp.com/shops/269557/files/434778127/schalen-en-vazen-kunstpakket.jpg\" alt=\"Schalen\" width=\"900\" height=\"135\" /></p>\r\n<p>Ieder seizoen kunt u de schalen weer anders decoreren. Vazen zijn er ook in vele vormen en kleuren en daarom mooi om naar te kijken. Met vazen en schalen brengt u sfeer in huis. Mooi in de vensterbank, of op tafel met een bloemen. Kijk ook naar onze museumvazen naar bekende kunstenaars.</p>\r\n<p><img src=\"https://cdn.webshopapp.com/shops/269557/files/434778329/vaas-kunstpakket.jpg\" alt=\"Kunstpakket vazen\" width=\"500\" height=\"500\" /></p>\r\n<p>Een vaas is een voorwerp dat een (vloei)stof kan bevatten en aan de bovenkant open is. Een vaas wordt tegenwoordig meestal gebruikt om bloemen in te plaatsen, maar kan ook zonder bloemen als versiering dienen. Vazen worden geproduceerd in porselein, aardewerk, kristal en glas. </p>",
+    "image": {
+      "createdAt": "2023-07-23T10:59:25+02:00",
+      "updatedAt": "2023-07-23T10:59:25+02:00",
+      "extension": "jpg",
+      "size": 85147,
+      "title": "Schaal Kunstpakket",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/434778043/50x50x2/schaal-kunstpakket.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/434778043/schaal-kunstpakket.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=12067775",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=12067775"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=12067775",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=12067775"
+      }
+    }
+  },
+  {
+    "id": 12019400,
+    "createdAt": "2023-06-20T18:14:58+02:00",
+    "updatedAt": "2025-10-19T13:09:03+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "12019400"
+    ],
+    "type": "category",
+    "sortOrder": 23,
+    "sorting": "popular",
+    "url": "wandborden",
+    "title": "Wandborden ",
+    "fulltitle": "Wandborden als origineel cadeau of relatiegeschenk",
+    "description": "Decoreer je woning of kantoor met Delfts blauwe of kleurrijke wandborden. Heb je een relatiegeschenk nodig of een origineel cadeau voor bijvoorbeeld een bruiloft? Dan zijn onze wandborden zeer geschikt.  ",
+    "content": "<p>Onze wandborden hebben of een ophangsysteem of kleine gaatjes in de achterkant, waardoor je deze makkelijk ophangt. Ook dit is natuurlijk een leuk cadeau of origineel om in te zetten als relatiegeschenk. Neem ook eens een kijkje naar onze kleurrijke borden van Loes van Delft of wat dacht je Gouden Eeuw grootheden.</p>\r\n<p><img src=\"https://cdn.webshopapp.com/shops/269557/files/432488982/loes-van-delft-kunstpakket.jpg\" alt=\"Wandborden bij Kunstpakket\" width=\"480\" height=\"480\" /></p>\r\n<p>Deze fraaie kunstwerken zijn voor de échte liefhebbers!  </p>",
+    "image": {
+      "createdAt": "2025-10-19T13:09:02+02:00",
+      "updatedAt": "2025-10-19T13:09:02+02:00",
+      "extension": "jpg",
+      "size": 541514,
+      "title": "wandbord-richard-hutten-winter-31-cm-doorsnede",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486273411/50x50x2/wandbord-richard-hutten-winter-31-cm-doorsnede.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486273411/wandbord-richard-hutten-winter-31-cm-doorsnede.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=12019400",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=12019400"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=12019400",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=12019400"
+      }
+    }
+  },
+  {
+    "id": 12008651,
+    "createdAt": "2023-06-12T11:56:00+02:00",
+    "updatedAt": "2025-08-20T17:26:46+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "12008651"
+    ],
+    "type": "category",
+    "sortOrder": 20,
+    "sorting": "popular",
+    "url": "keramiek-beelden",
+    "title": "Keramiek & Beelden",
+    "fulltitle": "Handgemaakte keramiek sculpturen van Bosa ",
+    "description": "Benieuwd naar andere vormen? In Keramiek & Beelden vind je bijzondere keramische stukken zoals Bosa uit Italië en designobjecten—alternatieve kunst die warmte en karakter brengt.",
+    "content": "<p>In een hoek van het Venetiaanse platteland, met een betoverende heuvelachtige skyline en kabbelende bergbeekjes, ligt een stad, Borso del Grappa, die de naam van zijn hoogste en meest nobele bergtop weerspiegelt, waar Bosa, de keramiekindustrie die over de hele wereld bekend is, koos ervoor om vele jaren geleden te vestigen. Het is geen toeval dat het Piemonte-gebied van de regio Veneto de grote keramische traditie van Bassano heeft samengevoegd met de geest van de kosmopolitische cultuur van Venetië en de baanbrekende aandacht van Asolo voor innovatie.<br /><br />In 1976 begon Italo Bosa zijn eigen keramiekproductie, waarbij hij de oude technieken toepaste om objecten volledig met de hand te maken, versterkt door een rijk palet aan kleuren, versierd met edele metalen zoals goud, platina en koper, en geëmailleerd in de exclusieve kleurtinten die gecreëerd werden. door het bedrijf. Deze precisietechnieken blijven de basis voor de productie van Bosa en zorgen ervoor dat de objecten van Bosa uniek, herkenbaar en van de beste kwaliteit blijven. De keramische objecten en accessoires gemaakt door maison Bosa drukken niet alleen het volledige scala van zijn ambachtelijke expertise uit, maar drukken ook zijn onophoudelijke experimenten uit met het potentieel van keramiek, met als doel formele en functionele conventies om te zetten in nieuwe interpretaties, nieuwe functies en fantastische werelden. een missie die Bosa heeft doorgegeven aan zijn dochters Francesca en Daniela, aan zijn vrouw en aan iedereen die met hem samenwerkt.</p>",
+    "image": {
+      "createdAt": "2023-06-12T11:57:04+02:00",
+      "updatedAt": "2023-06-12T11:57:04+02:00",
+      "extension": "jpg",
+      "size": 70431,
+      "title": "DabPenguin_02 goud kunstpakket",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/431837584/50x50x2/dabpenguin-02-goud-kunstpakket.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/431837584/dabpenguin-02-goud-kunstpakket.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=12008651",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=12008651"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=12008651",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=12008651"
+      }
+    }
+  },
+  {
+    "id": 11492653,
+    "createdAt": "2022-05-27T09:03:59+02:00",
+    "updatedAt": "2025-10-12T09:54:37+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "11492653"
+    ],
+    "type": "category",
+    "sortOrder": 22,
+    "sorting": "popular",
+    "url": "geslaagd-examen",
+    "title": "Geslaagd & Examen",
+    "fulltitle": "Verras de geslaagde met een uniek bronzen beeld",
+    "description": "Gefeliciteerd met succes! Examencadeaus zijn bronzen beelden die trots en prestatie vieren—een blijvende herinnering voor geslaagden, afgestudeerden of jubilarissen.",
+    "content": "<p>Vier een geslaagde of afgestudeerde met een uniek en symbolisch beeld! Onze handgemaakte geslaagd beelden zijn het perfecte cadeau voor examens en afstuderen. Van moderne sculpturen tot klassieke ontwerpen – elk beeld straalt trots en succes uit. Ideaal als blijvende herinnering aan een bijzondere prestatie. Bestel eenvoudig online en verras een geslaagde met een betekenisvol cadeau!</p>\r\n<ul>\r\n<li class=\"\" data-start=\"557\" data-end=\"589\">\r\n<p class=\"\" data-start=\"559\" data-end=\"589\">Symbolisch cadeau afstuderen</p>\r\n</li>\r\n<li class=\"\" data-start=\"590\" data-end=\"623\">\r\n<p class=\"\" data-start=\"592\" data-end=\"623\">Cadeau voor geslaagde student</p>\r\n</li>\r\n<li class=\"\" data-start=\"624\" data-end=\"653\">\r\n<p class=\"\" data-start=\"626\" data-end=\"653\">Diploma uitreiking cadeau</p>\r\n</li>\r\n<li class=\"\" data-start=\"654\" data-end=\"687\">\r\n<p class=\"\" data-start=\"656\" data-end=\"687\">Kunstbeeldjes voor geslaagden</p>\r\n</li>\r\n<li class=\"\" data-start=\"688\" data-end=\"717\">\r\n<p class=\"\" data-start=\"690\" data-end=\"717\">Origineel cadeau geslaagd</p>\r\n</li>\r\n</ul>",
+    "image": {
+      "createdAt": "2025-10-12T09:54:37+02:00",
+      "updatedAt": "2025-10-12T09:54:37+02:00",
+      "extension": "jpg",
+      "size": 504998,
+      "title": "geslaagd",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/485922247/50x50x2/geslaagd.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/485922247/geslaagd.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=11492653",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=11492653"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=11492653",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=11492653"
+      }
+    }
+  },
+  {
+    "id": 11453806,
+    "createdAt": "2022-05-01T10:03:31+02:00",
+    "updatedAt": "2025-09-27T20:18:12+02:00",
+    "isVisible": false,
+    "depth": 1,
+    "path": [
+      "11453806"
+    ],
+    "type": "category",
+    "sortOrder": 19,
+    "sorting": "popular",
+    "url": "moederdag-cadeau-beelden",
+    "title": "Moederdag Cadeau Beelden",
+    "fulltitle": "Beelden Moederdag",
+    "description": "Verras je moeder dit jaar met een bijzonder Moederdag cadeau: een uniek beeld dat liefde, verbondenheid en waardering uitstraalt. Onze collectie Bronzen Moederdag Beelden omvat prachtige moeder-kind sculpturen, symbolen van liefde en abstracte kunstwerken",
+    "content": "<h2><strong>Oorspong Moederdag:</strong></h2>\r\n<p>Moederdag werd in 1908 bedacht door de Amerikaanse Anna Jarvis. Ze riep deze dag in het leven om haar moeder, Ann Reeves Jarvis, te herdenken. Deze was het jaar daarvoor overleden. Maar tijdens de Amerikaanse Burgeroorlog had ze een belangrijke rol gespeeld als vredesactivist. Zo verzorgde Ann Jarvis zieke soldaten en richtte ze Mother’s Day Work Clubs op waarin ze zich sterk maakte voor gezondheidszorg.</p>\r\n<p>Door de inspanningen van Anna Jarvis erkenden verschillende Amerikaanse staten Moederdag als een officiële feestdag. Maar het was president Woodrow Wilson die de dag in 1914 Moederdag als een nationale Feestdag erkende. Vanaf nu was het een vast feestdag die elke 2<sup>de</sup> zondag in mei gevierd werd. Deze variant is de Atlantische Ocean overgewaaid. Sinds 1925 wordt de Amerikaanse versie van Moederdag ook in Nederland gevierd.</p>",
+    "image": {
+      "createdAt": "2022-05-01T10:07:52+02:00",
+      "updatedAt": "2022-05-01T10:07:52+02:00",
+      "extension": "jpg",
+      "size": 18011,
+      "title": "Moederdag",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/402291532/50x50x2/moederdag.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/402291532/moederdag.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=11453806",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=11453806"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=11453806",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=11453806"
+      }
+    }
+  },
+  {
+    "id": 10870334,
+    "createdAt": "2021-05-30T08:08:29+02:00",
+    "updatedAt": "2025-10-12T09:52:12+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "10870334"
+    ],
+    "type": "category",
+    "sortOrder": 14,
+    "sorting": "popular",
+    "url": "jubileum-afscheid",
+    "title": "Jubileum & Afscheid",
+    "fulltitle": "Bedank je collega's met een passend cadeau van Kunstpakket ",
+    "description": "Vier mijlpalen met onze Jubileum & Afscheid-collectie: bronzen kunstwerkjes die momenten markeren. Van pensioengeschenk tot vertrekcadeau—een klassiek en blijvend symbool van waardering.",
+    "content": "<p> </p>\r\n<p>Bij Kunstpakket vind je een unieke collectie handgemaakte beelden die perfect passen bij speciale mijlpalen zoals jubileums, afscheid en een nieuwe toekomst. Of je nu op zoek bent naar een symbolisch cadeau voor een collega die met pensioen gaat, een blijvende herinnering voor een afscheid, of een kunstzinnig beeld om een nieuwe levensfase te vieren, onze beelden zijn de ideale keuze. Elk kunstwerk is zorgvuldig ontworpen om betekenis en emotie over te brengen, waardoor het een bijzonder cadeau is dat jarenlang gekoesterd wordt. Bestel eenvoudig online bij Kunstpakket en geef een tijdloos geschenk dat echt indruk maakt.<br /><br /></p>",
+    "image": {
+      "createdAt": "2025-10-12T09:52:12+02:00",
+      "updatedAt": "2025-10-12T09:52:12+02:00",
+      "extension": "jpg",
+      "size": 58953,
+      "title": "op weg naar het",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/485922232/50x50x2/op-weg-naar-het.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/485922232/op-weg-naar-het.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=10870334",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=10870334"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=10870334",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=10870334"
+      }
+    }
+  },
+  {
+    "id": 10778817,
+    "createdAt": "2021-04-13T08:30:54+02:00",
+    "updatedAt": "2025-10-25T13:22:06+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "10778817"
+    ],
+    "type": "category",
+    "sortOrder": 15,
+    "sorting": "popular",
+    "url": "museum-kunstcadeaus",
+    "title": "Museum Kunstcadeaus",
+    "fulltitle": "Kunstcadeaus van Oude & Moderne Meesters – Museumcollectie bij Kunstpakket",
+    "description": "Laat je verrassen door Museumstukken: luxe kunsthars beelden, mokken, onderzetters, vazen geïnspireerd op grootmeesters zoals Rodin, Van Gogh en Dalí ontworpen om als kunstcadeau te intrigeren.",
+    "content": "<h3 class=\"\" data-start=\"114\" data-end=\"193\"><strong data-start=\"118\" data-end=\"191\">Beelden van Oude &amp; Moderne Meesters – Museumcollectie bij Kunstpakket</strong></h3>\r\n<p class=\"\" data-start=\"195\" data-end=\"435\">Ontdek onze prachtige <strong data-start=\"217\" data-end=\"238\">kunsthars beelden, mokken, onderzetters, vazen</strong> en meer geïnspireerd op de grootste meesters uit de kunstgeschiedenis. Deze exclusieve collectie omvat <strong data-start=\"334\" data-end=\"379\">beelden gebaseerd op beroemde kunstwerken</strong> en wordt geleverd in een <strong data-start=\"405\" data-end=\"432\">luxe geschenkverpakking</strong>.</p>\r\n<h4 class=\"\" data-start=\"437\" data-end=\"481\"><strong data-start=\"442\" data-end=\"479\">Beelden naar Beroemde Kunstenaars</strong></h4>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\">Onze collectie bevat beelden geïnspireerd door wereldberoemde kunstenaars, zoals:</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"569\" data-end=\"586\">Salvador Dalí</strong> – Surrealistische kunst in 3D-vorm</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"627\" data-end=\"647\">Richard Orlinski</strong> – Moderne, dynamische sculpturen</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"686\" data-end=\"706\">Vincent van Gogh</strong> – Iconische kunst vertaald naar beeld</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"750\" data-end=\"766\">Gustav Klimt</strong> – Beeldhouwwerken met een gouden touch</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"811\" data-end=\"826\" data-is-only-node=\"\">M.C. Escher</strong> – Optische illusies in sculpturen</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"866\" data-end=\"887\">Leonardo da Vinci</strong> – Renaissancekunst in beeldvorm</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"987\" data-end=\"1004\">Auguste Rodin</strong> – Expressieve en realistische bronzen beelden</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"><strong data-start=\"1056\" data-end=\"1075\">Selwyn Senatori</strong> – Pop-art geïnspireerde beelden</p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\">... en vele andere <strong data-start=\"1129\" data-end=\"1160\">museumwaardige kunstbeelden</strong>!</p>\r\n<p class=\"\" data-start=\"1206\" data-end=\"1400\">Onze collectie is perfect voor liefhebbers van <strong data-start=\"1253\" data-end=\"1287\">kunst, musea en designobjecten</strong>. Deze kunsthars beelden zijn ideaal als <strong data-start=\"1328\" data-end=\"1360\">cadeau voor kunstliefhebbers</strong>, ter decoratie of als verzamelobject.</p>\r\n<p class=\"\" data-start=\"1402\" data-end=\"1655\"><strong data-start=\"1402\" data-end=\"1460\">Waarom kiezen voor de museumcollectie van Kunstpakket?</strong><br data-start=\"1460\" data-end=\"1463\" />✅ Luxe kunsthars beelden met oog voor detail<br data-start=\"1507\" data-end=\"1510\" />✅ Geïnspireerd op meesterwerken uit de kunstgeschiedenis<br data-start=\"1566\" data-end=\"1569\" />✅ Stijlvol verpakt – perfect als geschenk<br data-start=\"1610\" data-end=\"1613\" />✅ Unieke decoratie voor thuis of kantoor</p>\r\n<p class=\"\" data-start=\"1657\" data-end=\"1753\"><strong data-start=\"1657\" data-end=\"1751\">Bestel nu een beeld uit onze museumcollectie en haal een stukje kunstgeschiedenis in huis!</strong></p>\r\n<p class=\"\" data-start=\"482\" data-end=\"1163\"> </p>",
+    "image": {
+      "createdAt": "2025-10-19T13:12:35+02:00",
+      "updatedAt": "2025-10-19T13:12:35+02:00",
+      "extension": "jpg",
+      "size": 104049,
+      "title": "escher-escher-vaas-lucht-water",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486273550/50x50x2/escher-escher-vaas-lucht-water.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486273550/escher-escher-vaas-lucht-water.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=10778817",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=10778817"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=10778817",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=10778817"
+      }
+    }
+  },
+  {
+    "id": 10284228,
+    "createdAt": "2020-09-17T20:01:12+02:00",
+    "updatedAt": "2025-10-26T11:42:41+01:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "10284228"
+    ],
+    "type": "category",
+    "sortOrder": 1,
+    "sorting": "popular",
+    "url": "moderne-kunstcadeaus",
+    "title": "Moderne Kunstcadeaus",
+    "fulltitle": "Collectie eigentijdse moderne Kunstcadeaus met betekenis",
+    "description": "Verras iemand met een uniek kunstcadeau! Van mokken, vazen en beelden tot wandborden, geïnspireerd door kunstenaars zoals Klimt, Van Gogh en Mondriaan. Perfect cadeau voor verjaardag, jubileum of zomaar. Gratis verzending.",
+    "content": "<p data-start=\"1531\" data-end=\"1850\"><strong data-start=\"1531\" data-end=\"1561\">Kunstcadeaus met betekenis</strong><br data-start=\"1561\" data-end=\"1564\" />Een cadeau geven wordt pas echt bijzonder wanneer het persoonlijk en tijdloos is. Bij Kunstpakket.nl vindt u een uitgebreide collectie <strong data-start=\"1699\" data-end=\"1715\">kunstcadeaus</strong> die schoonheid, creativiteit en cultuur combineren. Perfect als <strong data-start=\"1780\" data-end=\"1847\">cadeau voor een verjaardag, jubileum, relatiegeschenk of zomaar</strong>.</p>\r\n<p data-start=\"1852\" data-end=\"2105\"><strong data-start=\"1852\" data-end=\"1883\">Onze collectie kunstcadeaus</strong><br data-start=\"1883\" data-end=\"1886\" />Wij bieden een breed assortiment <strong data-start=\"1919\" data-end=\"1935\">kunstcadeaus</strong> geïnspireerd door beroemde kunstenaars zoals Klimt, Van Gogh, Mondriaan, Monet en Degas. Elk cadeau is met zorg gemaakt en brengt een stukje kunstgeschiedenis in huis.</p>\r\n<ul data-start=\"2107\" data-end=\"2501\">\r\n<li data-start=\"2107\" data-end=\"2179\">\r\n<p data-start=\"2109\" data-end=\"2179\"><strong data-start=\"2109\" data-end=\"2120\">Mokken:</strong> Praktisch en stijlvol, bedrukt met iconische kunstwerken</p>\r\n</li>\r\n<li data-start=\"2180\" data-end=\"2270\">\r\n<p data-start=\"2182\" data-end=\"2270\"><strong data-start=\"2182\" data-end=\"2194\">Beelden:</strong> Van klassieke meesterwerken tot moderne sculpturen, ideaal als eyecatcher</p>\r\n</li>\r\n<li data-start=\"2271\" data-end=\"2338\">\r\n<p data-start=\"2273\" data-end=\"2338\"><strong data-start=\"2273\" data-end=\"2283\">Vazen:</strong> Elegante kunstobjecten die ieder interieur verrijken</p>\r\n</li>\r\n<li data-start=\"2339\" data-end=\"2431\">\r\n<p data-start=\"2341\" data-end=\"2431\"><strong data-start=\"2341\" data-end=\"2356\">Wandborden:</strong> Decoratief en inspirerend met kunstmotieven uit verschillende stromingen</p>\r\n</li>\r\n<li data-start=\"2432\" data-end=\"2501\">\r\n<p data-start=\"2434\" data-end=\"2501\"><strong data-start=\"2434\" data-end=\"2446\">Schalen:</strong> Functioneel en artistiek, perfect om cadeau te geven</p>\r\n</li>\r\n</ul>\r\n<p data-start=\"2503\" data-end=\"2626\"><strong data-start=\"2503\" data-end=\"2545\">Bestel uw kunstcadeau eenvoudig online</strong> en verras iemand met een betekenisvol en uniek cadeau dat blijft indruk maken.</p>",
+    "image": {
+      "createdAt": "2025-10-25T13:15:15+02:00",
+      "updatedAt": "2025-10-25T13:15:15+02:00",
+      "extension": "jpg",
+      "size": 182140,
+      "title": "jacky-zegers-jacky-zegers-hond-stanley",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486620423/50x50x2/jacky-zegers-jacky-zegers-hond-stanley.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486620423/jacky-zegers-jacky-zegers-hond-stanley.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=10284228",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=10284228"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=10284228",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=10284228"
+      }
+    }
+  },
+  {
+    "id": 10066384,
+    "createdAt": "2020-05-12T08:07:16+02:00",
+    "updatedAt": "2025-10-20T13:55:47+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "10066384"
+    ],
+    "type": "category",
+    "sortOrder": 3,
+    "sorting": "popular",
+    "url": "zorg-verpleging",
+    "title": "Zorg & Verpleging",
+    "fulltitle": "Bronzen Beelden – Zorg & Verpleging",
+    "description": "Onze bronzen beelden - Zorg & Verpleging zijn symbolen van waardering en warmte. Eer zorgverleners met een prachtig kunstwerk dat respect en dankbaarheid uitstraalt. Personaliseer met tekstplaatje. Gratis verzending in NL.",
+    "content": "<p data-start=\"198\" data-end=\"260\"><strong data-start=\"198\" data-end=\"258\">Zorgbeelden - een betekenisvol cadeau voor zorgverleners</strong></p>\r\n<p data-start=\"262\" data-end=\"630\">Onze zorgvuldig geselecteerde collectie <strong data-start=\"243\" data-end=\"258\">zorgbeelden</strong> is het ideale cadeau om zorgverleners, mantelzorgers en zorgmedewerkers in ziekenhuizen of verzorgingshuizen te bedanken. Elk bronzen sculptuur straalt <strong data-start=\"411\" data-end=\"450\">zorg, aandacht, medeleven en warmte</strong> uit en is met vakmanschap gemaakt - een blijvend teken van respect en dankbaarheid.</p>\r\n<p data-start=\"632\" data-end=\"758\"><strong data-start=\"632\" data-end=\"662\">Maak het extra persoonlijk</strong>: voeg een gegraveerd tekstplaatje toe en geef een uniek geschenk dat recht uit het hart komt.</p>\r\n<p data-start=\"760\" data-end=\"802\"><strong data-start=\"760\" data-end=\"800\">Waarom kiezen voor onze zorgbeelden?</strong></p>\r\n<ul data-start=\"803\" data-end=\"1330\">\r\n<li data-start=\"803\" data-end=\"885\">\r\n<p data-start=\"805\" data-end=\"885\"><strong data-start=\"805\" data-end=\"826\">Unieke collectie:</strong> Sculpturen die zorg, compassie en toewijding uitdrukken.</p>\r\n</li>\r\n<li data-start=\"886\" data-end=\"975\">\r\n<p data-start=\"888\" data-end=\"975\"><strong data-start=\"888\" data-end=\"916\">Hoogwaardige materialen:</strong> Gemaakt van duurzaam brons met een tijdloze uitstraling.</p>\r\n</li>\r\n<li data-start=\"976\" data-end=\"1071\">\r\n<p data-start=\"978\" data-end=\"1071\"><strong data-start=\"978\" data-end=\"1003\">Persoonlijk geschenk:</strong> Voeg een gegraveerd tekstplaatje toe voor een persoonlijke touch.</p>\r\n</li>\r\n<li data-start=\"1072\" data-end=\"1189\">\r\n<p data-start=\"1074\" data-end=\"1189\"><strong data-start=\"1138\" data-end=\"1156\">Geschikt voor o.a.:</strong> verpleegkundigen, artsen, verzorgenden, kinderverpleegkundigen, fysiotherapeuten, mantelzorgers en zorgmedewerkers in ziekenhuizen, verzorgingshuizen of revalidatiecentra.</p>\r\n</li>\r\n<li data-start=\"1190\" data-end=\"1257\">\r\n<p data-start=\"1192\" data-end=\"1257\"><strong data-start=\"1192\" data-end=\"1214\">Gratis verzending:</strong> Geen bijkomende kosten binnen Nederland.</p>\r\n</li>\r\n<li data-start=\"1258\" data-end=\"1330\">\r\n<p data-start=\"1260\" data-end=\"1330\"><strong data-start=\"1260\" data-end=\"1280\">Snelle levering:</strong> Voor 12.00 uur besteld, binnen 2 dagen in huis.</p>\r\n</li>\r\n</ul>\r\n<p data-start=\"1332\" data-end=\"1578\">Laat uw waardering spreken met een betekenisvol kunstwerk voor de zorg. <strong data-start=\"1404\" data-end=\"1426\">Bestel vandaag nog</strong> en verras een zorgverlener met een blijvend bedankje vol warmte, respect en oprechte dankbaarheid.</p>",
+    "image": {
+      "createdAt": "2025-09-25T20:32:49+02:00",
+      "updatedAt": "2025-09-25T20:32:49+02:00",
+      "extension": "jpg",
+      "size": 82510,
+      "title": "Zorg voor elkaar",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/484668683/50x50x2/zorg-voor-elkaar.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/484668683/zorg-voor-elkaar.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=10066384",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=10066384"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=10066384",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=10066384"
+      }
+    }
+  },
+  {
+    "id": 8159336,
+    "createdAt": "2019-01-07T18:38:15+01:00",
+    "updatedAt": "2025-10-15T14:05:25+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "8159336"
+    ],
+    "type": "category",
+    "sortOrder": 11,
+    "sorting": "popular",
+    "url": "exclusief-brons",
+    "title": "Exclusief Brons",
+    "fulltitle": "Bijzondere exclusieve bronzen beelden en sculpturen voor binnen en buiten",
+    "description": "Bronzen Beelden voor Binnen & Buiten zijn met vakmanschap vervaardigde kunstwerken die zowel tuin als interieur verrijken. Duurzaam, stijlvol en weerbestendig—een sfeermaker voor elke ruimte.",
+    "content": "<p class=\"\" data-start=\"0\" data-end=\"81\"><strong data-start=\"0\" data-end=\"79\">Exclusieve bronzen beelden voor binnen en buiten – handgemaakte kunstwerken</strong></p>\r\n<p class=\"\" data-start=\"83\" data-end=\"408\">Op zoek naar unieke bronzen beelden voor tuin of interieur? Bij Kunstpakket.nl vind je exclusieve, met vakmanschap vervaardigde sculpturen. Geschikt voor binnen en buiten, deze kunstwerken geven elke ruimte een stijlvolle en tijdloze uitstraling. Ontdek ons assortiment en verrijk je omgeving met een bijzonder bronzen beeld!</p>\r\n<p> </p>",
+    "image": {
+      "createdAt": "2025-10-12T09:55:56+02:00",
+      "updatedAt": "2025-10-12T09:55:56+02:00",
+      "extension": "jpg",
+      "size": 69030,
+      "title": "buiten",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/485922260/50x50x2/buiten.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/485922260/buiten.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159336",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159336"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159336",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159336"
+      }
+    }
+  },
+  {
+    "id": 8159330,
+    "createdAt": "2019-01-07T18:36:02+01:00",
+    "updatedAt": "2025-10-17T00:07:21+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "8159330"
+    ],
+    "type": "category",
+    "sortOrder": 13,
+    "sorting": "popular",
+    "url": "samenwerking-teambuilding",
+    "title": "Samenwerking & Teambuilding",
+    "fulltitle": "Samenwerken en teambuilding beelden bronzen beelden en sculpturen",
+    "description": "Versterk de banden met Samenwerking-beelden: inspirerende bronzen sculpturen die verbinden. Ideaal als teambuildingcadeau, symbool van samenwerking of als bijzondere motivatie voor collega’s.",
+    "content": "<h3 class=\"\" data-start=\"484\" data-end=\"520\"><strong data-start=\"488\" data-end=\"518\">Samenwerken &amp; Teambuilding</strong></h3>\r\n<p class=\"\" data-start=\"521\" data-end=\"901\">Symboliseer samenwerking en teamspirit met onze bronzen beelden bij Kunstpakket.nl. Onze collectie verbeeldt kracht, verbondenheid en samenwerking, ideaal als relatiegeschenk of kunst voor bedrijven. Geschikt voor binnen, deze sculpturen brengen inspirerende symboliek in elke ruimte. Ontdek de kracht van kunst en verrijk uw omgeving met een uniek samenwerkingsbeeld!</p>",
+    "image": {
+      "createdAt": "2025-10-17T00:07:21+02:00",
+      "updatedAt": "2025-10-17T00:07:21+02:00",
+      "extension": "jpg",
+      "size": 100056,
+      "title": "corry-ammerlaan-kunstpakket-beeld-our-team-verbron",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486165655/50x50x2/corry-ammerlaan-kunstpakket-beeld-our-team-verbron.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486165655/corry-ammerlaan-kunstpakket-beeld-our-team-verbron.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159330",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159330"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159330",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159330"
+      }
+    }
+  },
+  {
+    "id": 8159321,
+    "createdAt": "2019-01-07T18:32:23+01:00",
+    "updatedAt": "2025-10-15T09:14:39+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "8159321"
+    ],
+    "type": "category",
+    "sortOrder": 9,
+    "sorting": "popular",
+    "url": "liefde-huwelijk",
+    "title": "Liefde & Huwelijk",
+    "fulltitle": "Bronzen Beelden – Liefde & Huwelijk",
+    "description": "In de Liefde & Huwelijk collectie vind je bronzen sculpturen die de liefde vieren—van symbolische koppels tot fit-for-purpose designstukken voor bruiloften, huwelijkscadeaus of romantische momenten.",
+    "content": "<h3 class=\"\" data-start=\"95\" data-end=\"162\"><strong data-start=\"99\" data-end=\"162\">Bronzen en Moderne Beelden met het Thema Liefde en Huwelijk</strong></h3>\r\n<p class=\"\" data-start=\"164\" data-end=\"283\"><span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Vier de liefde met onze exclusieve collectie <strong data-start=\"45\" data-end=\"75\">bronzen en moderne beelden</strong> die de essentie van liefde en verbondenheid uitdrukken.</span> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Of u nu op zoek bent naar een betekenisvol <strong data-start=\"43\" data-end=\"62\">huwelijkscadeau</strong>, een geschenk voor een <strong data-start=\"86\" data-end=\"98\">jubileum</strong>, of een attent cadeau voor <strong data-start=\"126\" data-end=\"143\">Valentijnsdag</strong>, onze zorgvuldig geselecteerde sculpturen symboliseren de diepe band tussen geliefden.</span>​</p>\r\n<p class=\"\" data-start=\"285\" data-end=\"404\"><span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Onze collectie omvat diverse stijlen, van klassieke bronzen beelden tot eigentijdse ontwerpen, perfect voor elke smaak en interieur.</span> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Elk kunstwerk is met vakmanschap vervaardigd en straalt warmte en emotie uit, waardoor het een blijvende herinnering vormt aan bijzondere momenten.</span>​</p>\r\n<p class=\"\" data-start=\"406\" data-end=\"449\"><strong data-start=\"406\" data-end=\"449\">Waarom kiezen voor onze liefdesbeelden?</strong></p>\r\n<ul data-start=\"451\" data-end=\"1001\">\r\n<li class=\"\" data-start=\"451\" data-end=\"556\">\r\n<p class=\"\" data-start=\"453\" data-end=\"556\"><strong data-start=\"453\" data-end=\"474\">Unieke Collectie:</strong> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Een breed scala aan beelden die liefde en verbondenheid symboliseren.</span>​</p>\r\n</li>\r\n<li class=\"\" data-start=\"557\" data-end=\"673\">\r\n<p class=\"\" data-start=\"559\" data-end=\"673\"><strong data-start=\"559\" data-end=\"587\">Hoogwaardige Materialen:</strong> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Vervaardigd uit duurzaam brons en andere kwaliteitsmaterialen voor een tijdloze uitstraling.</span>​</p>\r\n</li>\r\n<li class=\"\" data-start=\"674\" data-end=\"781\">\r\n<p class=\"\" data-start=\"676\" data-end=\"781\"><strong data-start=\"676\" data-end=\"695\">Personalisatie:</strong> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Voeg een <strong data-start=\"9\" data-end=\"25\">tekstplaatje</strong> toe met een persoonlijke boodschap om uw geschenk extra speciaal te maken.</span>​</p>\r\n</li>\r\n<li class=\"\" data-start=\"782\" data-end=\"892\">\r\n<p class=\"\" data-start=\"784\" data-end=\"892\"><strong data-start=\"784\" data-end=\"806\">Gratis Verzending:</strong> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Profiteer van gratis verzending binnen Nederland.</span>​</p>\r\n</li>\r\n<li class=\"\" data-start=\"893\" data-end=\"1001\">\r\n<p class=\"\" data-start=\"895\" data-end=\"1001\"><strong data-start=\"895\" data-end=\"915\">Snelle Levering:</strong> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Voor 12 uur besteld, binnen 2 dagen in huis.</span>​</p>\r\n</li>\r\n</ul>\r\n<p class=\"\" data-start=\"1003\" data-end=\"1128\"><span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Laat uw liefde spreken met een betekenisvol kunstwerk uit onze collectie <strong data-start=\"73\" data-end=\"91\">liefdesbeelden</strong>.</span> <span class=\"relative -mx-px my-[-0.2rem] rounded px-px py-[0.2rem]\">Bestel eenvoudig online en geef een blijvend aandenken aan uw dierbaren.</span>​</p>",
+    "image": {
+      "createdAt": "2025-10-15T09:14:39+02:00",
+      "updatedAt": "2025-10-15T09:14:39+02:00",
+      "extension": "jpg",
+      "size": 45360,
+      "title": "mark-brouwers-verbronsd-beeld-elkaars-liefde-delen",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486048463/50x50x2/mark-brouwers-verbronsd-beeld-elkaars-liefde-delen.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486048463/mark-brouwers-verbronsd-beeld-elkaars-liefde-delen.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159321",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159321"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159321",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159321"
+      }
+    }
+  },
+  {
+    "id": 8159318,
+    "createdAt": "2019-01-07T18:31:06+01:00",
+    "updatedAt": "2025-10-11T13:52:51+02:00",
+    "isVisible": false,
+    "depth": 1,
+    "path": [
+      "8159318"
+    ],
+    "type": "category",
+    "sortOrder": 8,
+    "sorting": "popular",
+    "url": "beelden-muziek",
+    "title": "Beelden Muziek ",
+    "fulltitle": "Muziek beeldjes in brons",
+    "description": "Diversen muzikanten in brons uitgebeeld door bekende kunstenaars.\r\nVan saxofonist, trompettist, een dirigent, Kunstpakket heeft alle beelden op voorraad.",
+    "content": "<h2> </h2>\r\n<p>Muziek en kunst in brons gaan hand in hand.Onze beelden met verschillende instrumenten en muzikanten zijn eenvoudig te bestellen en altijd op voorraad. De muziekbeeldjes zijn gesigneerd door de kunstenaar en worden verzonden met een muzikale motivatie op het certificaat.</p>\r\n<p> </p>",
+    "image": {
+      "createdAt": "2025-10-11T13:52:50+02:00",
+      "updatedAt": "2025-10-11T13:52:50+02:00",
+      "extension": "jpg",
+      "size": 405146,
+      "title": "muziek",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/485900541/50x50x2/muziek.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/485900541/muziek.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159318",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159318"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159318",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159318"
+      }
+    }
+  },
+  {
+    "id": 8159315,
+    "createdAt": "2019-01-07T18:30:26+01:00",
+    "updatedAt": "2025-10-25T15:14:14+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "8159315"
+    ],
+    "type": "category",
+    "sortOrder": 2,
+    "sorting": "popular",
+    "url": "sportbeelden-8159315",
+    "title": "Sportbeelden",
+    "fulltitle": "Bronzen Sportbeeldjes & Sportprijzen",
+    "description": "Ontdek onze bronzen sportbeelden - van sportmomenten tot symbolen van succes, overwinning en samenwerking. Kies uit diverse sporten, waaronder golf, tennis, voetbal en iconische voetballers. Personaliseer met tekstplaatje en gratis verzending.",
+    "content": "<h3 data-start=\"522\" data-end=\"612\"><strong data-start=\"528\" data-end=\"612\">Bronzen Sportbeelden - Inspirerende Sculpturen voor Sport, Succes en Overwinning</strong></h3>\r\n<p data-start=\"614\" data-end=\"903\">Ontdek onze veelzijdige collectie <strong data-start=\"648\" data-end=\"672\">bronzen sportbeelden - </strong>van dynamische sportmomenten tot beelden die <strong data-start=\"720\" data-end=\"784\">succes, overwinning, samenwerking en het bereiken van doelen</strong> uitbeelden. Elk <strong data-start=\"801\" data-end=\"825\">sportbeeld van brons</strong> is met vakmanschap vervaardigd en straalt kracht, passie en waardering uit.</p>\r\n<p data-start=\"905\" data-end=\"1233\">Onze collectie omvat ook een breed scala aan sporten, waaronder <strong data-start=\"965\" data-end=\"1054\">voetbal, golf, tennis, wielrennen, dans, yoga, schaatsen, bodybuilding, judo, biljart</strong> en <strong data-start=\"1058\" data-end=\"1078\">handboogschieten</strong>. Daarnaast vindt u iconische <strong data-start=\"1108\" data-end=\"1136\">beelden van Coen Moulijn</strong> en <strong data-start=\"1140\" data-end=\"1157\">Johan Cruijff - </strong>een eerbetoon aan twee grootheden uit de Nederlandse sportgeschiedenis.</p>\r\n<p data-start=\"1235\" data-end=\"1488\">Of u nu een <strong data-start=\"1247\" data-end=\"1286\">prijs zoekt voor een sportevenement</strong>, een <strong data-start=\"1292\" data-end=\"1336\">relatiegeschenk voor een sportvereniging</strong> of een <strong data-start=\"1344\" data-end=\"1391\">persoonlijk cadeau voor een sporter of team</strong>, onze bronzen sportbeelden bieden voor elke gelegenheid een passend en betekenisvol kunstwerk.</p>\r\n<p data-start=\"1490\" data-end=\"1745\">Maak uw geschenk extra persoonlijk met een <strong data-start=\"1533\" data-end=\"1549\">tekstplaatje</strong> met eigen boodschap. <strong data-start=\"1573\" data-end=\"1611\">Gratis verzending binnen Nederland</strong> en snelle levering. Voor vragen of advies staan wij <strong data-start=\"1666\" data-end=\"1686\">7 dagen per week</strong> voor u klaar via <strong data-start=\"1704\" data-end=\"1742\">WhatsApp of telefoon (06-23643267)</strong>.</p>",
+    "image": {
+      "createdAt": "2025-10-17T00:04:56+02:00",
+      "updatedAt": "2025-10-17T00:04:56+02:00",
+      "extension": "jpg",
+      "size": 98737,
+      "title": "ger-van-tankeren-beeld-tennisser",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486165652/50x50x2/ger-van-tankeren-beeld-tennisser.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486165652/ger-van-tankeren-beeld-tennisser.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159315",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159315"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159315",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159315"
+      }
+    }
+  },
+  {
+    "id": 8159312,
+    "createdAt": "2019-01-07T18:29:04+01:00",
+    "updatedAt": "2025-10-22T10:57:55+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "8159312"
+    ],
+    "type": "category",
+    "sortOrder": 7,
+    "sorting": "popular",
+    "url": "zakelijke-geschenken",
+    "title": "Zakelijke Geschenken",
+    "fulltitle": "Zakelijk & Geschenk",
+    "description": "Onze collectie Zakelijk & Geschenk combineert stijl en betekenis. Van exclusieve bronzen sculpturen tot kunstzinnige awards—perfect om waardering te tonen bij zakelijke relaties, jubilea of afscheid.",
+    "content": "<h3 class=\"\" data-start=\"117\" data-end=\"193\"><strong data-start=\"121\" data-end=\"191\">Kunstpakket: Het Perfecte Zakelijke Geschenk voor Elke Gelegenheid</strong></h3>\r\n<p class=\"\" data-start=\"195\" data-end=\"454\">Ben je op zoek naar een <strong data-start=\"219\" data-end=\"264\">exclusief en betekenisvol zakelijk cadeau</strong>? Bij Kunstpakket vind je een breed assortiment <strong data-start=\"312\" data-end=\"331\">bronzen beelden</strong> die symbool staan voor waardering, samenwerking en succes. Een perfect <strong data-start=\"403\" data-end=\"422\">relatiegeschenk</strong> voor elke zakelijke mijlpal.</p>\r\n<h4 class=\"\" data-start=\"456\" data-end=\"509\"><strong data-start=\"461\" data-end=\"507\">Zakelijke Geschenken voor Elke Gelegenheid</strong></h4>\r\n<h4 class=\"\" data-start=\"923\" data-end=\"979\"><strong data-start=\"928\" data-end=\"977\">Waarom een bronzen beeld als zakelijk cadeau?</strong></h4>\r\n<p class=\"\" data-start=\"980\" data-end=\"1302\">✔ <strong data-start=\"982\" data-end=\"1015\">Symbolische en tijdloze kunst</strong> – Perfect als <strong data-start=\"1030\" data-end=\"1071\">relatiegeschenk, award of herinnering</strong>.<br data-start=\"1072\" data-end=\"1075\" />✔ <strong data-start=\"1077\" data-end=\"1104\">Personalisatie mogelijk</strong> – Voeg een <strong data-start=\"1116\" data-end=\"1151\">gegraveerd tekstplaatje of logo</strong> toe.<br data-start=\"1156\" data-end=\"1159\" />✔ <strong data-start=\"1161\" data-end=\"1201\">Snelle levering &amp; geen verzendkosten</strong> – Direct uit voorraad geleverd.<br data-start=\"1233\" data-end=\"1236\" />✔ <strong data-start=\"1238\" data-end=\"1265\">Gratis cadeauverpakking</strong> – Maak je geschenk extra speciaal.</p>\r\n<h4 class=\"\" data-start=\"1304\" data-end=\"1364\"><strong data-start=\"1309\" data-end=\"1362\">Voor wie zijn onze zakelijke geschenken geschikt?</strong></h4>\r\n<p class=\"\" data-start=\"1365\" data-end=\"1599\"> </p>",
+    "image": {
+      "createdAt": "2025-10-22T10:57:55+02:00",
+      "updatedAt": "2025-10-22T10:57:55+02:00",
+      "extension": "jpg",
+      "size": 32620,
+      "title": "mark-brouwers-verbronsd-beeldje-elkaar-bedanken-nu",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/486442024/50x50x2/mark-brouwers-verbronsd-beeldje-elkaar-bedanken-nu.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/486442024/mark-brouwers-verbronsd-beeldje-elkaar-bedanken-nu.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159312",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159312"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159312",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159312"
+      }
+    }
+  },
+  {
+    "id": 8159309,
+    "createdAt": "2019-01-07T18:28:13+01:00",
+    "updatedAt": "2025-08-20T17:31:48+02:00",
+    "isVisible": false,
+    "depth": 1,
+    "path": [
+      "8159309"
+    ],
+    "type": "category",
+    "sortOrder": 6,
+    "sorting": "default",
+    "url": "relatiegeschenken-eindejaarsgeschenken",
+    "title": "Relatiegeschenken & Eindejaarsgeschenken",
+    "fulltitle": "Relatiegeschenken Kerstpakketten Wijnpakketten Eindejaarsgeschenk",
+    "description": "Ontdek onze collectie Relatiegeschenken & Eindejaarsgeschenken. Van traditionele kerstpakketten tot luxe wijnpakketten: altijd een stijlvol en persoonlijk cadeau om waardering te tonen. Perfect voor collega’s, zakenpartners of relaties – een geschenk dat ",
+    "content": "<p>Ontdek onze collectie <em data-start=\"1376\" data-end=\"1395\">Relatiegeschenken</em>: een zorgvuldig samengestelde selectie voor elk moment van waardering—van feestelijke kerstpakketten en verfijnde wijnpakketten tot stijlvolle eindejaarsgeschenken. Of je nu op zoek bent naar een klassiek kerstcadeau, een exclusief wijnpakket of een persoonlijk eindejaarsgeschenk: bij ons vind je altijd iets dat indruk maakt op relaties, klanten of collega’s.</p>",
+    "image": {
+      "createdAt": "2023-11-19T16:41:16+01:00",
+      "updatedAt": "2023-11-19T16:41:16+01:00",
+      "extension": "jpg",
+      "size": 45665,
+      "title": "Beeld met wijn Kunstpakket",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/444039138/50x50x2/beeld-met-wijn-kunstpakket.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/444039138/beeld-met-wijn-kunstpakket.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159309",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159309"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159309",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159309"
+      }
+    }
+  },
+  {
+    "id": 8159306,
+    "createdAt": "2019-01-07T18:26:25+01:00",
+    "updatedAt": "2025-10-11T13:51:42+02:00",
+    "isVisible": true,
+    "depth": 1,
+    "path": [
+      "8159306"
+    ],
+    "type": "category",
+    "sortOrder": 5,
+    "sorting": "popular",
+    "url": "gezinsbeelden",
+    "title": "Gezinsbeelden",
+    "fulltitle": "Betekenisvolle Bronzen Beelden van Familie & Gezin",
+    "description": "Bronzen Gezinsbeelden brengen liefde en verbondenheid in beeld. Moeder-kind, spelende kinderen of gezinsscènes – elk beeld is een tijdloos kunstwerk en bijzonder cadeau voor moederdag, vaderdag of familie.",
+    "content": "<h3 class=\"\" data-start=\"679\" data-end=\"746\"><strong data-start=\"683\" data-end=\"744\">Familie Bronzen Beelden &amp; Sculpturen – Unieke Gezinskunst</strong></h3>\r\n<p class=\"\" data-start=\"748\" data-end=\"994\">Familie is de basis van het leven, en wat is er mooier dan dit vast te leggen in een tijdloos kunstwerk? Onze collectie <strong data-start=\"868\" data-end=\"894\">bronzen familiebeelden</strong> en <strong data-start=\"898\" data-end=\"918\">gezin sculpturen</strong> is perfect om de liefde en verbondenheid binnen een gezin uit te drukken.</p>\r\n<h4 class=\"\" data-start=\"996\" data-end=\"1035\"><strong data-start=\"1001\" data-end=\"1033\">Unieke Bronzen Gezinsbeelden</strong></h4>\r\n<p class=\"\" data-start=\"1036\" data-end=\"1122\">Bij Kunstpakket vind je een breed assortiment bronzen beelden met het thema familie:</p>\r\n<ul data-start=\"1124\" data-end=\"1425\">\r\n<li class=\"\" data-start=\"1124\" data-end=\"1193\">\r\n<p class=\"\" data-start=\"1126\" data-end=\"1193\"><strong data-start=\"1126\" data-end=\"1152\">Moeder en kind beelden</strong> – symboliseren liefde en geborgenheid.</p>\r\n</li>\r\n<li class=\"\" data-start=\"1194\" data-end=\"1281\">\r\n<p class=\"\" data-start=\"1196\" data-end=\"1281\"><strong data-start=\"1196\" data-end=\"1230\">Beelden van een zwangere vrouw</strong> – een bijzonder aandenken aan een speciale tijd.</p>\r\n</li>\r\n<li class=\"\" data-start=\"1282\" data-end=\"1349\">\r\n<p class=\"\" data-start=\"1284\" data-end=\"1349\"><strong data-start=\"1284\" data-end=\"1310\">Spelende kinderbeelden</strong> – vrolijke kunstwerken vol beweging.</p>\r\n</li>\r\n<li class=\"\" data-start=\"1350\" data-end=\"1425\">\r\n<p class=\"\" data-start=\"1352\" data-end=\"1425\"><strong data-start=\"1352\" data-end=\"1381\">Man en vrouw met kinderen</strong> – een krachtig symbool van familiebanden.</p>\r\n</li>\r\n</ul>\r\n<p class=\"\" data-start=\"1427\" data-end=\"1536\">Onze familiebeelden zijn een prachtig geschenk voor verjaardagen, jubilea of als decoratie in huis of tuin.</p>\r\n<h3 class=\"\" data-start=\"1538\" data-end=\"1596\"><strong data-start=\"1542\" data-end=\"1594\">Waarom een bronzen familiebeeld van Kunstpakket?</strong></h3>\r\n<p class=\"\" data-start=\"1597\" data-end=\"1868\">✅ <strong data-start=\"1599\" data-end=\"1620\">Gratis verzending</strong> binnen Nederland<br data-start=\"1637\" data-end=\"1640\" />✅ <strong data-start=\"1642\" data-end=\"1661\">Snelle levering</strong> uit eigen voorraad<br data-start=\"1680\" data-end=\"1683\" />✅ <strong data-start=\"1685\" data-end=\"1707\">Persoonlijk cadeau</strong> – optioneel met gravure op een natuurstenen sokkel<br data-start=\"1758\" data-end=\"1761\" />✅ <strong data-start=\"1763\" data-end=\"1789\">Hoogwaardige kwaliteit</strong> – inclusief certificaat van de kunstenaar<br data-start=\"1831\" data-end=\"1834\" />✅ <strong data-start=\"1836\" data-end=\"1866\">Gratis cadeau inpakservice</strong></p>\r\n<p class=\"\" data-start=\"1870\" data-end=\"2028\">Maak je bronzen beeld extra speciaal met een persoonlijke boodschap. Voeg een gegraveerd tekstplaatje toe en geef je familie een herinnering voor het leven.</p>\r\n<h3 class=\"\" data-start=\"2030\" data-end=\"2080\"><strong data-start=\"2034\" data-end=\"2078\">Bestel jouw bronzen gezinsbeeld vandaag!</strong></h3>\r\n<p class=\"\" data-start=\"2081\" data-end=\"2219\">Ontdek onze collectie en kies het perfecte familiebeeld. <strong data-start=\"2138\" data-end=\"2217\">Bestel eenvoudig online bij Kunstpakket.nl en geniet van gratis verzending!</strong></p>",
+    "image": {
+      "createdAt": "2025-10-11T13:51:42+02:00",
+      "updatedAt": "2025-10-11T13:51:42+02:00",
+      "extension": "jpg",
+      "size": 836100,
+      "title": "gezin",
+      "thumb": "https://cdn.webshopapp.com/shops/269557/files/485900512/50x50x2/gezin.jpg",
+      "src": "https://cdn.webshopapp.com/shops/269557/files/485900512/gezin.jpg"
+    },
+    "parent": false,
+    "children": {
+      "resource": {
+        "id": false,
+        "url": "categories?parent=8159306",
+        "link": "https://api.webshopapp.com/nl/categories.json?parent=8159306"
+      }
+    },
+    "products": {
+      "resource": {
+        "id": false,
+        "url": "categories/products?category=8159306",
+        "link": "https://api.webshopapp.com/nl/categories/products.json?category=8159306"
+      }
+    }
   }
 ]
