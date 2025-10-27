@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.3.0';
+  const VERSION = '5.4.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -240,7 +240,7 @@
         <input 
           type="search" 
           id="kp-search-input-bar" 
-          placeholder="Zoek naar een kunstcadeau"
+          placeholder="Zoek met kunstpakket.ai"
           autocomplete="off"
           enterkeyhint="search"
         />
@@ -290,7 +290,7 @@
             <input 
               type="search" 
               id="kp-search-input-overlay" 
-              placeholder="Zoek naar een kunstcadeau"
+              placeholder="Zoek met kunstpakket.ai"
               autocomplete="off"
               enterkeyhint="search"
             />
@@ -689,6 +689,16 @@
         transition: all 0.2s;
       }
       
+      /* Animate the AI stars - each star pulses at different times */
+      @keyframes sparkle {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+      }
+      
+      .kp-ai-search-btn svg path {
+        animation: sparkle 2s ease-in-out infinite;
+      }
+      
       .kp-ai-search-btn:hover {
         background: rgba(30, 41, 59, 0.08);
       }
@@ -813,6 +823,10 @@
         display: block;
         fill: #1e293b;
         transition: all 0.2s;
+      }
+      
+      .kp-ai-search-btn-overlay svg path {
+        animation: sparkle 2s ease-in-out infinite;
       }
       
       .kp-ai-search-btn-overlay:hover {
