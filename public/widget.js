@@ -5,7 +5,7 @@
 (function() {
   'use strict';
   
-  const VERSION = '5.4.0';
+  const VERSION = '5.3.0';
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://kunstpakket.bluestars.app/api';
@@ -214,49 +214,6 @@
     } catch (err) {
       console.warn('[KP Search] Click tracking error:', err);
     }
-  }
-  
-  /**
-   * Inject AI header banner above .usp-bar
-   */
-  function injectAIHeader() {
-    const uspBar = document.querySelector('.usp-bar.usp-bar-top');
-    if (!uspBar) {
-      console.warn('[KP Search] .usp-bar.usp-bar-top not found');
-      return;
-    }
-    
-    const aiHeader = document.createElement('div');
-    aiHeader.id = 'kp-ai-header';
-    aiHeader.innerHTML = `
-      <div class="kp-ai-header-content">
-        <span class="kp-ai-header-text">Zoek met AI</span>
-        <div class="kp-ai-header-icons">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
-            <path d="M18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z"/>
-          </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
-            <path d="M18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z"/>
-          </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
-            <path d="M18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z"/>
-          </svg>
-        </div>
-      </div>
-    `;
-    
-    // Insert before .usp-bar
-    uspBar.parentNode.insertBefore(aiHeader, uspBar);
-    
-    // Add click handler to open overlay
-    aiHeader.addEventListener('click', () => {
-      openOverlay();
-      // Focus on overlay input
-      setTimeout(() => {
-        const overlayInput = document.getElementById('kp-search-input-overlay');
-        if (overlayInput) overlayInput.focus();
-      }, 100);
-    });
   }
   
   /**
@@ -660,45 +617,6 @@
       #wwkSidebar,
       #wwkSidebarMobile {
         z-index: 800 !important;
-      }
-      
-      /* AI Search Header Banner */
-      #kp-ai-header {
-        background: #f5876e;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      
-      #kp-ai-header:hover {
-        background: #f3744f;
-      }
-      
-      .kp-ai-header-content {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 12px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      
-      .kp-ai-header-text {
-        color: white;
-        font-size: 16px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-      }
-      
-      .kp-ai-header-icons {
-        display: flex;
-        gap: 4px;
-      }
-      
-      .kp-ai-header-icons svg {
-        width: 20px;
-        height: 20px;
-        fill: white;
-        opacity: 0.95;
       }
       
       /* Remove top padding from container-bar */
@@ -1362,9 +1280,6 @@
     
     // Create overlay
     createOverlay();
-    
-    // Inject AI header banner
-    injectAIHeader();
     
     // Inject search bar
     injectSearchBar();
