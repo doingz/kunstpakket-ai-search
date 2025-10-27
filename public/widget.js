@@ -244,9 +244,11 @@
           autocomplete="off"
           enterkeyhint="search"
         />
-        <button id="kp-search-button-bar" class="kp-ai-search-btn" aria-label="Zoeken">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
-            <path d="M16.269 18.626c-1.526 1.267-3.502 2.032-5.661 2.032-4.834 0-8.749-3.834-8.749-8.543s3.915-8.543 8.749-8.543c.483 0 .957.038 1.419.112a.8.8 0 1 1-.252 1.58 7.41 7.41 0 0 0-1.167-.092c-3.94 0-7.149 3.105-7.149 6.943s3.209 6.943 7.149 6.943c1.959 0 3.737-.767 5.03-2.01a.83.83 0 0 1 .072-.084.81.81 0 0 1 .102-.089c.999-1.029 1.678-2.356 1.881-3.829a.8.8 0 1 1 1.585.219 8.41 8.41 0 0 1-1.876 4.231l3.92 3.819a.8.8 0 0 1-1.116 1.146l-3.936-3.834zM18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z"/>
+        <button id="kp-search-button-bar" class="kp-ai-search-btn" aria-label="Zoeken met AI">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path class="star-1" d="M6 9L7 11L9 12L7 13L6 15L5 13L3 12L5 11L6 9Z" fill="currentColor"/>
+            <path class="star-2" d="M12 4L13.5 7L16.5 8.5L13.5 10L12 13L10.5 10L7.5 8.5L10.5 7L12 4Z" fill="currentColor"/>
+            <path class="star-3" d="M18 10L19 12L21 13L19 14L18 16L17 14L15 13L17 12L18 10Z" fill="currentColor"/>
           </svg>
         </button>
       </div>
@@ -294,9 +296,11 @@
               autocomplete="off"
               enterkeyhint="search"
             />
-            <button id="kp-search-button-overlay" class="kp-ai-search-btn-overlay" aria-label="Zoeken">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
-                <path d="M16.269 18.626c-1.526 1.267-3.502 2.032-5.661 2.032-4.834 0-8.749-3.834-8.749-8.543s3.915-8.543 8.749-8.543c.483 0 .957.038 1.419.112a.8.8 0 1 1-.252 1.58 7.41 7.41 0 0 0-1.167-.092c-3.94 0-7.149 3.105-7.149 6.943s3.209 6.943 7.149 6.943c1.959 0 3.737-.767 5.03-2.01a.83.83 0 0 1 .072-.084.81.81 0 0 1 .102-.089c.999-1.029 1.678-2.356 1.881-3.829a.8.8 0 1 1 1.585.219 8.41 8.41 0 0 1-1.876 4.231l3.92 3.819a.8.8 0 0 1-1.116 1.146l-3.936-3.834zM18.7 1.313l.836 1.805 1.853.814-1.853.814-.836 1.805-.836-1.805-1.853-.814 1.853-.814.836-1.805zm-4.462 3.317l1.216 2.625 2.695 1.185-2.695 1.185-1.216 2.625-1.216-2.625-2.695-1.185 2.695-1.185 1.216-2.625zm5.79 3.526l.657 1.419 1.457.64-1.457.64-.657 1.419-.657-1.419-1.457-.64 1.457-.64.657-1.419z"/>
+            <button id="kp-search-button-overlay" class="kp-ai-search-btn-overlay" aria-label="Zoeken met AI">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path class="star-1" d="M6 9L7 11L9 12L7 13L6 15L5 13L3 12L5 11L6 9Z" fill="currentColor"/>
+                <path class="star-2" d="M12 4L13.5 7L16.5 8.5L13.5 10L12 13L10.5 10L7.5 8.5L10.5 7L12 4Z" fill="currentColor"/>
+                <path class="star-3" d="M18 10L19 12L21 13L19 14L18 16L17 14L15 13L17 12L18 10Z" fill="currentColor"/>
               </svg>
             </button>
           </div>
@@ -685,18 +689,32 @@
       
       .kp-ai-search-btn svg {
         display: block;
-        fill: #1e293b;
+        color: #1e293b;
         transition: all 0.2s;
       }
       
-      /* Animate the AI stars - each star pulses at different times */
-      @keyframes sparkle {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(0.8); }
+      /* Animate the AI stars - each star twinkles at different times */
+      @keyframes twinkle {
+        0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        50% { opacity: 0.3; transform: scale(0.7) rotate(20deg); }
       }
       
-      .kp-ai-search-btn svg path {
-        animation: sparkle 2s ease-in-out infinite;
+      .kp-ai-search-btn svg .star-1 {
+        animation: twinkle 1.5s ease-in-out infinite;
+        animation-delay: 0s;
+        transform-origin: center;
+      }
+      
+      .kp-ai-search-btn svg .star-2 {
+        animation: twinkle 1.5s ease-in-out infinite;
+        animation-delay: 0.5s;
+        transform-origin: center;
+      }
+      
+      .kp-ai-search-btn svg .star-3 {
+        animation: twinkle 1.5s ease-in-out infinite;
+        animation-delay: 1s;
+        transform-origin: center;
       }
       
       .kp-ai-search-btn:hover {
@@ -704,7 +722,7 @@
       }
       
       .kp-ai-search-btn:hover svg {
-        fill: #f5876e;
+        color: #f5876e;
         transform: scale(1.1);
       }
       
@@ -821,12 +839,26 @@
       
       .kp-ai-search-btn-overlay svg {
         display: block;
-        fill: #1e293b;
+        color: #1e293b;
         transition: all 0.2s;
       }
       
-      .kp-ai-search-btn-overlay svg path {
-        animation: sparkle 2s ease-in-out infinite;
+      .kp-ai-search-btn-overlay svg .star-1 {
+        animation: twinkle 1.5s ease-in-out infinite;
+        animation-delay: 0s;
+        transform-origin: center;
+      }
+      
+      .kp-ai-search-btn-overlay svg .star-2 {
+        animation: twinkle 1.5s ease-in-out infinite;
+        animation-delay: 0.5s;
+        transform-origin: center;
+      }
+      
+      .kp-ai-search-btn-overlay svg .star-3 {
+        animation: twinkle 1.5s ease-in-out infinite;
+        animation-delay: 1s;
+        transform-origin: center;
       }
       
       .kp-ai-search-btn-overlay:hover {
@@ -834,7 +866,7 @@
       }
       
       .kp-ai-search-btn-overlay:hover svg {
-        fill: #f5876e;
+        color: #f5876e;
         transform: scale(1.1);
       }
       
