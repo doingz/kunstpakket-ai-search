@@ -245,7 +245,7 @@
           enterkeyhint="search"
         />
         <button id="kp-search-button-bar" class="kp-ai-search-btn" aria-label="Zoeken met AI">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none">
             <path class="star-1" d="M6 9L7 11L9 12L7 13L6 15L5 13L3 12L5 11L6 9Z" fill="currentColor"/>
             <path class="star-2" d="M12 4L13.5 7L16.5 8.5L13.5 10L12 13L10.5 10L7.5 8.5L10.5 7L12 4Z" fill="currentColor"/>
             <path class="star-3" d="M18 10L19 12L21 13L19 14L18 16L17 14L15 13L17 12L18 10Z" fill="currentColor"/>
@@ -297,7 +297,7 @@
               enterkeyhint="search"
             />
             <button id="kp-search-button-overlay" class="kp-ai-search-btn-overlay" aria-label="Zoeken met AI">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <path class="star-1" d="M6 9L7 11L9 12L7 13L6 15L5 13L3 12L5 11L6 9Z" fill="currentColor"/>
                 <path class="star-2" d="M12 4L13.5 7L16.5 8.5L13.5 10L12 13L10.5 10L7.5 8.5L10.5 7L12 4Z" fill="currentColor"/>
                 <path class="star-3" d="M18 10L19 12L21 13L19 14L18 16L17 14L15 13L17 12L18 10Z" fill="currentColor"/>
