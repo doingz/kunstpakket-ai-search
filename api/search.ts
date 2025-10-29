@@ -24,10 +24,10 @@ export const config = {
 };
 
 // Constants
-const SIMILARITY_THRESHOLD_VAGUE = 0.70;      // High threshold for vague queries → 0 results
-const SIMILARITY_THRESHOLD_SPECIFIC = 0.25;   // Lower threshold for specific queries → semantic matches
-const SIMILARITY_THRESHOLD_TYPE_ONLY = 0.20;  // Even lower for type-only queries (e.g., "mok", "vaas")
-const SIMILARITY_THRESHOLD_KEYWORDS = 0.15;   // Lowest for keyword searches (e.g., "dog", "kat")
+const SIMILARITY_THRESHOLD_VAGUE = 0.35;      // Moderate threshold for vague queries
+const SIMILARITY_THRESHOLD_SPECIFIC = 0.22;   // Lower threshold for specific queries → semantic matches
+const SIMILARITY_THRESHOLD_TYPE_ONLY = 0.18;  // Even lower for type-only queries (e.g., "mok", "vaas")
+const SIMILARITY_THRESHOLD_KEYWORDS = 0.12;   // Lowest for keyword searches (e.g., "dog", "kat")
 const POPULAR_SALES_THRESHOLD = 50;           // Products with 50+ sales are popular (top 5%)
 const SCARCE_STOCK_THRESHOLD = 5;             // Products with stock <= 5 are scarce
 const MAX_RESULTS = 50;
